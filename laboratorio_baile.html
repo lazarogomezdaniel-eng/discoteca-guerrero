@@ -453,10 +453,10 @@
 
   <!-- Top Center Live HUD -->
   <div class="live-hud">
-    <span style="font-size: 20px;" id="hud-icon">🌀</span>
+    <span style="font-size: 20px;" id="hud-icon">🥨</span>
     <div>
-      <div class="hud-seq-name" id="hud-seq-name">El Molino (Windmills)</div>
-      <div style="font-size: 11px; color: var(--muted);" id="hud-sub">Fórmula afilada con latigazo a medio beat (0.22s)</div>
+      <div class="hud-seq-name" id="hud-seq-name">El Trenzado (Arm Weave en 8)</div>
+      <div style="font-size: 11px; color: var(--muted);" id="hud-sub">Antebrazos entrelazados describiendo un bucle continuo en 8 por delante del pecho</div>
     </div>
     <div class="hud-beat-counter" id="hud-beat-counter">Compás: 1.1</div>
   </div>
@@ -495,11 +495,11 @@
       <span>135 BPM</span>
     </div>
     <div class="seq-grid">
-      <button class="seq-btn active" id="btn-seq-molino" onclick="window.setSequence('molino')">
+      <button class="seq-btn" id="btn-seq-molino" onclick="window.setSequence('molino')">
         <span>🌀 1. El Molino (Windmills)</span>
         <kbd>1</kbd>
       </button>
-      <button class="seq-btn" id="btn-seq-trenzado" onclick="window.setSequence('trenzado')">
+      <button class="seq-btn active" id="btn-seq-trenzado" onclick="window.setSequence('trenzado')">
         <span>🥨 2. El Trenzado (Arm Weave)</span>
         <kbd>2</kbd>
       </button>
@@ -609,7 +609,7 @@
         this.bpm = 135;
         this.amplitude = 1.0;
         this.snappiness = 0.35;
-        this.currentMode = 'molino';
+        this.currentMode = 'trenzado';
 
         this.time = 0;
         this.totalBeats = 0;
@@ -813,36 +813,36 @@
 
         // ---------------------------------------------------------------------
         // 2. "EL TRENZADO" (Arm Weave Figure-8)
-        // Antebrazos entrelazados describiendo un ocho infinito (Lissajous 3D)
+        // Antebrazos entrelazados describiendo un ocho continuo (Lissajous 3D) por delante del pecho
         // ---------------------------------------------------------------------
         } else if (mode === 'trenzado') {
           const weaveFreq = (Math.PI * 2 / beatDur);
           const phaseW = t * weaveFreq;
 
-          euler.set(0.1, 0, 0.2 * amp);
+          // Hombros proyectados adelante y encogidos hacia el pecho
+          euler.set(0.2, 0.1 * amp, 0.15 * amp);
           qDelta.clavicle_l.setFromEuler(euler);
-          euler.set(0.1, 0, -0.2 * amp);
+          euler.set(0.2, -0.1 * amp, -0.15 * amp);
           qDelta.clavicle_r.setFromEuler(euler);
 
-          // Curva tridimensional en 8 para entrelazar los brazos alternando profundidad
-          const weaveX_L = Math.sin(phaseW) * 0.45 * amp;
-          const weaveY_L = Math.sin(phaseW * 2) * 0.35 * amp;
-          const weaveZ_L = Math.cos(phaseW) * 0.4 * amp;
+          // Oscilación continua en 8 (Lissajous) para entrelazar las muñecas y antebrazos
+          const wx = Math.sin(phaseW) * 0.45 * amp;
+          const wy = Math.sin(phaseW * 2) * 0.25 * amp;
+          const wz = Math.cos(phaseW) * 0.35 * amp;
 
-          const weaveX_R = -Math.sin(phaseW) * 0.45 * amp;
-          const weaveY_R = -Math.sin(phaseW * 2) * 0.35 * amp;
-          const weaveZ_R = -Math.cos(phaseW) * 0.4 * amp;
-
-          euler.set((0.75 + weaveY_L) * amp, weaveZ_L * 0.6, (0.55 + weaveX_L) * amp);
+          // Codos al frente a la altura del esternón (Z > 0.20m por delante del pecho)
+          euler.set((1.25 + wy * 0.4) * amp, 0.0, (-1.15 + wx * 0.5) * amp);
           qDelta.upperarm_l.setFromEuler(euler);
-          euler.set((0.75 - weaveY_R) * amp, weaveZ_R * 0.6, (-0.55 - weaveX_R) * amp);
+          euler.set((1.25 - wy * 0.4) * amp, 0.0, (1.15 - wx * 0.5) * amp);
           qDelta.upperarm_r.setFromEuler(euler);
 
-          euler.set((1.1 + weaveY_L * 0.8) * amp, 0, (-1.25 + weaveX_L * 0.7) * amp);
+          // Antebrazos cruzándose profundamente por delante rebasando la línea central (X cruza de lado a lado)
+          euler.set((0.6 + wy * 0.4) * amp, -wz * 0.8 * amp, (-0.2 - wx * 0.6) * amp);
           qDelta.lowerarm_l.setFromEuler(euler);
-          euler.set((1.1 - weaveY_R * 0.8) * amp, 0, (1.25 - weaveX_R * 0.7) * amp);
+          euler.set((0.6 - wy * 0.4) * amp, wz * 0.8 * amp, (0.2 + wx * 0.6) * amp);
           qDelta.lowerarm_r.setFromEuler(euler);
 
+          // Muñecas fluidas que acompañan el lazo envolvente de manos
           euler.set(Math.sin(phaseW * 2) * 0.6 * amp, 0, Math.cos(phaseW) * 0.5 * amp);
           qDelta.hand_l.setFromEuler(euler);
           euler.set(-Math.sin(phaseW * 2) * 0.6 * amp, 0, -Math.cos(phaseW) * 0.5 * amp);
@@ -850,104 +850,104 @@
 
         // ---------------------------------------------------------------------
         // 3. "EL ENHEBRADO" (Threading / Ventana Electro)
-        // Un brazo forma un marco/ventana rectangular y el otro enhebra cruzando por dentro
+        // Un brazo forma un marco/ventana rectangular y el otro enhebra cruzando por dentro por delante del pecho
         // ---------------------------------------------------------------------
         } else if (mode === 'enhebrado') {
           const stepThread = Math.floor(halfStep / 2) % 4;
           const threadSnappy = this.sharpWave(t * (Math.PI * 2 / beatDur), 0.25);
 
           if (stepThread === 0 || stepThread === 1) {
-            // Brazo IZQUIERDO forma la ventana geométrica a 90° frente al pecho
-            euler.set(0.65 * amp, 0, 1.15 * amp);
+            // Brazo IZQUIERDO forma la ventana geométrica centrada a 90° frente al pecho
+            euler.set(1.2 * amp, 0, -0.8 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
-            euler.set(1.57 * amp, 0, 0);
+            euler.set(-0.5 * amp, 0, 1.5 * amp);
             qDelta.lowerarm_l.setFromEuler(euler);
             euler.set(0, 0, 0.4 * amp);
             qDelta.hand_l.setFromEuler(euler);
 
-            // Brazo DERECHO ENHEBRA cruzando por dentro de la ventana hacia la izquierda
-            euler.set((0.85 + threadSnappy * 0.1) * amp, 0.2 * amp, -0.25 * amp);
+            // Brazo DERECHO ENHEBRA cruzando por dentro de la ventana hacia la izquierda por delante
+            euler.set((1.35 + threadSnappy * 0.1) * amp, 0, (1.2 - threadSnappy * 0.15) * amp);
             qDelta.upperarm_r.setFromEuler(euler);
-            euler.set(0.35 * amp, 0, (0.75 + threadSnappy * 0.2) * amp);
+            euler.set((0.5 + threadSnappy * 0.1) * amp, 0, (0.2 + threadSnappy * 0.3) * amp);
             qDelta.lowerarm_r.setFromEuler(euler);
-            euler.set(0, 0.6 * amp, 0.3 * amp);
+            euler.set(0, 0.5 * amp, 0.3 * amp);
             qDelta.hand_r.setFromEuler(euler);
 
-            euler.set(0, 0, 0.15 * amp);
+            euler.set(0, 0, 0.12 * amp);
             qDelta.spine.setFromEuler(euler);
 
           } else {
-            // Inverso: Brazo DERECHO forma la ventana geométrica
-            euler.set(0.65 * amp, 0, -1.15 * amp);
+            // Inverso: Brazo DERECHO forma la ventana geométrica frente al pecho
+            euler.set(1.2 * amp, 0, 0.8 * amp);
             qDelta.upperarm_r.setFromEuler(euler);
-            euler.set(1.57 * amp, 0, 0);
+            euler.set(-0.5 * amp, 0, -1.5 * amp);
             qDelta.lowerarm_r.setFromEuler(euler);
             euler.set(0, 0, -0.4 * amp);
             qDelta.hand_r.setFromEuler(euler);
 
-            // Brazo IZQUIERDO ENHEBRA cruzando por dentro hacia la derecha
-            euler.set((0.85 + threadSnappy * 0.1) * amp, -0.2 * amp, 0.25 * amp);
+            // Brazo IZQUIERDO ENHEBRA cruzando por dentro de la ventana hacia la derecha por delante
+            euler.set((1.35 + threadSnappy * 0.1) * amp, 0, (-1.2 + threadSnappy * 0.15) * amp);
             qDelta.upperarm_l.setFromEuler(euler);
-            euler.set(0.35 * amp, 0, (-0.75 - threadSnappy * 0.2) * amp);
+            euler.set((0.5 + threadSnappy * 0.1) * amp, 0, (-0.2 - threadSnappy * 0.3) * amp);
             qDelta.lowerarm_l.setFromEuler(euler);
-            euler.set(0, -0.6 * amp, -0.3 * amp);
+            euler.set(0, -0.5 * amp, -0.3 * amp);
             qDelta.hand_l.setFromEuler(euler);
 
-            euler.set(0, 0, -0.15 * amp);
+            euler.set(0, 0, -0.12 * amp);
             qDelta.spine.setFromEuler(euler);
           }
 
         // ---------------------------------------------------------------------
         // 4. "NUDO TECKTONIK" (Arm Wrap & Lock)
-        // Cruce en X, enganche envolvente de codos y apertura explosiva
+        // Cruce en X cerrado por delante del esternón, enganche envolvente de codos y apertura explosiva
         // ---------------------------------------------------------------------
         } else if (mode === 'nudo') {
           const stepKnot = halfStep % 4;
 
           if (stepKnot === 0) {
-            // Cruce estrecho en X pegado al pecho
-            euler.set(0.75 * amp, 0, 0.85 * amp);
+            // Cruce estrecho en X ceñido por delante del pecho (Wrists cruzados en Z ~ +0.30m)
+            euler.set(1.3 * amp, 0, -1.2 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
-            euler.set(0, 0, -1.75 * amp);
+            euler.set(0.6 * amp, 0, -0.3 * amp);
             qDelta.lowerarm_l.setFromEuler(euler);
 
-            euler.set(0.75 * amp, 0, -0.85 * amp);
+            euler.set(1.2 * amp, 0, 1.2 * amp);
             qDelta.upperarm_r.setFromEuler(euler);
-            euler.set(0, 0, 1.75 * amp);
+            euler.set(0.6 * amp, 0, 0.3 * amp);
             qDelta.lowerarm_r.setFromEuler(euler);
 
           } else if (stepKnot === 1) {
             // Enganche envolvente: Brazo izquierdo abraza por arriba, derecho por debajo
-            euler.set(0.9 * amp, -0.25 * amp, 0.45 * amp);
+            euler.set(1.35 * amp, -0.2 * amp, -1.35 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
-            euler.set(1.45 * amp, 0, -1.25 * amp);
+            euler.set(0.8 * amp, 0, -0.6 * amp);
             qDelta.lowerarm_l.setFromEuler(euler);
 
-            euler.set(0.85 * amp, 0.25 * amp, -0.55 * amp);
+            euler.set(1.15 * amp, 0.2 * amp, 1.05 * amp);
             qDelta.upperarm_r.setFromEuler(euler);
-            euler.set(-0.35 * amp, 0, 1.65 * amp);
+            euler.set(0.4 * amp, 0, 0.8 * amp);
             qDelta.lowerarm_r.setFromEuler(euler);
 
-            euler.set(0.4 * amp, 0, -0.5 * amp);
+            euler.set(0.3 * amp, 0, -0.4 * amp);
             qDelta.hand_l.setFromEuler(euler);
-            euler.set(0.4 * amp, 0, 0.5 * amp);
+            euler.set(0.3 * amp, 0, 0.4 * amp);
             qDelta.hand_r.setFromEuler(euler);
 
           } else if (stepKnot === 2) {
             // Inversión del nudo: Brazo derecho abraza por arriba, izquierdo por debajo
-            euler.set(0.85 * amp, -0.25 * amp, 0.55 * amp);
+            euler.set(1.15 * amp, -0.2 * amp, -1.05 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
-            euler.set(-0.35 * amp, 0, -1.65 * amp);
+            euler.set(0.4 * amp, 0, -0.8 * amp);
             qDelta.lowerarm_l.setFromEuler(euler);
 
-            euler.set(0.9 * amp, 0.25 * amp, -0.45 * amp);
+            euler.set(1.35 * amp, 0.2 * amp, 1.35 * amp);
             qDelta.upperarm_r.setFromEuler(euler);
-            euler.set(1.45 * amp, 0, 1.25 * amp);
+            euler.set(0.8 * amp, 0, 0.6 * amp);
             qDelta.lowerarm_r.setFromEuler(euler);
 
-            euler.set(0.4 * amp, 0, 0.5 * amp);
+            euler.set(0.3 * amp, 0, 0.4 * amp);
             qDelta.hand_l.setFromEuler(euler);
-            euler.set(0.4 * amp, 0, -0.5 * amp);
+            euler.set(0.3 * amp, 0, -0.4 * amp);
             qDelta.hand_r.setFromEuler(euler);
 
           } else {
@@ -1333,6 +1333,7 @@
         meshBadge.style.color = 'var(--green)';
 
         tecktonikController = new TecktonikController(currentModel);
+        window.setSequence('trenzado');
         const detected = tecktonikController.detectedBonesList;
 
         boneDot.innerText = '🟢';
