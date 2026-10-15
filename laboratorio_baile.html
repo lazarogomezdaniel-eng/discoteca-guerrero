@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Laboratorio Tecktonik 3D — Perfeccionamiento Electro Dance</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,7 +13,7 @@
   <style>
     :root {
       --bg: #07090f;
-      --panel: rgba(12, 17, 30, 0.88);
+      --panel: rgba(12, 17, 30, 0.90);
       --panel-border: rgba(255, 255, 255, 0.12);
       --cyan: #00f2fe;
       --blue: #3b82f6;
@@ -160,6 +163,28 @@
     select.model-select:focus, select.model-select:hover {
       border-color: var(--cyan);
       box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
+    }
+
+    /* Manual file button in panel */
+    .btn-file-manual {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .btn-file-manual:hover {
+      border-color: var(--cyan);
+      color: #fff;
+      background: rgba(0, 242, 254, 0.08);
     }
 
     /* Bone Diagnostic Box */
@@ -353,6 +378,8 @@
       align-items: center;
       justify-content: center;
       gap: 16px;
+      padding: 24px;
+      text-align: center;
       transition: opacity 0.3s ease;
     }
     .spinner {
@@ -366,20 +393,50 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    .cors-box {
+      max-width: 520px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      border-radius: 14px;
+      padding: 16px 20px;
+      color: #fca5a5;
+      font-size: 13px;
+      line-height: 1.6;
+      display: none;
+    }
   </style>
 
-  <!-- Three.js + OrbitControls + GLTFLoader -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+  <!-- Modern Import Map for Three.js & Addons -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 <body>
 
   <!-- Loading Screen -->
   <div id="loader">
-    <div class="spinner"></div>
+    <div class="spinner" id="spinner"></div>
     <div style="font-weight: 800; font-size: 18px; letter-spacing: -0.2px;">LABORATORIO TECKTONIK 3D</div>
-    <div id="loader-status" style="font-size: 13px; color: var(--muted);">Inicializando esqueleto y controlador procedural...</div>
+    <div id="loader-status" style="font-size: 13px; color: var(--muted); max-width: 440px;">Inicializando Three.js y cargando modelo...</div>
+
+    <!-- CORS Warning Box for direct file:// access -->
+    <div class="cors-box" id="cors-box">
+      <div style="font-weight: 800; color: #fff; font-size: 14px; margin-bottom: 6px;">⚠️ Modo archivo directo (file://) detectado</div>
+      Chrome y Safari bloquean la carga automática de archivos 3D locales por seguridad (CORS).<br><br>
+      <b>Opciones rápidas para solucionarlo:</b><br>
+      1. Pulsa este botón y selecciona <b>actionforge_85_clips_fit.glb</b> en tu carpeta:<br>
+      <label style="display:inline-block; margin-top:10px; background:var(--cyan); color:#000; font-weight:800; padding:8px 16px; border-radius:8px; cursor:pointer;">
+        📂 Seleccionar actionforge_85_clips_fit.glb
+        <input type="file" accept=".glb,.gltf" style="display:none;" onchange="window.handleManualFile(event)">
+      </label><br><br>
+      2. O arrastra el archivo <b>.glb</b> directamente a esta pantalla.<br>
+      3. O ejecuta <b>Iniciar Visor.command</b> y accede desde <a href="http://localhost:8080/laboratorio_baile.html" style="color:#38bdf8;">http://localhost:8080/laboratorio_baile.html</a>.
+    </div>
   </div>
 
   <!-- Stage Glow Ambient -->
@@ -412,9 +469,13 @@
         <span>📦 Archivo .GLB en Escena</span>
         <span id="mesh-badge" style="color: var(--green); font-size: 10px;">SkinnedMesh OK</span>
       </div>
-      <select class="model-select" id="glb-select" onchange="onModelSelectChange(this.value)">
-        <!-- Rellenado dinámicamente con los .glb del proyecto -->
+      <select class="model-select" id="glb-select" onchange="window.onModelSelectChange(this.value)">
+        <!-- Rellenado dinámicamente -->
       </select>
+      <label class="btn-file-manual" title="Cargar cualquier GLB local mediante selector de archivos">
+        <span>📂 Cargar archivo .GLB local</span>
+        <input type="file" id="local-file-input" accept=".glb,.gltf" style="display:none;" onchange="window.handleManualFile(event)">
+      </label>
     </div>
 
     <!-- 2. Detected Bones Info Card -->
@@ -434,23 +495,23 @@
       <span>135 BPM</span>
     </div>
     <div class="seq-grid">
-      <button class="seq-btn active" id="btn-seq-molino" onclick="setSequence('molino')">
+      <button class="seq-btn active" id="btn-seq-molino" onclick="window.setSequence('molino')">
         <span>🌀 1. El Molino</span>
         <kbd>1</kbd>
       </button>
-      <button class="seq-btn" id="btn-seq-peinada" onclick="setSequence('peinada')">
+      <button class="seq-btn" id="btn-seq-peinada" onclick="window.setSequence('peinada')">
         <span>👑 2. La Peinada</span>
         <kbd>2</kbd>
       </button>
-      <button class="seq-btn" id="btn-seq-l_shapes" onclick="setSequence('l_shapes')">
+      <button class="seq-btn" id="btn-seq-l_shapes" onclick="window.setSequence('l_shapes')">
         <span>📐 3. Geometría Neón (L-Shapes)</span>
         <kbd>3</kbd>
       </button>
-      <button class="seq-btn" id="btn-seq-frenesi" onclick="setSequence('frenesi')">
+      <button class="seq-btn" id="btn-seq-frenesi" onclick="window.setSequence('frenesi')">
         <span>⚡ 4. Frenesí Electro</span>
         <kbd>4</kbd>
       </button>
-      <button class="seq-btn" id="btn-seq-auto" onclick="setSequence('auto')">
+      <button class="seq-btn" id="btn-seq-auto" onclick="window.setSequence('auto')">
         <span>🔀 5. Auto-Show (Mix 8 Beats)</span>
         <kbd>5</kbd>
       </button>
@@ -466,7 +527,7 @@
           <span>Velocidad (BPM)</span>
           <span class="slider-val" id="val-bpm">135 BPM</span>
         </div>
-        <input type="range" id="slider-bpm" min="80" max="180" step="1" value="135" oninput="updateBPM(this.value)">
+        <input type="range" id="slider-bpm" min="80" max="180" step="1" value="135" oninput="window.updateBPM(this.value)">
       </div>
 
       <div class="slider-item">
@@ -474,7 +535,7 @@
           <span>Amplitud (Fuerza de Brazos)</span>
           <span class="slider-val" id="val-amp">1.0x</span>
         </div>
-        <input type="range" id="slider-amp" min="0.3" max="2.0" step="0.05" value="1.0" oninput="updateAmp(this.value)">
+        <input type="range" id="slider-amp" min="0.3" max="2.0" step="0.05" value="1.0" oninput="window.updateAmp(this.value)">
       </div>
 
       <div class="slider-item">
@@ -482,40 +543,43 @@
           <span>Dureza Latigazo (Snappiness)</span>
           <span class="slider-val" id="val-snap">0.35</span>
         </div>
-        <input type="range" id="slider-snap" min="0.08" max="1.0" step="0.02" value="0.35" oninput="updateSnap(this.value)">
+        <input type="range" id="slider-snap" min="0.08" max="1.0" step="0.02" value="0.35" oninput="window.updateSnap(this.value)">
       </div>
     </div>
 
     <!-- 5. Lab Utility Buttons -->
     <div class="lab-actions">
-      <button class="act-btn" id="btn-audio-toggle" onclick="toggleAudioBeat()">
+      <button class="act-btn" id="btn-audio-toggle" onclick="window.toggleAudioBeat()">
         <span id="audio-icon">🔊</span> <span id="audio-label">Beat ON</span>
       </button>
-      <button class="act-btn" id="btn-skel-toggle" onclick="toggleSkeletonHelper()">
+      <button class="act-btn" id="btn-skel-toggle" onclick="window.toggleSkeletonHelper()">
         <span>🦴</span> Esqueleto
       </button>
-      <button class="act-btn" onclick="resetCamera()">
+      <button class="act-btn" onclick="window.resetCamera()">
         <span>🎯</span> Reset Cam
       </button>
     </div>
   </div>
 
-  <!-- SCRIPT PRINCIPAL & CONTROLADOR INDEPENDIENTE TECKTONIK -->
-  <script>
+  <!-- SCRIPT PRINCIPAL MODULAR ES6 -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
     // =========================================================================
-    // LISTA DE ARCHIVOS .GLB DEL PROYECTO & DETECCIÓN DEL PRINCIPAL
+    // LISTA DE ARCHIVOS .GLB DEL PROYECTO
     // =========================================================================
     const AVAILABLE_GLB_FILES = [
-      { id: 'actionforge_85_clips_fit.glb', name: 'actionforge_85_clips_fit.glb (JUEGO PRINCIPAL)', isDefault: true },
+      { id: 'actionforge_85_clips_fit.glb', name: 'actionforge_85_clips_fit.glb (PRINCIPAL)', isDefault: true },
       { id: 'character_rest_pose.glb', name: 'character_rest_pose.glb (Pose Base T)', isDefault: false },
       { id: 'guerrero_completo_84_animaciones_inplace.glb', name: 'guerrero_completo_84_animaciones_inplace.glb', isDefault: false },
       { id: 'guerrero_animado_perfecto.glb', name: 'guerrero_animado_perfecto.glb', isDefault: false },
       { id: 'dance_loop_walk_formal_loop_composite_adjusted_fit.glb', name: 'dance_loop_walk_formal_loop_composite_adjusted_fit.glb', isDefault: false },
-      { id: 'guerrero.glb', name: 'guerrero.glb (Mesh estático)', isDefault: false },
-      { id: 'guerrero_180cm.glb', name: 'guerrero_180cm.glb (Mesh estático)', isDefault: false }
+      { id: 'guerrero.glb', name: 'guerrero.glb (Mesh estático sin esqueleto)', isDefault: false },
+      { id: 'guerrero_180cm.glb', name: 'guerrero_180cm.glb (Mesh estático sin esqueleto)', isDefault: false }
     ];
 
-    // Población inicial del select
     const glbSelect = document.getElementById('glb-select');
     AVAILABLE_GLB_FILES.forEach(item => {
       const opt = document.createElement('option');
@@ -527,19 +591,15 @@
 
     // =========================================================================
     // CLASE INDEPENDIENTE: TecktonikController(skeletonOrModel)
-    // Encapsula toda la lógica de animación procedural Tecktonik a 135 BPM
-    // para ser transportada directamente a cualquier proyecto Three.js.
     // =========================================================================
-    class TecktonikController {
+    export class TecktonikController {
       constructor(modelOrSkeleton) {
         this.bpm = 135;
         this.amplitude = 1.0;
         this.snappiness = 0.35;
-        this.currentMode = 'molino'; // 'molino' | 'peinada' | 'l_shapes' | 'frenesi' | 'auto'
+        this.currentMode = 'molino';
 
         this.time = 0;
-        this.beatTimer = 0;
-        this.halfBeatTimer = 0;
         this.totalBeats = 0;
         this.lastHalfBeatStep = -1;
 
@@ -549,7 +609,6 @@
         this.autoSwitchBeats = 8;
         this.autoBeatCounter = 0;
 
-        // Estructuras de almacenamiento de articulaciones y orientaciones
         this.bones = {};
         this.initQuats = {};
         this.targetQuats = {};
@@ -559,7 +618,6 @@
         this.initBones(modelOrSkeleton);
       }
 
-      // Localiza las articulaciones mediante mapeo flexible (ActionForge, Mixamo, VRM)
       initBones(root) {
         if (!root) return;
 
@@ -625,23 +683,18 @@
         this.snappiness = snap;
       }
 
-      // Función de latigazo matemático afilado: se mantiene fija en el lock y golpea rápido
       sharpWave(val, power = 0.25) {
         const s = Math.sin(val);
         return Math.sign(s) * Math.pow(Math.abs(s), power);
       }
 
-      // Actualización procedural ejecutada en cada frame
       update(delta) {
         this.time += delta;
 
-        const beatDuration = 60 / this.bpm;        // 0.444s a 135 BPM
-        const halfBeatDuration = beatDuration / 2; // 0.222s (latigazo)
-
-        this.halfBeatTimer += delta;
+        const beatDuration = 60 / this.bpm;
+        const halfBeatDuration = beatDuration / 2;
         const currentHalfBeatStep = Math.floor(this.time / halfBeatDuration);
 
-        // Disparo de cambio de pose en cada medio beat
         const isNewHalfBeat = (currentHalfBeatStep !== this.lastHalfBeatStep);
         if (isNewHalfBeat) {
           this.lastHalfBeatStep = currentHalfBeatStep;
@@ -649,7 +702,7 @@
 
           if (this.currentMode === 'auto') {
             this.autoBeatCounter++;
-            if (this.autoBeatCounter >= this.autoSwitchBeats * 2) { // 8 beats completos
+            if (this.autoBeatCounter >= this.autoSwitchBeats * 2) {
               this.autoBeatCounter = 0;
               this.autoSequenceIndex = (this.autoSequenceIndex + 1) % this.autoSequenceList.length;
             }
@@ -660,11 +713,8 @@
           ? this.autoSequenceList[this.autoSequenceIndex] 
           : this.currentMode;
 
-        // Calcular los Quaternions objetivo para cada secuencia
         this.computeTargets(effectiveMode, this.time, currentHalfBeatStep, beatDuration, halfBeatDuration);
 
-        // Interpolación Slerp suave pero agresiva (snappy) hacia los objetivos
-        // para garantizar clavado de pose sin tirones
         const slerpFactor = Math.min(1.0, delta * 30 * this.snappiness);
 
         for (const [key, bone] of Object.entries(this.bones)) {
@@ -674,12 +724,10 @@
         }
       }
 
-      // Calcula los objetivos de rotación respecto a la pose base (initQuat)
       computeTargets(mode, t, halfStep, beatDur, halfBeatDur) {
         const amp = this.amplitude;
         const phase = t * (Math.PI * 2 / beatDur);
 
-        // Reset de deltas a identidad
         const qDelta = {
           pelvis: new THREE.Quaternion(),
           spine: new THREE.Quaternion(),
@@ -697,28 +745,21 @@
 
         const euler = new THREE.Euler();
 
-        // ---------------------------------------------------------------------
-        // 1. "EL MOLINO" (Windmills)
-        // Hombros arriba, codos a 90°, antebrazos rotando rápido con desfase de PI/2
-        // ---------------------------------------------------------------------
         if (mode === 'molino') {
-          // Rebote sutil de cadera
           const bounce = Math.abs(Math.sin(phase)) * 0.08 * amp;
           if (this.bones.pelvis) {
             this.bones.pelvis.position.y = (bounce * -0.2);
           }
 
-          // Brazos levantados en ángulo Tecktonik
-          euler.set(0.3 * amp, 0, 1.25 * amp); // Upperarm L levantado hacia afuera
+          euler.set(0.3 * amp, 0, 1.25 * amp);
           qDelta.upperarm_l.setFromEuler(euler);
 
-          euler.set(0.3 * amp, 0, -1.25 * amp); // Upperarm R levantado hacia afuera
+          euler.set(0.3 * amp, 0, -1.25 * amp);
           qDelta.upperarm_r.setFromEuler(euler);
 
-          // Codos flexionados a 90° con rotación circular rápida de antebrazos
-          const rotSpeed = t * (Math.PI * 2 / beatDur) * 2; // Doble velocidad
+          const rotSpeed = t * (Math.PI * 2 / beatDur) * 2;
           const spinL = this.sharpWave(rotSpeed, 0.3) * (Math.PI * 0.8) * amp;
-          const spinR = this.sharpWave(rotSpeed + Math.PI / 2, 0.3) * (Math.PI * 0.8) * amp; // Desfase PI/2
+          const spinR = this.sharpWave(rotSpeed + Math.PI / 2, 0.3) * (Math.PI * 0.8) * amp;
 
           euler.set(spinL, 0, -1.35 * amp);
           qDelta.lowerarm_l.setFromEuler(euler);
@@ -726,83 +767,63 @@
           euler.set(spinR, 0, 1.35 * amp);
           qDelta.lowerarm_r.setFromEuler(euler);
 
-          // Muñecas estilizadas
           euler.set(0, Math.sin(rotSpeed * 2) * 0.5 * amp, 0);
           qDelta.hand_l.setFromEuler(euler);
           qDelta.hand_r.setFromEuler(euler);
-        }
 
-        // ---------------------------------------------------------------------
-        // 2. "LA PEINADA" (Head Pass)
-        // Alternar codo subiendo por encima de la cabeza y pasando antebrazo tras la nuca
-        // mientras la cabeza se inclina al lado opuesto.
-        // ---------------------------------------------------------------------
-        else if (mode === 'peinada') {
-          const beat4 = Math.floor(halfStep / 2) % 4; // Compás de 4 beats
+        } else if (mode === 'peinada') {
+          const beat4 = Math.floor(halfStep / 2) % 4;
 
           if (beat4 === 0 || beat4 === 1) {
-            // Brazo DERECHO peinando por detrás de la cabeza
-            euler.set(1.6 * amp, 0.3, -1.4 * amp); // Codo derecho alzado por encima de cabeza
+            euler.set(1.6 * amp, 0.3, -1.4 * amp);
             qDelta.upperarm_r.setFromEuler(euler);
 
-            euler.set(-1.8 * amp, -0.6 * amp, 0);  // Antebrazo pasa por detrás de nuca
+            euler.set(-1.8 * amp, -0.6 * amp, 0);
             qDelta.lowerarm_r.setFromEuler(euler);
 
-            // Brazo izquierdo en guardia baja al pecho
             euler.set(0.2, 0, 0.6);
             qDelta.upperarm_l.setFromEuler(euler);
             euler.set(1.3 * amp, 0, -0.8 * amp);
             qDelta.lowerarm_l.setFromEuler(euler);
 
-            // Cabeza inclinada al lado opuesto (izquierda)
             euler.set(0.1, 0, -0.35 * amp);
             qDelta.head.setFromEuler(euler);
             euler.set(0, 0, -0.15 * amp);
             qDelta.chest.setFromEuler(euler);
 
           } else {
-            // Brazo IZQUIERDO peinando por detrás de la cabeza
-            euler.set(1.6 * amp, -0.3, 1.4 * amp); // Codo izquierdo alzado
+            euler.set(1.6 * amp, -0.3, 1.4 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
 
-            euler.set(-1.8 * amp, 0.6 * amp, 0);   // Antebrazo pasa tras nuca
+            euler.set(-1.8 * amp, 0.6 * amp, 0);
             qDelta.lowerarm_l.setFromEuler(euler);
 
-            // Brazo derecho en guardia baja
             euler.set(0.2, 0, -0.6);
             qDelta.upperarm_r.setFromEuler(euler);
             euler.set(1.3 * amp, 0, 0.8 * amp);
             qDelta.lowerarm_r.setFromEuler(euler);
 
-            // Cabeza inclinada al lado opuesto (derecha)
             euler.set(0.1, 0, 0.35 * amp);
             qDelta.head.setFromEuler(euler);
             euler.set(0, 0, 0.15 * amp);
             qDelta.chest.setFromEuler(euler);
           }
-        }
 
-        // ---------------------------------------------------------------------
-        // 3. "GEOMETRÍA NEÓN (L-SHAPES)"
-        // Poses a 90 grados: un brazo vertical al cielo y el otro horizontal frente al pecho
-        // ---------------------------------------------------------------------
-        else if (mode === 'l_shapes') {
+        } else if (mode === 'l_shapes') {
           const stepPose = halfStep % 4;
 
           if (stepPose === 0) {
-            // Brazo Izq Vertical (L al cielo), Brazo Der Horizontal en pecho
             euler.set(0, 0, 1.55 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
-            euler.set(0, 0, -1.55 * amp); // Codo a 90° apuntando vertical
+            euler.set(0, 0, -1.55 * amp);
             qDelta.lowerarm_l.setFromEuler(euler);
 
             euler.set(0.8 * amp, 0, -0.4 * amp);
             qDelta.upperarm_r.setFromEuler(euler);
-            euler.set(0, 1.5 * amp, 0.8 * amp); // Horizontal frente a pecho
+            euler.set(0, 1.5 * amp, 0.8 * amp);
             qDelta.lowerarm_r.setFromEuler(euler);
 
           } else if (stepPose === 1) {
-            // Inverso: Brazo Der Vertical al cielo, Brazo Izq Horizontal
             euler.set(0, 0, -1.55 * amp);
             qDelta.upperarm_r.setFromEuler(euler);
             euler.set(0, 0, 1.55 * amp);
@@ -814,7 +835,6 @@
             qDelta.lowerarm_l.setFromEuler(euler);
 
           } else if (stepPose === 2) {
-            // Marco cuadrado doble (Dual Box Lock): ambos codos abiertos a 90°
             euler.set(0.2, 0, 1.45 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
             euler.set(1.55 * amp, 0, 0);
@@ -826,7 +846,6 @@
             qDelta.lowerarm_r.setFromEuler(euler);
 
           } else {
-            // Diagonal L-Shape cortante cruzada
             euler.set(1.2 * amp, 0, 0.8 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
             euler.set(0, 1.4 * amp, -1.2 * amp);
@@ -837,27 +856,19 @@
             euler.set(1.4 * amp, 0, 0.5 * amp);
             qDelta.lowerarm_r.setFromEuler(euler);
           }
-        }
 
-        // ---------------------------------------------------------------------
-        // 4. "FRENESÍ ELECTRO"
-        // Rebote enérgico de cadera/rodillas, inclinación de torso y giros a doble velocidad
-        // ---------------------------------------------------------------------
-        else if (mode === 'frenesi') {
-          // Rebote continuo en cadera y rodillas
+        } else if (mode === 'frenesi') {
           const bounce = Math.abs(Math.sin(phase * 2)) * 0.12 * amp;
           if (this.bones.pelvis) {
             this.bones.pelvis.position.y = -bounce;
           }
 
-          // Balanceo lateral rápido de torso
           const sway = Math.sin(phase) * 0.25 * amp;
           euler.set(0, 0, sway);
           qDelta.spine.setFromEuler(euler);
           euler.set(0, 0, -sway * 0.5);
           qDelta.chest.setFromEuler(euler);
 
-          // Movimientos rápidos alternados de brazos a doble velocidad
           const frenesiPhase = phase * 2;
           const leftSwing = this.sharpWave(frenesiPhase, 0.3) * 1.3 * amp;
           const rightSwing = this.sharpWave(frenesiPhase + Math.PI, 0.3) * 1.3 * amp;
@@ -872,14 +883,11 @@
           euler.set(1.4 * amp, 0, rightSwing);
           qDelta.lowerarm_r.setFromEuler(euler);
 
-          // Rotación vigorosa de muñecas
           euler.set(Math.sin(frenesiPhase * 2) * 0.8 * amp, 0, 0);
           qDelta.hand_l.setFromEuler(euler);
           qDelta.hand_r.setFromEuler(euler);
         }
 
-        // Aplicar multiplicando sobre el Quaternion inicial (initQuat)
-        // para que las rotaciones sean siempre relativas y sin deformar hombros
         for (const [key, deltaQ] of Object.entries(qDelta)) {
           if (this.initQuats[key]) {
             this.targetQuats[key] = this.initQuats[key].clone().multiply(deltaQ);
@@ -908,7 +916,7 @@
     renderer.toneMappingExposure = 1.25;
     container.appendChild(renderer.domElement);
 
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.target.set(0, 0.95, 0);
@@ -949,7 +957,7 @@
     scene.add(shadowPlane);
 
     // =========================================================================
-    // SINTETIZADOR DE BEAT PROCEDURAL (135 BPM Web Audio API)
+    // SINTETIZADOR DE BEAT (135 BPM Web Audio API)
     // =========================================================================
     let audioCtx = null;
     let isAudioPlaying = true;
@@ -978,7 +986,6 @@
       osc.start(time);
       osc.stop(time + 0.26);
 
-      // Efecto visual pulso en suelo
       const glow = document.getElementById('club-glow');
       glow.classList.add('bass-pulse');
       setTimeout(() => glow.classList.remove('bass-pulse'), 140);
@@ -1061,20 +1068,15 @@
     };
 
     // =========================================================================
-    // GESTIÓN DE MODELO 3D, ESQUELETO Y CARGA AUTOMÁTICA
+    // GESTIÓN DE MODELO 3D & CARGA (SOPORTE SERVIDOR + FILE:// LOCAL)
     // =========================================================================
     let currentModel = null;
     let tecktonikController = null;
     let skeletonHelper = null;
     let isSkeletonVisible = false;
-    const loader = new THREE.GLTFLoader();
+    const loader = new GLTFLoader();
 
-    function loadModel(filename) {
-      const loaderScreen = document.getElementById('loader');
-      loaderScreen.style.display = 'flex';
-      loaderScreen.style.opacity = '1';
-      document.getElementById('loader-status').innerText = `Cargando ${filename}...`;
-
+    function setupLoadedModel(gltf, sourceName) {
       if (currentModel) {
         scene.remove(currentModel);
         if (skeletonHelper) scene.remove(skeletonHelper);
@@ -1082,67 +1084,81 @@
         tecktonikController = null;
       }
 
+      currentModel = gltf.scene;
+      scene.add(currentModel);
+
+      let hasSkinnedMesh = false;
+      currentModel.traverse(node => {
+        if (node.isSkinnedMesh) {
+          hasSkinnedMesh = true;
+          node.castShadow = true;
+          node.receiveShadow = true;
+        } else if (node.isMesh) {
+          node.castShadow = true;
+          node.receiveShadow = true;
+        }
+      });
+
+      const meshBadge = document.getElementById('mesh-badge');
+      const boneDot = document.getElementById('bone-dot');
+      const boneSummary = document.getElementById('bone-summary');
+      const boneListText = document.getElementById('bone-list-text');
+
+      if (hasSkinnedMesh) {
+        meshBadge.innerText = 'SkinnedMesh OK';
+        meshBadge.style.color = 'var(--green)';
+
+        tecktonikController = new TecktonikController(currentModel);
+        const detected = tecktonikController.detectedBonesList;
+
+        boneDot.innerText = '🟢';
+        boneSummary.innerText = `Huesos mapeados: ${detected.length} articulaciones`;
+        boneListText.innerHTML = detected.join('<br>') || 'No se reconocieron nombres estándar';
+
+        skeletonHelper = new THREE.SkeletonHelper(currentModel);
+        skeletonHelper.material.linewidth = 2;
+        skeletonHelper.visible = isSkeletonVisible;
+        scene.add(skeletonHelper);
+
+      } else {
+        meshBadge.innerText = '⚠️ Sin Esqueleto';
+        meshBadge.style.color = 'var(--pink)';
+        boneDot.innerText = '🔴';
+        boneSummary.innerText = 'Este modelo no contiene SkinnedMesh / Bones';
+        boneListText.innerText = 'No se le puede aplicar animación procedural de huesos porque es una malla rígida.';
+      }
+
+      const bbox = new THREE.Box3().setFromObject(currentModel);
+      const center = bbox.getCenter(new THREE.Vector3());
+      controls.target.set(center.x, Math.max(center.y, 0.85), center.z);
+
+      const loaderScreen = document.getElementById('loader');
+      loaderScreen.style.opacity = '0';
+      setTimeout(() => { loaderScreen.style.display = 'none'; }, 300);
+
+      startBeatClock(135);
+    }
+
+    function loadModel(filename) {
+      const loaderScreen = document.getElementById('loader');
+      loaderScreen.style.display = 'flex';
+      loaderScreen.style.opacity = '1';
+      document.getElementById('loader-status').innerText = `Cargando ${filename}...`;
+      document.getElementById('cors-box').style.display = 'none';
+      document.getElementById('spinner').style.display = 'block';
+
+      // Comprobación de protocolo file://
+      if (window.location.protocol === 'file:') {
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('loader-status').innerText = 'Navegador en modo local (file://)';
+        document.getElementById('cors-box').style.display = 'block';
+        return;
+      }
+
       loader.load(
         filename + '?v=' + Date.now(),
         (gltf) => {
-          currentModel = gltf.scene;
-          scene.add(currentModel);
-
-          let hasSkinnedMesh = false;
-          currentModel.traverse(node => {
-            if (node.isSkinnedMesh) {
-              hasSkinnedMesh = true;
-              node.castShadow = true;
-              node.receiveShadow = true;
-            } else if (node.isMesh) {
-              node.castShadow = true;
-              node.receiveShadow = true;
-            }
-          });
-
-          // Diagnóstico de esqueleto
-          const meshBadge = document.getElementById('mesh-badge');
-          const boneDot = document.getElementById('bone-dot');
-          const boneSummary = document.getElementById('bone-summary');
-          const boneListText = document.getElementById('bone-list-text');
-
-          if (hasSkinnedMesh) {
-            meshBadge.innerText = 'SkinnedMesh OK';
-            meshBadge.style.color = 'var(--green)';
-
-            // Inicializar el controlador de baile procedural
-            tecktonikController = new TecktonikController(currentModel);
-            const detected = tecktonikController.detectedBonesList;
-
-            boneDot.innerText = '🟢';
-            boneSummary.innerText = `Huesos mapeados: ${detected.length} articulaciones`;
-            boneListText.innerHTML = detected.join('<br>') || 'No se reconocieron nombres estándar';
-
-            // Crear SkeletonHelper
-            skeletonHelper = new THREE.SkeletonHelper(currentModel);
-            skeletonHelper.material.linewidth = 2;
-            skeletonHelper.visible = isSkeletonVisible;
-            scene.add(skeletonHelper);
-
-          } else {
-            meshBadge.innerText = '⚠️ Sin Esqueleto';
-            meshBadge.style.color = 'var(--pink)';
-            boneDot.innerText = '🔴';
-            boneSummary.innerText = 'Este modelo no contiene SkinnedMesh / Bones';
-            boneListText.innerText = 'No se le puede aplicar animación procedural de huesos porque es un objeto 3D rígido estático.';
-          }
-
-          // Centrar automáticamente la cámara en el personaje
-          const bbox = new THREE.Box3().setFromObject(currentModel);
-          const center = bbox.getCenter(new THREE.Vector3());
-          controls.target.set(center.x, Math.max(center.y, 0.85), center.z);
-
-          // Ocultar pantalla de carga
-          loaderScreen.style.opacity = '0';
-          setTimeout(() => { loaderScreen.style.display = 'none'; }, 300);
-
-          // Iniciar reloj de beat sincronizado
-          startBeatClock(135);
+          setupLoadedModel(gltf, filename);
         },
         (xhr) => {
           if (xhr.lengthComputable) {
@@ -1151,8 +1167,10 @@
           }
         },
         (error) => {
-          console.error('Error cargando modelo:', error);
-          document.getElementById('loader-status').innerHTML = `⚠️ Error cargando ${filename}.<br>Ejecuta con un servidor web local (ej: node server.js).`;
+          console.warn('Error cargando modelo por URL:', error);
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('loader-status').innerHTML = `⚠️ No se pudo cargar <b>${filename}</b> por URL directa.`;
+          document.getElementById('cors-box').style.display = 'block';
         }
       );
     }
@@ -1160,6 +1178,45 @@
     window.onModelSelectChange = function(filename) {
       loadModel(filename);
     };
+
+    // Soporte para cargar archivo manualmente (FileReader)
+    window.handleManualFile = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const loaderScreen = document.getElementById('loader');
+      loaderScreen.style.display = 'flex';
+      loaderScreen.style.opacity = '1';
+      document.getElementById('spinner').style.display = 'block';
+      document.getElementById('cors-box').style.display = 'none';
+      document.getElementById('loader-status').innerText = `Leyendo ${file.name}...`;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        loader.parse(
+          event.target.result,
+          '',
+          (gltf) => {
+            setupLoadedModel(gltf, file.name);
+          },
+          (parseErr) => {
+            console.error('Error parseando GLB:', parseErr);
+            alert('Error leyendo el archivo GLB: ' + parseErr.message);
+          }
+        );
+      };
+      reader.readAsArrayBuffer(file);
+    };
+
+    // Drag and Drop de archivos .glb a la ventana
+    window.addEventListener('dragover', (e) => { e.preventDefault(); });
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file && (file.name.endsWith('.glb') || file.name.endsWith('.gltf'))) {
+        window.handleManualFile({ target: { files: [file] } });
+      }
+    });
 
     // =========================================================================
     // CONTROLES DE LA INTERFAZ
@@ -1223,14 +1280,13 @@
       controls.target.set(0, 0.95, 0);
     };
 
-    // Atajos de teclado (1-5 = Secuencias, Espacio = Beat Audio)
     window.addEventListener('keydown', (e) => {
       const map = { '1': 'molino', '2': 'peinada', '3': 'l_shapes', '4': 'frenesi', '5': 'auto' };
       if (map[e.key]) {
-        setSequence(map[e.key]);
+        window.setSequence(map[e.key]);
       } else if (e.code === 'Space') {
         e.preventDefault();
-        toggleAudioBeat();
+        window.toggleAudioBeat();
       }
     });
 
@@ -1246,7 +1302,6 @@
       if (tecktonikController) {
         tecktonikController.update(delta);
 
-        // Actualizar HUD de compás
         const beatNum = Math.floor(tecktonikController.time / (60 / tecktonikController.bpm));
         const subBeat = Math.floor((tecktonikController.time % (60 / tecktonikController.bpm)) * 4) + 1;
         document.getElementById('hud-beat-counter').innerText = `Compás: ${(beatNum % 8) + 1}.${subBeat}`;
@@ -1257,17 +1312,14 @@
     }
     animate();
 
-    // Redimensionado de ventana
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // Carga inicial del modelo principal por defecto
-    window.addEventListener('DOMContentLoaded', () => {
-      loadModel('actionforge_85_clips_fit.glb');
-    });
+    // Iniciar carga
+    loadModel('actionforge_85_clips_fit.glb');
   </script>
 </body>
 </html>
