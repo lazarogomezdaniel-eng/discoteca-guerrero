@@ -514,10 +514,15 @@
     }
   </style>
 
-  <!-- Three.js + OrbitControls + GLTFLoader -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+  <!-- Modern Import Map for Three.js & Addons -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 <body>
 
@@ -668,7 +673,11 @@
   <audio id="html5-audio" preload="auto" style="display:none;"></audio>
 
   <!-- Main JavaScript Engine -->
-  <script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
     // =========================================================================
     // 1. THREE.JS 3D STAGE & LIGHTING SETUP
     // =========================================================================
@@ -689,7 +698,7 @@
     renderer.toneMappingExposure = 1.3;
     container.appendChild(renderer.domElement);
 
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.target.set(0, 0.95, 0);
@@ -1332,7 +1341,7 @@
     // =========================================================================
     // 7. CARGA DEL MODELO GLB MASTER (actionforge_85_clips_fit.glb)
     // =========================================================================
-    const loader = new THREE.GLTFLoader();
+    const loader = new GLTFLoader();
     loader.load(
       'actionforge_85_clips_fit.glb?v=' + Date.now(),
       (gltf) => {
