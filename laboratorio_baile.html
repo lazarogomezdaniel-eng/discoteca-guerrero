@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratorio Tecktonik 3D — Perfeccionamiento Electro Dance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090f;
+      --panel: rgba(12, 17, 30, 0.88);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --cyan: #00f2fe;
+      --blue: #3b82f6;
+      --purple: #9d4edd;
+      --pink: #f72585;
+      --green: #10b981;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Ambient club floor glow */
+    .club-glow {
+      position: absolute;
+      bottom: -10vh;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80vw;
+      height: 35vh;
+      background: radial-gradient(circle, rgba(0, 242, 254, 0.18) 0%, rgba(157, 78, 221, 0.12) 45%, transparent 75%);
+      pointer-events: none;
+      z-index: 2;
+      filter: blur(40px);
+      transition: all 0.1s ease;
+    }
+    .club-glow.bass-pulse {
+      transform: translateX(-50%) scale(1.25);
+      background: radial-gradient(circle, rgba(247, 37, 133, 0.3) 0%, rgba(0, 242, 254, 0.25) 50%, transparent 80%);
+    }
+
+    /* Top Left Lab Badge */
+    .lab-badge {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--panel);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 10px 18px;
+      border-radius: 16px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .badge-tag {
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+    .badge-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    /* Floating Control Panel (Left Sidebar) */
+    .control-panel {
+      position: absolute;
+      top: 80px;
+      left: 20px;
+      width: 360px;
+      max-height: calc(100vh - 105px);
+      overflow-y: auto;
+      z-index: 25;
+      background: var(--panel);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 16px 45px rgba(0,0,0,0.65);
+    }
+
+    .control-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+    .control-panel::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.15);
+      border-radius: 3px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Model Select dropdown */
+    .model-select-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    select.model-select {
+      background: #141a29;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    select.model-select:focus, select.model-select:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
+    }
+
+    /* Bone Diagnostic Box */
+    .bone-info-card {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .bone-status-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .bone-list-preview {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      max-height: 75px;
+      overflow-y: auto;
+      line-height: 1.4;
+      word-break: break-all;
+    }
+
+    /* Sequence Buttons Grid */
+    .seq-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .seq-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--panel-border);
+      color: #e2e8f0;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .seq-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--cyan);
+      transform: translateX(4px);
+    }
+    .seq-btn.active {
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(157, 78, 221, 0.3));
+      border-color: var(--cyan);
+      color: #fff;
+      box-shadow: 0 0 16px rgba(0, 242, 254, 0.35);
+    }
+    .seq-btn kbd {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* Sliders Group */
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .slider-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .slider-val {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--cyan);
+      font-weight: 700;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 3px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--cyan);
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(0, 242, 254, 0.8);
+      transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Bottom Action Buttons */
+    .lab-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .act-btn {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--panel-border);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 9px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .act-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: var(--cyan);
+    }
+    .act-btn.active-audio {
+      background: linear-gradient(135deg, var(--green), #059669);
+      border-color: var(--green);
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Top Center HUD Indicator */
+    .live-hud {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      background: var(--panel);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: 10px 24px;
+      border-radius: 20px;
+      border: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.6);
+    }
+    .hud-seq-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .hud-beat-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cyan);
+      background: rgba(0, 242, 254, 0.12);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 242, 254, 0.3);
+    }
+
+    /* Loading Overlay */
+    #loader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #07090f;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      transition: opacity 0.3s ease;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(0, 242, 254, 0.15);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <!-- Three.js + OrbitControls + GLTFLoader -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <div style="font-weight: 800; font-size: 18px; letter-spacing: -0.2px;">LABORATORIO TECKTONIK 3D</div>
+    <div id="loader-status" style="font-size: 13px; color: var(--muted);">Inicializando esqueleto y controlador procedural...</div>
+  </div>
+
+  <!-- Stage Glow Ambient -->
+  <div class="club-glow" id="club-glow"></div>
+
+  <!-- 3D Canvas -->
+  <div id="canvas-container"></div>
+
+  <!-- Top Left Badge -->
+  <div class="lab-badge">
+    <span class="badge-tag">LAB PROCEDURAL</span>
+    <span class="badge-title">Tecktonik 135 BPM Controller</span>
+  </div>
+
+  <!-- Top Center Live HUD -->
+  <div class="live-hud">
+    <span style="font-size: 20px;" id="hud-icon">🌀</span>
+    <div>
+      <div class="hud-seq-name" id="hud-seq-name">El Molino (Windmills)</div>
+      <div style="font-size: 11px; color: var(--muted);" id="hud-sub">Fórmula afilada con latigazo a medio beat (0.22s)</div>
+    </div>
+    <div class="hud-beat-counter" id="hud-beat-counter">Compás: 1.1</div>
+  </div>
+
+  <!-- Floating Control Panel (Left Sidebar) -->
+  <div class="control-panel">
+    <!-- 1. Model Selector -->
+    <div class="model-select-wrapper">
+      <div class="section-title">
+        <span>📦 Archivo .GLB en Escena</span>
+        <span id="mesh-badge" style="color: var(--green); font-size: 10px;">SkinnedMesh OK</span>
+      </div>
+      <select class="model-select" id="glb-select" onchange="onModelSelectChange(this.value)">
+        <!-- Rellenado dinámicamente con los .glb del proyecto -->
+      </select>
+    </div>
+
+    <!-- 2. Detected Bones Info Card -->
+    <div class="bone-info-card">
+      <div class="bone-status-line">
+        <span id="bone-dot">🟢</span>
+        <span id="bone-summary">Huesos detectados: 12/12</span>
+      </div>
+      <div class="bone-list-preview" id="bone-list-text">
+        Cargando articulaciones...
+      </div>
+    </div>
+
+    <!-- 3. Sequence Buttons -->
+    <div class="section-title">
+      <span>🕺 Secuencias Tecktonik</span>
+      <span>135 BPM</span>
+    </div>
+    <div class="seq-grid">
+      <button class="seq-btn active" id="btn-seq-molino" onclick="setSequence('molino')">
+        <span>🌀 1. El Molino</span>
+        <kbd>1</kbd>
+      </button>
+      <button class="seq-btn" id="btn-seq-peinada" onclick="setSequence('peinada')">
+        <span>👑 2. La Peinada</span>
+        <kbd>2</kbd>
+      </button>
+      <button class="seq-btn" id="btn-seq-l_shapes" onclick="setSequence('l_shapes')">
+        <span>📐 3. Geometría Neón (L-Shapes)</span>
+        <kbd>3</kbd>
+      </button>
+      <button class="seq-btn" id="btn-seq-frenesi" onclick="setSequence('frenesi')">
+        <span>⚡ 4. Frenesí Electro</span>
+        <kbd>4</kbd>
+      </button>
+      <button class="seq-btn" id="btn-seq-auto" onclick="setSequence('auto')">
+        <span>🔀 5. Auto-Show (Mix 8 Beats)</span>
+        <kbd>5</kbd>
+      </button>
+    </div>
+
+    <!-- 4. Realtime Sliders -->
+    <div class="section-title">
+      <span>⚙️ Parámetros en Vivo</span>
+    </div>
+    <div class="slider-group">
+      <div class="slider-item">
+        <div class="slider-header">
+          <span>Velocidad (BPM)</span>
+          <span class="slider-val" id="val-bpm">135 BPM</span>
+        </div>
+        <input type="range" id="slider-bpm" min="80" max="180" step="1" value="135" oninput="updateBPM(this.value)">
+      </div>
+
+      <div class="slider-item">
+        <div class="slider-header">
+          <span>Amplitud (Fuerza de Brazos)</span>
+          <span class="slider-val" id="val-amp">1.0x</span>
+        </div>
+        <input type="range" id="slider-amp" min="0.3" max="2.0" step="0.05" value="1.0" oninput="updateAmp(this.value)">
+      </div>
+
+      <div class="slider-item">
+        <div class="slider-header">
+          <span>Dureza Latigazo (Snappiness)</span>
+          <span class="slider-val" id="val-snap">0.35</span>
+        </div>
+        <input type="range" id="slider-snap" min="0.08" max="1.0" step="0.02" value="0.35" oninput="updateSnap(this.value)">
+      </div>
+    </div>
+
+    <!-- 5. Lab Utility Buttons -->
+    <div class="lab-actions">
+      <button class="act-btn" id="btn-audio-toggle" onclick="toggleAudioBeat()">
+        <span id="audio-icon">🔊</span> <span id="audio-label">Beat ON</span>
+      </button>
+      <button class="act-btn" id="btn-skel-toggle" onclick="toggleSkeletonHelper()">
+        <span>🦴</span> Esqueleto
+      </button>
+      <button class="act-btn" onclick="resetCamera()">
+        <span>🎯</span> Reset Cam
+      </button>
+    </div>
+  </div>
+
+  <!-- SCRIPT PRINCIPAL & CONTROLADOR INDEPENDIENTE TECKTONIK -->
+  <script>
+    // =========================================================================
+    // LISTA DE ARCHIVOS .GLB DEL PROYECTO & DETECCIÓN DEL PRINCIPAL
+    // =========================================================================
+    const AVAILABLE_GLB_FILES = [
+      { id: 'actionforge_85_clips_fit.glb', name: 'actionforge_85_clips_fit.glb (JUEGO PRINCIPAL)', isDefault: true },
+      { id: 'character_rest_pose.glb', name: 'character_rest_pose.glb (Pose Base T)', isDefault: false },
+      { id: 'guerrero_completo_84_animaciones_inplace.glb', name: 'guerrero_completo_84_animaciones_inplace.glb', isDefault: false },
+      { id: 'guerrero_animado_perfecto.glb', name: 'guerrero_animado_perfecto.glb', isDefault: false },
+      { id: 'dance_loop_walk_formal_loop_composite_adjusted_fit.glb', name: 'dance_loop_walk_formal_loop_composite_adjusted_fit.glb', isDefault: false },
+      { id: 'guerrero.glb', name: 'guerrero.glb (Mesh estático)', isDefault: false },
+      { id: 'guerrero_180cm.glb', name: 'guerrero_180cm.glb (Mesh estático)', isDefault: false }
+    ];
+
+    // Población inicial del select
+    const glbSelect = document.getElementById('glb-select');
+    AVAILABLE_GLB_FILES.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.innerText = item.name;
+      if (item.isDefault) opt.selected = true;
+      glbSelect.appendChild(opt);
+    });
+
+    // =========================================================================
+    // CLASE INDEPENDIENTE: TecktonikController(skeletonOrModel)
+    // Encapsula toda la lógica de animación procedural Tecktonik a 135 BPM
+    // para ser transportada directamente a cualquier proyecto Three.js.
+    // =========================================================================
+    class TecktonikController {
+      constructor(modelOrSkeleton) {
+        this.bpm = 135;
+        this.amplitude = 1.0;
+        this.snappiness = 0.35;
+        this.currentMode = 'molino'; // 'molino' | 'peinada' | 'l_shapes' | 'frenesi' | 'auto'
+
+        this.time = 0;
+        this.beatTimer = 0;
+        this.halfBeatTimer = 0;
+        this.totalBeats = 0;
+        this.lastHalfBeatStep = -1;
+
+        // Auto-show mixer
+        this.autoSequenceIndex = 0;
+        this.autoSequenceList = ['molino', 'l_shapes', 'peinada', 'frenesi'];
+        this.autoSwitchBeats = 8;
+        this.autoBeatCounter = 0;
+
+        // Estructuras de almacenamiento de articulaciones y orientaciones
+        this.bones = {};
+        this.initQuats = {};
+        this.targetQuats = {};
+        this.currentQuats = {};
+        this.detectedBonesList = [];
+
+        this.initBones(modelOrSkeleton);
+      }
+
+      // Localiza las articulaciones mediante mapeo flexible (ActionForge, Mixamo, VRM)
+      initBones(root) {
+        if (!root) return;
+
+        const aliases = {
+          pelvis: ['pelvis', 'hips', 'root_pelvis'],
+          spine: ['spine_02', 'spine_01', 'spine', 'spine1'],
+          chest: ['spine_03', 'chest', 'upperchest', 'spine2'],
+          neck: ['neck_01', 'neck'],
+          head: ['head', 'head_01'],
+
+          clavicle_l: ['clavicle_l', 'shoulder_l', 'shoulder.l', 'leftshoulder'],
+          upperarm_l: ['upperarm_l', 'arm_l', 'arm.l', 'leftarm'],
+          lowerarm_l: ['lowerarm_l', 'forearm_l', 'forearm.l', 'leftforearm'],
+          hand_l: ['hand_l', 'wrist_l', 'hand.l', 'lefthand'],
+
+          clavicle_r: ['clavicle_r', 'shoulder_r', 'shoulder.r', 'rightshoulder'],
+          upperarm_r: ['upperarm_r', 'arm_r', 'arm.r', 'rightarm'],
+          lowerarm_r: ['lowerarm_r', 'forearm_r', 'forearm.r', 'rightforearm'],
+          hand_r: ['hand_r', 'wrist_r', 'hand.r', 'righthand'],
+
+          thigh_l: ['thigh_l', 'upleg_l', 'upleg.l', 'leftupleg'],
+          calf_l: ['calf_l', 'leg_l', 'leg.l', 'leftleg'],
+          thigh_r: ['thigh_r', 'upleg_r', 'upleg.r', 'rightupleg'],
+          calf_r: ['calf_r', 'leg_r', 'leg.r', 'rightleg']
+        };
+
+        const foundBones = new Map();
+        root.traverse(node => {
+          if (node.isBone) {
+            foundBones.set(node.name.toLowerCase(), node);
+          }
+        });
+
+        for (const [key, searchNames] of Object.entries(aliases)) {
+          for (const s of searchNames) {
+            const match = foundBones.get(s.toLowerCase());
+            if (match) {
+              this.bones[key] = match;
+              this.initQuats[key] = match.quaternion.clone();
+              this.targetQuats[key] = match.quaternion.clone();
+              this.currentQuats[key] = match.quaternion.clone();
+              this.detectedBonesList.push(`${key} -> ${match.name}`);
+              break;
+            }
+          }
+        }
+      }
+
+      setMode(mode) {
+        this.currentMode = mode;
+        this.autoBeatCounter = 0;
+      }
+
+      setBPM(bpm) {
+        this.bpm = bpm;
+      }
+
+      setAmplitude(amp) {
+        this.amplitude = amp;
+      }
+
+      setSnappiness(snap) {
+        this.snappiness = snap;
+      }
+
+      // Función de latigazo matemático afilado: se mantiene fija en el lock y golpea rápido
+      sharpWave(val, power = 0.25) {
+        const s = Math.sin(val);
+        return Math.sign(s) * Math.pow(Math.abs(s), power);
+      }
+
+      // Actualización procedural ejecutada en cada frame
+      update(delta) {
+        this.time += delta;
+
+        const beatDuration = 60 / this.bpm;        // 0.444s a 135 BPM
+        const halfBeatDuration = beatDuration / 2; // 0.222s (latigazo)
+
+        this.halfBeatTimer += delta;
+        const currentHalfBeatStep = Math.floor(this.time / halfBeatDuration);
+
+        // Disparo de cambio de pose en cada medio beat
+        const isNewHalfBeat = (currentHalfBeatStep !== this.lastHalfBeatStep);
+        if (isNewHalfBeat) {
+          this.lastHalfBeatStep = currentHalfBeatStep;
+          this.totalBeats = Math.floor(this.time / beatDuration);
+
+          if (this.currentMode === 'auto') {
+            this.autoBeatCounter++;
+            if (this.autoBeatCounter >= this.autoSwitchBeats * 2) { // 8 beats completos
+              this.autoBeatCounter = 0;
+              this.autoSequenceIndex = (this.autoSequenceIndex + 1) % this.autoSequenceList.length;
+            }
+          }
+        }
+
+        const effectiveMode = (this.currentMode === 'auto') 
+          ? this.autoSequenceList[this.autoSequenceIndex] 
+          : this.currentMode;
+
+        // Calcular los Quaternions objetivo para cada secuencia
+        this.computeTargets(effectiveMode, this.time, currentHalfBeatStep, beatDuration, halfBeatDuration);
+
+        // Interpolación Slerp suave pero agresiva (snappy) hacia los objetivos
+        // para garantizar clavado de pose sin tirones
+        const slerpFactor = Math.min(1.0, delta * 30 * this.snappiness);
+
+        for (const [key, bone] of Object.entries(this.bones)) {
+          if (!bone || !this.targetQuats[key]) continue;
+          this.currentQuats[key].slerp(this.targetQuats[key], slerpFactor);
+          bone.quaternion.copy(this.currentQuats[key]);
+        }
+      }
+
+      // Calcula los objetivos de rotación respecto a la pose base (initQuat)
+      computeTargets(mode, t, halfStep, beatDur, halfBeatDur) {
+        const amp = this.amplitude;
+        const phase = t * (Math.PI * 2 / beatDur);
+
+        // Reset de deltas a identidad
+        const qDelta = {
+          pelvis: new THREE.Quaternion(),
+          spine: new THREE.Quaternion(),
+          chest: new THREE.Quaternion(),
+          head: new THREE.Quaternion(),
+          clavicle_l: new THREE.Quaternion(),
+          upperarm_l: new THREE.Quaternion(),
+          lowerarm_l: new THREE.Quaternion(),
+          hand_l: new THREE.Quaternion(),
+          clavicle_r: new THREE.Quaternion(),
+          upperarm_r: new THREE.Quaternion(),
+          lowerarm_r: new THREE.Quaternion(),
+          hand_r: new THREE.Quaternion()
+        };
+
+        const euler = new THREE.Euler();
+
+        // ---------------------------------------------------------------------
+        // 1. "EL MOLINO" (Windmills)
+        // Hombros arriba, codos a 90°, antebrazos rotando rápido con desfase de PI/2
+        // ---------------------------------------------------------------------
+        if (mode === 'molino') {
+          // Rebote sutil de cadera
+          const bounce = Math.abs(Math.sin(phase)) * 0.08 * amp;
+          if (this.bones.pelvis) {
+            this.bones.pelvis.position.y = (bounce * -0.2);
+          }
+
+          // Brazos levantados en ángulo Tecktonik
+          euler.set(0.3 * amp, 0, 1.25 * amp); // Upperarm L levantado hacia afuera
+          qDelta.upperarm_l.setFromEuler(euler);
+
+          euler.set(0.3 * amp, 0, -1.25 * amp); // Upperarm R levantado hacia afuera
+          qDelta.upperarm_r.setFromEuler(euler);
+
+          // Codos flexionados a 90° con rotación circular rápida de antebrazos
+          const rotSpeed = t * (Math.PI * 2 / beatDur) * 2; // Doble velocidad
+          const spinL = this.sharpWave(rotSpeed, 0.3) * (Math.PI * 0.8) * amp;
+          const spinR = this.sharpWave(rotSpeed + Math.PI / 2, 0.3) * (Math.PI * 0.8) * amp; // Desfase PI/2
+
+          euler.set(spinL, 0, -1.35 * amp);
+          qDelta.lowerarm_l.setFromEuler(euler);
+
+          euler.set(spinR, 0, 1.35 * amp);
+          qDelta.lowerarm_r.setFromEuler(euler);
+
+          // Muñecas estilizadas
+          euler.set(0, Math.sin(rotSpeed * 2) * 0.5 * amp, 0);
+          qDelta.hand_l.setFromEuler(euler);
+          qDelta.hand_r.setFromEuler(euler);
+        }
+
+        // ---------------------------------------------------------------------
+        // 2. "LA PEINADA" (Head Pass)
+        // Alternar codo subiendo por encima de la cabeza y pasando antebrazo tras la nuca
+        // mientras la cabeza se inclina al lado opuesto.
+        // ---------------------------------------------------------------------
+        else if (mode === 'peinada') {
+          const beat4 = Math.floor(halfStep / 2) % 4; // Compás de 4 beats
+
+          if (beat4 === 0 || beat4 === 1) {
+            // Brazo DERECHO peinando por detrás de la cabeza
+            euler.set(1.6 * amp, 0.3, -1.4 * amp); // Codo derecho alzado por encima de cabeza
+            qDelta.upperarm_r.setFromEuler(euler);
+
+            euler.set(-1.8 * amp, -0.6 * amp, 0);  // Antebrazo pasa por detrás de nuca
+            qDelta.lowerarm_r.setFromEuler(euler);
+
+            // Brazo izquierdo en guardia baja al pecho
+            euler.set(0.2, 0, 0.6);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(1.3 * amp, 0, -0.8 * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+
+            // Cabeza inclinada al lado opuesto (izquierda)
+            euler.set(0.1, 0, -0.35 * amp);
+            qDelta.head.setFromEuler(euler);
+            euler.set(0, 0, -0.15 * amp);
+            qDelta.chest.setFromEuler(euler);
+
+          } else {
+            // Brazo IZQUIERDO peinando por detrás de la cabeza
+            euler.set(1.6 * amp, -0.3, 1.4 * amp); // Codo izquierdo alzado
+            qDelta.upperarm_l.setFromEuler(euler);
+
+            euler.set(-1.8 * amp, 0.6 * amp, 0);   // Antebrazo pasa tras nuca
+            qDelta.lowerarm_l.setFromEuler(euler);
+
+            // Brazo derecho en guardia baja
+            euler.set(0.2, 0, -0.6);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(1.3 * amp, 0, 0.8 * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+
+            // Cabeza inclinada al lado opuesto (derecha)
+            euler.set(0.1, 0, 0.35 * amp);
+            qDelta.head.setFromEuler(euler);
+            euler.set(0, 0, 0.15 * amp);
+            qDelta.chest.setFromEuler(euler);
+          }
+        }
+
+        // ---------------------------------------------------------------------
+        // 3. "GEOMETRÍA NEÓN (L-SHAPES)"
+        // Poses a 90 grados: un brazo vertical al cielo y el otro horizontal frente al pecho
+        // ---------------------------------------------------------------------
+        else if (mode === 'l_shapes') {
+          const stepPose = halfStep % 4;
+
+          if (stepPose === 0) {
+            // Brazo Izq Vertical (L al cielo), Brazo Der Horizontal en pecho
+            euler.set(0, 0, 1.55 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(0, 0, -1.55 * amp); // Codo a 90° apuntando vertical
+            qDelta.lowerarm_l.setFromEuler(euler);
+
+            euler.set(0.8 * amp, 0, -0.4 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(0, 1.5 * amp, 0.8 * amp); // Horizontal frente a pecho
+            qDelta.lowerarm_r.setFromEuler(euler);
+
+          } else if (stepPose === 1) {
+            // Inverso: Brazo Der Vertical al cielo, Brazo Izq Horizontal
+            euler.set(0, 0, -1.55 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(0, 0, 1.55 * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+
+            euler.set(0.8 * amp, 0, 0.4 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(0, -1.5 * amp, -0.8 * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+
+          } else if (stepPose === 2) {
+            // Marco cuadrado doble (Dual Box Lock): ambos codos abiertos a 90°
+            euler.set(0.2, 0, 1.45 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(1.55 * amp, 0, 0);
+            qDelta.lowerarm_l.setFromEuler(euler);
+
+            euler.set(0.2, 0, -1.45 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(1.55 * amp, 0, 0);
+            qDelta.lowerarm_r.setFromEuler(euler);
+
+          } else {
+            // Diagonal L-Shape cortante cruzada
+            euler.set(1.2 * amp, 0, 0.8 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(0, 1.4 * amp, -1.2 * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+
+            euler.set(-0.6 * amp, 0, -1.1 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(1.4 * amp, 0, 0.5 * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+          }
+        }
+
+        // ---------------------------------------------------------------------
+        // 4. "FRENESÍ ELECTRO"
+        // Rebote enérgico de cadera/rodillas, inclinación de torso y giros a doble velocidad
+        // ---------------------------------------------------------------------
+        else if (mode === 'frenesi') {
+          // Rebote continuo en cadera y rodillas
+          const bounce = Math.abs(Math.sin(phase * 2)) * 0.12 * amp;
+          if (this.bones.pelvis) {
+            this.bones.pelvis.position.y = -bounce;
+          }
+
+          // Balanceo lateral rápido de torso
+          const sway = Math.sin(phase) * 0.25 * amp;
+          euler.set(0, 0, sway);
+          qDelta.spine.setFromEuler(euler);
+          euler.set(0, 0, -sway * 0.5);
+          qDelta.chest.setFromEuler(euler);
+
+          // Movimientos rápidos alternados de brazos a doble velocidad
+          const frenesiPhase = phase * 2;
+          const leftSwing = this.sharpWave(frenesiPhase, 0.3) * 1.3 * amp;
+          const rightSwing = this.sharpWave(frenesiPhase + Math.PI, 0.3) * 1.3 * amp;
+
+          euler.set(0.4 * amp, leftSwing * 0.6, 1.1 * amp);
+          qDelta.upperarm_l.setFromEuler(euler);
+          euler.set(1.4 * amp, 0, -leftSwing);
+          qDelta.lowerarm_l.setFromEuler(euler);
+
+          euler.set(0.4 * amp, -rightSwing * 0.6, -1.1 * amp);
+          qDelta.upperarm_r.setFromEuler(euler);
+          euler.set(1.4 * amp, 0, rightSwing);
+          qDelta.lowerarm_r.setFromEuler(euler);
+
+          // Rotación vigorosa de muñecas
+          euler.set(Math.sin(frenesiPhase * 2) * 0.8 * amp, 0, 0);
+          qDelta.hand_l.setFromEuler(euler);
+          qDelta.hand_r.setFromEuler(euler);
+        }
+
+        // Aplicar multiplicando sobre el Quaternion inicial (initQuat)
+        // para que las rotaciones sean siempre relativas y sin deformar hombros
+        for (const [key, deltaQ] of Object.entries(qDelta)) {
+          if (this.initQuats[key]) {
+            this.targetQuats[key] = this.initQuats[key].clone().multiply(deltaQ);
+          }
+        }
+      }
+    }
+
+    // =========================================================================
+    // ESCENA THREE.JS, ILUMINACIÓN & CONTROL DE CÁMARA
+    // =========================================================================
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x07090f);
+    scene.fog = new THREE.FogExp2(0x07090f, 0.04);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.35, 3.2);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(0, 0.95, 0);
+    controls.maxPolarAngle = Math.PI / 2 + 0.02;
+    controls.minDistance = 0.6;
+    controls.maxDistance = 10;
+
+    // Iluminación Club / Neón
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+    scene.add(ambientLight);
+
+    const mainSpot = new THREE.SpotLight(0x00f2fe, 5.0, 14, Math.PI / 4, 0.35, 1.0);
+    mainSpot.position.set(0, 5, 2.5);
+    mainSpot.target.position.set(0, 0.9, 0);
+    mainSpot.castShadow = true;
+    scene.add(mainSpot);
+    scene.add(mainSpot.target);
+
+    const strobeLeft = new THREE.PointLight(0xf72585, 4.0, 8);
+    strobeLeft.position.set(-2.8, 2.4, 1);
+    scene.add(strobeLeft);
+
+    const strobeRight = new THREE.PointLight(0x9d4edd, 4.0, 8);
+    strobeRight.position.set(2.8, 2.4, 1);
+    scene.add(strobeRight);
+
+    // Suelo Cuadrícula Neón & Sombra
+    const grid = new THREE.GridHelper(18, 36, 0x00f2fe, 0x1e293b);
+    grid.position.y = -0.001;
+    scene.add(grid);
+
+    const shadowPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(24, 24),
+      new THREE.ShadowMaterial({ opacity: 0.45 })
+    );
+    shadowPlane.rotation.x = -Math.PI / 2;
+    shadowPlane.receiveShadow = true;
+    scene.add(shadowPlane);
+
+    // =========================================================================
+    // SINTETIZADOR DE BEAT PROCEDURAL (135 BPM Web Audio API)
+    // =========================================================================
+    let audioCtx = null;
+    let isAudioPlaying = true;
+    let beatStepTimer = null;
+    let step16 = 0;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function triggerKick(time) {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.setValueAtTime(155, time);
+      osc.frequency.exponentialRampToValueAtTime(34, time + 0.12);
+      gain.gain.setValueAtTime(0.9, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.26);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(time);
+      osc.stop(time + 0.26);
+
+      // Efecto visual pulso en suelo
+      const glow = document.getElementById('club-glow');
+      glow.classList.add('bass-pulse');
+      setTimeout(() => glow.classList.remove('bass-pulse'), 140);
+    }
+
+    function triggerSnare(time) {
+      if (!audioCtx) return;
+      const bufferSize = Math.floor(audioCtx.sampleRate * 0.08);
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 900;
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.65, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      noise.start(time);
+      noise.stop(time + 0.13);
+    }
+
+    function triggerHat(time) {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(9500, time);
+      gain.gain.setValueAtTime(0.25, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.035);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(time);
+      osc.stop(time + 0.04);
+    }
+
+    function startBeatClock(bpm = 135) {
+      stopBeatClock();
+      if (!isAudioPlaying) return;
+      const stepMs = (60 / bpm / 4) * 1000;
+      beatStepTimer = setInterval(() => {
+        if (!audioCtx || audioCtx.state === 'suspended') return;
+        const now = audioCtx.currentTime;
+        const s = step16 % 16;
+        if (s % 4 === 0) triggerKick(now);
+        if (s % 4 === 2) triggerHat(now);
+        if (s === 4 || s === 12) triggerSnare(now);
+        step16++;
+      }, stepMs);
+    }
+
+    function stopBeatClock() {
+      if (beatStepTimer) {
+        clearInterval(beatStepTimer);
+        beatStepTimer = null;
+      }
+    }
+
+    window.toggleAudioBeat = function() {
+      initAudio();
+      isAudioPlaying = !isAudioPlaying;
+      const btn = document.getElementById('btn-audio-toggle');
+      const icon = document.getElementById('audio-icon');
+      const label = document.getElementById('audio-label');
+      if (isAudioPlaying) {
+        btn.classList.add('active-audio');
+        icon.innerText = '🔊';
+        label.innerText = 'Beat ON';
+        startBeatClock(tecktonikController ? tecktonikController.bpm : 135);
+      } else {
+        btn.classList.remove('active-audio');
+        icon.innerText = '🔇';
+        label.innerText = 'Silencio';
+        stopBeatClock();
+      }
+    };
+
+    // =========================================================================
+    // GESTIÓN DE MODELO 3D, ESQUELETO Y CARGA AUTOMÁTICA
+    // =========================================================================
+    let currentModel = null;
+    let tecktonikController = null;
+    let skeletonHelper = null;
+    let isSkeletonVisible = false;
+    const loader = new THREE.GLTFLoader();
+
+    function loadModel(filename) {
+      const loaderScreen = document.getElementById('loader');
+      loaderScreen.style.display = 'flex';
+      loaderScreen.style.opacity = '1';
+      document.getElementById('loader-status').innerText = `Cargando ${filename}...`;
+
+      if (currentModel) {
+        scene.remove(currentModel);
+        if (skeletonHelper) scene.remove(skeletonHelper);
+        currentModel = null;
+        tecktonikController = null;
+      }
+
+      loader.load(
+        filename + '?v=' + Date.now(),
+        (gltf) => {
+          currentModel = gltf.scene;
+          scene.add(currentModel);
+
+          let hasSkinnedMesh = false;
+          currentModel.traverse(node => {
+            if (node.isSkinnedMesh) {
+              hasSkinnedMesh = true;
+              node.castShadow = true;
+              node.receiveShadow = true;
+            } else if (node.isMesh) {
+              node.castShadow = true;
+              node.receiveShadow = true;
+            }
+          });
+
+          // Diagnóstico de esqueleto
+          const meshBadge = document.getElementById('mesh-badge');
+          const boneDot = document.getElementById('bone-dot');
+          const boneSummary = document.getElementById('bone-summary');
+          const boneListText = document.getElementById('bone-list-text');
+
+          if (hasSkinnedMesh) {
+            meshBadge.innerText = 'SkinnedMesh OK';
+            meshBadge.style.color = 'var(--green)';
+
+            // Inicializar el controlador de baile procedural
+            tecktonikController = new TecktonikController(currentModel);
+            const detected = tecktonikController.detectedBonesList;
+
+            boneDot.innerText = '🟢';
+            boneSummary.innerText = `Huesos mapeados: ${detected.length} articulaciones`;
+            boneListText.innerHTML = detected.join('<br>') || 'No se reconocieron nombres estándar';
+
+            // Crear SkeletonHelper
+            skeletonHelper = new THREE.SkeletonHelper(currentModel);
+            skeletonHelper.material.linewidth = 2;
+            skeletonHelper.visible = isSkeletonVisible;
+            scene.add(skeletonHelper);
+
+          } else {
+            meshBadge.innerText = '⚠️ Sin Esqueleto';
+            meshBadge.style.color = 'var(--pink)';
+            boneDot.innerText = '🔴';
+            boneSummary.innerText = 'Este modelo no contiene SkinnedMesh / Bones';
+            boneListText.innerText = 'No se le puede aplicar animación procedural de huesos porque es un objeto 3D rígido estático.';
+          }
+
+          // Centrar automáticamente la cámara en el personaje
+          const bbox = new THREE.Box3().setFromObject(currentModel);
+          const center = bbox.getCenter(new THREE.Vector3());
+          controls.target.set(center.x, Math.max(center.y, 0.85), center.z);
+
+          // Ocultar pantalla de carga
+          loaderScreen.style.opacity = '0';
+          setTimeout(() => { loaderScreen.style.display = 'none'; }, 300);
+
+          // Iniciar reloj de beat sincronizado
+          startBeatClock(135);
+        },
+        (xhr) => {
+          if (xhr.lengthComputable) {
+            const pct = Math.round((xhr.loaded / xhr.total) * 100);
+            document.getElementById('loader-status').innerText = `Descargando: ${pct}%...`;
+          }
+        },
+        (error) => {
+          console.error('Error cargando modelo:', error);
+          document.getElementById('loader-status').innerHTML = `⚠️ Error cargando ${filename}.<br>Ejecuta con un servidor web local (ej: node server.js).`;
+        }
+      );
+    }
+
+    window.onModelSelectChange = function(filename) {
+      loadModel(filename);
+    };
+
+    // =========================================================================
+    // CONTROLES DE LA INTERFAZ
+    // =========================================================================
+    const SEQ_META = {
+      molino: { name: 'El Molino (Windmills)', icon: '🌀', desc: 'Hombros arriba, codos a 90° y rotación continua desfasada' },
+      peinada: { name: 'La Peinada (Head-Pass)', icon: '👑', desc: 'Alternancia de brazos tras la nuca e inclinación lateral de cabeza' },
+      l_shapes: { name: 'Geometría Neón (L-Shapes)', icon: '📐', desc: 'Poses angulares rígidas a 90° con lock instantáneo' },
+      frenesi: { name: 'Frenesí Electro', icon: '⚡', desc: 'Rebote de cadera, balanceo de torso y ráfaga rápida de antebrazos' },
+      auto: { name: 'Auto-Show (Mix 8 Beats)', icon: '🔀', desc: 'Transición automática entre las 4 figuras cada 8 compases' }
+    };
+
+    window.setSequence = function(seqKey) {
+      if (tecktonikController) {
+        tecktonikController.setMode(seqKey);
+      }
+      document.querySelectorAll('.seq-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`btn-seq-${seqKey}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const meta = SEQ_META[seqKey];
+      if (meta) {
+        document.getElementById('hud-icon').innerText = meta.icon;
+        document.getElementById('hud-seq-name').innerText = meta.name;
+        document.getElementById('hud-sub').innerText = meta.desc;
+      }
+    };
+
+    window.updateBPM = function(val) {
+      document.getElementById('val-bpm').innerText = `${val} BPM`;
+      if (tecktonikController) {
+        tecktonikController.setBPM(parseFloat(val));
+      }
+      startBeatClock(parseFloat(val));
+    };
+
+    window.updateAmp = function(val) {
+      document.getElementById('val-amp').innerText = `${parseFloat(val).toFixed(2)}x`;
+      if (tecktonikController) {
+        tecktonikController.setAmplitude(parseFloat(val));
+      }
+    };
+
+    window.updateSnap = function(val) {
+      document.getElementById('val-snap').innerText = parseFloat(val).toFixed(2);
+      if (tecktonikController) {
+        tecktonikController.setSnappiness(parseFloat(val));
+      }
+    };
+
+    window.toggleSkeletonHelper = function() {
+      isSkeletonVisible = !isSkeletonVisible;
+      if (skeletonHelper) skeletonHelper.visible = isSkeletonVisible;
+      const btn = document.getElementById('btn-skel-toggle');
+      btn.style.borderColor = isSkeletonVisible ? 'var(--cyan)' : 'var(--panel-border)';
+      btn.style.color = isSkeletonVisible ? 'var(--cyan)' : '#fff';
+    };
+
+    window.resetCamera = function() {
+      camera.position.set(0, 1.35, 3.2);
+      controls.target.set(0, 0.95, 0);
+    };
+
+    // Atajos de teclado (1-5 = Secuencias, Espacio = Beat Audio)
+    window.addEventListener('keydown', (e) => {
+      const map = { '1': 'molino', '2': 'peinada', '3': 'l_shapes', '4': 'frenesi', '5': 'auto' };
+      if (map[e.key]) {
+        setSequence(map[e.key]);
+      } else if (e.code === 'Space') {
+        e.preventDefault();
+        toggleAudioBeat();
+      }
+    });
+
+    // =========================================================================
+    // LOOP PRINCIPAL DE RENDER
+    // =========================================================================
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+
+      if (tecktonikController) {
+        tecktonikController.update(delta);
+
+        // Actualizar HUD de compás
+        const beatNum = Math.floor(tecktonikController.time / (60 / tecktonikController.bpm));
+        const subBeat = Math.floor((tecktonikController.time % (60 / tecktonikController.bpm)) * 4) + 1;
+        document.getElementById('hud-beat-counter').innerText = `Compás: ${(beatNum % 8) + 1}.${subBeat}`;
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Redimensionado de ventana
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Carga inicial del modelo principal por defecto
+    window.addEventListener('DOMContentLoaded', () => {
+      loadModel('actionforge_85_clips_fit.glb');
+    });
+  </script>
+</body>
+</html>
