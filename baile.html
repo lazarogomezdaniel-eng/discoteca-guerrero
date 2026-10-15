@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electro Dance 3D — Especialización Tecktonik & Ritmo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #05070c;
+      --panel-bg: rgba(10, 14, 24, 0.82);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --accent-cyan: #00f2fe;
+      --accent-blue: #4facfe;
+      --accent-purple: #9d4edd;
+      --accent-pink: #f72585;
+      --accent-green: #06d6a0;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Ambient Pulsing Glow */
+    .stage-glow {
+      position: absolute;
+      bottom: -15vh;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80vw;
+      height: 40vh;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 242, 254, 0.15) 0%, rgba(157, 78, 221, 0.12) 40%, transparent 75%);
+      pointer-events: none;
+      z-index: 2;
+      transition: all 0.12s ease;
+      filter: blur(40px);
+    }
+    .stage-glow.bass-drop {
+      transform: translateX(-50%) scale(1.35);
+      background: radial-gradient(circle, rgba(247, 37, 133, 0.35) 0%, rgba(0, 242, 254, 0.25) 50%, transparent 80%);
+      filter: blur(55px);
+    }
+
+    /* Header Bar */
+    .top-bar {
+      position: absolute;
+      top: 18px;
+      left: 20px;
+      right: 20px;
+      z-index: 30;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .brand-logo {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: 10px 18px;
+      border-radius: 16px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .badge-teck {
+      background: linear-gradient(135deg, #f72585, #7209b7, #3a0ca3);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 5px 9px;
+      border-radius: 8px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 10px rgba(247, 37, 133, 0.4);
+    }
+
+    .brand-text {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      background: linear-gradient(90deg, #ffffff, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      background: rgba(0, 242, 254, 0.12);
+      border: 1px solid rgba(0, 242, 254, 0.35);
+      padding: 4px 10px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .status-badge.pulse {
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.5);
+      transform: scale(1.03);
+    }
+
+    /* Link to full studio */
+    .btn-studio-link {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--panel-border);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      backdrop-filter: blur(16px);
+      transition: all 0.2s ease;
+    }
+    .btn-studio-link:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border-color: var(--accent-cyan);
+    }
+
+    /* Live Dance Indicator Banner (Top Center) */
+    .current-move-card {
+      position: absolute;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 25;
+      background: var(--panel-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+      transition: all 0.25s ease;
+    }
+
+    .move-icon {
+      font-size: 26px;
+      animation: floatIcon 2s infinite ease-in-out;
+    }
+    @keyframes floatIcon {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .move-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .move-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.2px;
+    }
+    .move-meta {
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-cyan);
+      display: flex;
+      gap: 10px;
+    }
+
+    /* Bottom Control Center */
+    .dj-dock {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      max-width: 95vw;
+    }
+
+    /* Main Player Controls Bar */
+    .dj-player-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      padding: 10px 20px;
+      border-radius: 24px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.7);
+    }
+
+    .big-play-btn {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      border: none;
+      color: #05070c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(0, 242, 254, 0.45);
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .big-play-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 25px rgba(0, 242, 254, 0.65);
+    }
+    .big-play-btn:active {
+      transform: scale(0.95);
+    }
+    .big-play-btn.paused {
+      background: linear-gradient(135deg, #ef4444, #f43f5e);
+      box-shadow: 0 4px 18px rgba(239, 68, 68, 0.45);
+    }
+
+    .track-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .track-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .track-btn.active {
+      background: rgba(0, 242, 254, 0.18);
+      color: #fff;
+      border-color: rgba(0, 242, 254, 0.45);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.25);
+    }
+
+    /* BPM & Tempo display */
+    .bpm-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 6px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .bpm-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 800;
+      color: #00f2fe;
+      min-width: 65px;
+      text-align: center;
+    }
+    .bpm-ctrl-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: #fff;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+    .bpm-ctrl-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Audio Visualizer Canvas */
+    .vis-box {
+      width: 110px;
+      height: 34px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    #visualizer-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Custom File Input Upload Button */
+    .upload-btn-label {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--panel-border);
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .upload-btn-label:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--accent-cyan);
+      color: #fff;
+    }
+
+    /* Live Tecktonik Figure Pads Grid */
+    .pads-container {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 900px;
+    }
+
+    .pad-btn {
+      background: rgba(14, 20, 36, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .pad-btn:hover {
+      transform: translateY(-3px) scale(1.03);
+      border-color: var(--accent-cyan);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(0, 242, 254, 0.35);
+    }
+    .pad-btn:active, .pad-btn.firing {
+      transform: scale(0.96);
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.35), rgba(157, 78, 221, 0.35));
+      border-color: #00f2fe;
+      color: #fff;
+      box-shadow: 0 0 25px rgba(0, 242, 254, 0.6);
+    }
+    .pad-btn kbd {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Right Floating Camera & Stage Controls */
+    .stage-tools {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 28;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(24px);
+      padding: 12px;
+      border-radius: 18px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+    }
+
+    .tool-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 2px;
+      text-align: center;
+    }
+
+    .tool-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--panel-border);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .tool-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+    .tool-btn.active {
+      background: rgba(0, 242, 254, 0.2);
+      border-color: var(--accent-cyan);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
+    }
+
+    /* Loading Overlay */
+    #loader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #05070c;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      transition: opacity 0.4s ease;
+    }
+    .spinner {
+      width: 56px;
+      height: 56px;
+      border: 4px solid rgba(0, 242, 254, 0.15);
+      border-top-color: #00f2fe;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .loader-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: #fff;
+    }
+    .loader-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: 380px;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .top-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .current-move-card { top: 120px; padding: 8px 16px; }
+      .stage-tools { display: none; }
+      .pads-container { max-height: 110px; overflow-y: auto; }
+    }
+  </style>
+
+  <!-- Three.js + OrbitControls + GLTFLoader -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <div class="loader-title">ELECTRO DANCE 3D</div>
+    <div class="loader-sub" id="loader-sub">Cargando guerrero, motor coreográfico Tecktonik y sintetizador de ritmo...</div>
+  </div>
+
+  <!-- Stage Glow Ambient -->
+  <div class="stage-glow" id="stage-glow"></div>
+
+  <!-- 3D Canvas -->
+  <div id="canvas-container"></div>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="brand-logo">
+      <span class="badge-teck">TECKTONIK 128 BPM</span>
+      <span class="brand-text">Electro Warrior Dance</span>
+      <div class="status-badge" id="dance-status">
+        <span id="status-dot">🟢</span> <span id="status-text">Listo para bailar</span>
+      </div>
+    </div>
+    <a href="index.html" class="btn-studio-link">
+      <span>🛠️ Ir a Estudio Completo (84 Clips)</span>
+    </a>
+  </div>
+
+  <!-- Floating Current Move Card -->
+  <div class="current-move-card" id="move-card">
+    <div class="move-icon" id="move-icon">🕺</div>
+    <div class="move-info">
+      <div class="move-title" id="move-name">Groove Natural Electro</div>
+      <div class="move-meta">
+        <span id="move-phase">Compás 1 / 2</span>
+        <span>•</span>
+        <span id="move-arm">Ambos Brazos Activos</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage & Camera Tools (Right Floating) -->
+  <div class="stage-tools">
+    <div class="tool-title">Cámaras</div>
+    <button class="tool-btn active" id="cam-dynamic" onclick="setCameraMode('dynamic')">
+      <span>🎥</span> Beat Cam (Reactiva)
+    </button>
+    <button class="tool-btn" id="cam-stage" onclick="setCameraMode('stage')">
+      <span>🏟️</span> Plano Escenario
+    </button>
+    <button class="tool-btn" id="cam-close" onclick="setCameraMode('close')">
+      <span>🔍</span> Primer Plano
+    </button>
+    <button class="tool-btn" id="cam-orbit" onclick="setCameraMode('orbit')">
+      <span>🔄</span> Giro Orbital
+    </button>
+
+    <div class="tool-title" style="margin-top: 10px;">Iluminación</div>
+    <button class="tool-btn active" id="light-cyber" onclick="setLightingTheme('cyber')">
+      <span>⚡</span> Cyber Rave Neon
+    </button>
+    <button class="tool-btn" id="light-laser" onclick="setLightingTheme('laser')">
+      <span>🔴</span> Láser Strobe
+    </button>
+    <button class="tool-btn" id="light-gold" onclick="setLightingTheme('gold')">
+      <span>✨</span> Sunset Festival
+    </button>
+  </div>
+
+  <!-- Bottom DJ Dock -->
+  <div class="dj-dock">
+    <!-- Main Player Bar -->
+    <div class="dj-player-bar">
+      <!-- Big Play / Stop Button -->
+      <button class="big-play-btn" id="btn-play-toggle" title="Play / Pausar Baile y Música (Espacio)">
+        <svg id="icon-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+        <svg id="icon-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+        </svg>
+      </button>
+
+      <!-- Sound Track Selectors -->
+      <div class="track-selector">
+        <button class="track-btn active" id="trk-cyber" onclick="setBeatTrack('cyber')">⚡ Electro House</button>
+        <button class="track-btn" id="trk-rave" onclick="setBeatTrack('rave')">🔥 Cyber Rave</button>
+        <button class="track-btn" id="trk-lofi" onclick="setBeatTrack('lofi')">☕ Lofi Groove</button>
+        <button class="track-btn" id="trk-sample" onclick="setBeatTrack('sample')">🎵 Beat WAV</button>
+      </div>
+
+      <!-- BPM Display & Controls -->
+      <div class="bpm-box">
+        <button class="bpm-ctrl-btn" onclick="changeBPM(-2)">−</button>
+        <div class="bpm-display" id="bpm-val">128 BPM</div>
+        <button class="bpm-ctrl-btn" onclick="changeBPM(2)">+</button>
+      </div>
+
+      <!-- Realtime Audio Visualizer -->
+      <div class="vis-box">
+        <canvas id="visualizer-canvas" width="110" height="34"></canvas>
+      </div>
+
+      <!-- Upload Custom Song -->
+      <label class="upload-btn-label">
+        <span>📂 Cargar MP3/WAV</span>
+        <input type="file" id="audio-file-input" accept="audio/*" style="display:none;" onchange="loadUserAudioFile(event)">
+      </label>
+    </div>
+
+    <!-- Live Action Figure Pads (Bilateral Tecktonik Moves) -->
+    <div class="pads-container">
+      <button class="pad-btn" id="pad-1" onclick="triggerMoveNow('tecktonik_windmills')">
+        <span>🌀 Molinetes</span> <kbd>1</kbd>
+      </button>
+      <button class="pad-btn" id="pad-2" onclick="triggerMoveNow('tecktonik_headpass')">
+        <span>👑 Cabeza</span> <kbd>2</kbd>
+      </button>
+      <button class="pad-btn" id="pad-3" onclick="triggerMoveNow('tecktonik_chestcross')">
+        <span>⚡ Cruce Pecho</span> <kbd>3</kbd>
+      </button>
+      <button class="pad-btn" id="pad-4" onclick="triggerMoveNow('tecktonik_block')">
+        <span>🛡️ Doble Bloqueo</span> <kbd>4</kbd>
+      </button>
+      <button class="pad-btn" id="pad-5" onclick="triggerMoveNow('tecktonik_highguard')">
+        <span>🥊 Guardia Alta</span> <kbd>5</kbd>
+      </button>
+      <button class="pad-btn" id="pad-6" onclick="triggerMoveNow('tecktonik_punch_combo')">
+        <span>💥 Ráfaga Puños</span> <kbd>6</kbd>
+      </button>
+      <button class="pad-btn" id="pad-7" onclick="triggerMoveNow('tecktonik_harvest')">
+        <span>🌾 Rasgar Cultivo</span> <kbd>7</kbd>
+      </button>
+      <button class="pad-btn" id="pad-8" onclick="triggerMoveNow('tecktonik_scratch')">
+        <span>🐾 Rasgado Doble</span> <kbd>8</kbd>
+      </button>
+      <button class="pad-btn" id="pad-9" onclick="triggerMoveNow('tecktonik_freeze')">
+        <span>❄️ Freeze Lock</span> <kbd>9</kbd>
+      </button>
+      <button class="pad-btn" id="pad-0" onclick="triggerMoveNow('tecktonik_victory')">
+        <span>🎉 Swagger Victoria</span> <kbd>0</kbd>
+      </button>
+    </div>
+  </div>
+
+  <audio id="html5-audio" preload="auto" style="display:none;"></audio>
+
+  <!-- Main JavaScript Engine -->
+  <script>
+    // =========================================================================
+    // 1. THREE.JS 3D STAGE & LIGHTING SETUP
+    // =========================================================================
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x05070c);
+    scene.fog = new THREE.FogExp2(0x05070c, 0.04);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.4, 3.4);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.3;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(0, 0.95, 0);
+    controls.maxPolarAngle = Math.PI / 2 + 0.02;
+    controls.minDistance = 0.8;
+    controls.maxDistance = 12;
+
+    // Club Stage Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+
+    const mainSpot = new THREE.SpotLight(0x00f2fe, 6.0, 15, Math.PI / 4, 0.4, 1.0);
+    mainSpot.position.set(0, 5, 2.5);
+    mainSpot.target.position.set(0, 0.9, 0);
+    mainSpot.castShadow = true;
+    scene.add(mainSpot);
+    scene.add(mainSpot.target);
+
+    const leftStrobe = new THREE.PointLight(0xf72585, 4.5, 10);
+    leftStrobe.position.set(-3, 2.5, 1);
+    scene.add(leftStrobe);
+
+    const rightStrobe = new THREE.PointLight(0x7209b7, 4.5, 10);
+    rightStrobe.position.set(3, 2.5, 1);
+    scene.add(rightStrobe);
+
+    const backRim = new THREE.DirectionalLight(0x4facfe, 3.0);
+    backRim.position.set(0, 4, -4);
+    scene.add(backRim);
+
+    // Dynamic Floor Grid & Ring
+    const grid = new THREE.GridHelper(20, 40, 0x00f2fe, 0x1e293b);
+    grid.position.y = -0.001;
+    scene.add(grid);
+
+    // Concentric Neon Dance Rings
+    const ringGeo = new THREE.RingGeometry(1.2, 1.25, 48);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f2fe, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+    const danceRing = new THREE.Mesh(ringGeo, ringMat);
+    danceRing.rotation.x = -Math.PI / 2;
+    danceRing.position.y = 0.001;
+    scene.add(danceRing);
+
+    const shadowPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.ShadowMaterial({ opacity: 0.45 })
+    );
+    shadowPlane.rotation.x = -Math.PI / 2;
+    shadowPlane.receiveShadow = true;
+    scene.add(shadowPlane);
+
+    // =========================================================================
+    // 2. CORE DANCE ENGINE & BILATERAL TECKTONIK ROUTINES
+    // =========================================================================
+    let currentModel = null;
+    let mixer = null;
+    let activeAction = null;
+    let clipsMap = new Map();
+    let isDancing = false;
+    let currentBPM = 128;
+    let choreoBeatTimer = 0;
+    let choreoIndex = 0;
+    let isLiveFigureLocked = false;
+    let liveFigureTimeout = null;
+
+    // Repertorio de Figuras Tecktonik (Bilateral - Ambos Brazos Activos)
+    const TECKTONIK_MOVES = [
+      { id: 'tecktonik_windmills', name: '🌀 Molinetes Dobles de Brazos (Windmills)', icon: '🌀', beats: 8, fade: 0.3 },
+      { id: 'tecktonik_headpass', name: '👑 Pase Doble por Cabeza (Head Pass)', icon: '👑', beats: 4, fade: 0.3 },
+      { id: 'tecktonik_chestcross', name: '⚡ Cruces Geométricos (Chest Cross)', icon: '⚡', beats: 4, fade: 0.3 },
+      { id: 'tecktonik_highguard', name: '🥊 Guardia Alta Electro Activa', icon: '🥊', beats: 4, fade: 0.3 },
+      { id: 'tecktonik_block', name: '🛡️ Bloqueo Geométrico Doble', icon: '🛡️', beats: 4, fade: 0.3 },
+      { id: 'tecktonik_punch_combo', name: '💥 Ráfaga 4 Puñetazos Rítmicos', icon: '💥', beats: 4, fade: 0.3 },
+      { id: 'tecktonik_harvest', name: '🌾 Barrido Doble Rasgar Cultivos', icon: '🌾', beats: 8, fade: 0.3 },
+      { id: 'tecktonik_scratch', name: '🐾 Rasgado & Zarpazo Electro Doble', icon: '🐾', beats: 4, fade: 0.3 },
+      { id: 'tecktonik_freeze', name: '❄️ Freeze & Lock Electropop', icon: '❄️', beats: 4, fade: 0.25 },
+      { id: 'tecktonik_victory', name: '🎉 Swagger & Celebración Electro', icon: '🎉', beats: 8, fade: 0.3 }
+    ];
+
+    const TECKTONIK_ROUTINE = [];
+
+    // Intercala aleatoriamente: GROOVE -> FIGURA -> GROOVE -> FIGURA...
+    function rebuildTecktonikRoutine() {
+      const shuffled = TECKTONIK_MOVES.slice();
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      TECKTONIK_ROUTINE.length = 0;
+      shuffled.forEach(move => {
+        const grooveBeats = Math.random() < 0.5 ? 4 : 8; // 1 o 2 compases de groove natural
+        TECKTONIK_ROUTINE.push({ id: 'dance_loop_fit', name: '🕺 Groove Natural Electro', icon: '🕺', beats: grooveBeats, fade: 0.35 });
+        TECKTONIK_ROUTINE.push(move);
+      });
+    }
+    rebuildTecktonikRoutine();
+
+    // =========================================================================
+    // 3. ANIMATION COMPOSITING (Creación de figuras bilaterales rítmicas)
+    // =========================================================================
+    function buildTecktonikComposites() {
+      const b1 = 60 / 128;       // 1 beat = 0.468s
+      const b2 = b1 * 2;         // 2 beats = 0.937s
+      const b4 = b1 * 4;         // 4 beats = 1.875s
+
+      function createComposite(newId, steps) {
+        if (typeof steps === 'string') {
+          const src = clipsMap.get(steps);
+          if (src) {
+            const clone = src.clone();
+            clone.name = newId;
+            clipsMap.set(newId, clone);
+          }
+          return;
+        }
+
+        const trackMap = new Map();
+        let totalDuration = 0;
+
+        steps.forEach(st => {
+          const src = clipsMap.get(st.id);
+          if (!src) return;
+          const scale = st.dur / src.duration;
+          src.tracks.forEach(tr => {
+            if (!trackMap.has(tr.name)) {
+              trackMap.set(tr.name, {
+                type: (tr instanceof THREE.QuaternionKeyframeTrack) ? 'quat' : 'num',
+                times: [],
+                values: []
+              });
+            }
+            const bucket = trackMap.get(tr.name);
+            const valSize = tr.getValueSize();
+            for (let i = 0; i < tr.times.length; i++) {
+              bucket.times.push(totalDuration + (tr.times[i] * scale));
+              for (let k = 0; k < valSize; k++) {
+                bucket.values.push(tr.values[i * valSize + k]);
+              }
+            }
+          });
+          totalDuration += st.dur;
+        });
+
+        const newTracks = [];
+        trackMap.forEach((data, name) => {
+          if (data.type === 'quat') {
+            newTracks.push(new THREE.QuaternionKeyframeTrack(name, data.times, data.values));
+          } else {
+            newTracks.push(new THREE.VectorKeyframeTrack(name, data.times, data.values));
+          }
+        });
+
+        const compositeClip = new THREE.AnimationClip(newId, totalDuration, newTracks);
+        clipsMap.set(newId, compositeClip);
+      }
+
+      // Figuras compuestas Tecktonik
+      createComposite('tecktonik_block', [
+        { id: 'sword_block_fit', dur: b1 },
+        { id: 'idle_shield_loop_fit', dur: b1 },
+        { id: 'shield_dash_fit', dur: b2 }
+      ]);
+
+      createComposite('tecktonik_highguard', [
+        { id: 'idle_shield_loop_fit', dur: b2 },
+        { id: 'sword_block_fit', dur: b2 }
+      ]);
+
+      createComposite('tecktonik_punch_combo', [
+        { id: 'punch_jab_fit', dur: b1 },
+        { id: 'punch_cross_fit', dur: b1 },
+        { id: 'melee_hook_fit', dur: b1 },
+        { id: 'punch_cross_fit', dur: b1 }
+      ]);
+
+      createComposite('tecktonik_harvest', [
+        { id: 'farm_harvest_fit', dur: b4 },
+        { id: 'zombie_scratch_fit', dur: b4 }
+      ]);
+
+      createComposite('tecktonik_scratch', [
+        { id: 'zombie_scratch_fit', dur: b2 },
+        { id: 'melee_hook_fit', dur: b2 }
+      ]);
+
+      createComposite('tecktonik_windmills', 'spell_simple_idle_loop_fit');
+      createComposite('tecktonik_headpass', 'spell_simple_enter_fit');
+      createComposite('tecktonik_chestcross', 'spell_simple_exit_fit');
+      createComposite('tecktonik_freeze', 'idle_foldarms_loop_fit');
+      createComposite('tecktonik_victory', 'yes_fit');
+    }
+
+    // =========================================================================
+    // 4. AUDIO ENGINE & SYNTHESIZER (Web Audio API)
+    // =========================================================================
+    let audioCtx = null;
+    let masterGain = null;
+    let analyserNode = null;
+    let freqData = null;
+    let activeBeatTrack = 'cyber'; // 'cyber' | 'rave' | 'lofi' | 'sample' | 'custom'
+    let stepCount = 0;
+    let beatInterval = null;
+    const html5Audio = document.getElementById('html5-audio');
+    let customAudioSource = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyserNode = audioCtx.createAnalyser();
+        analyserNode.fftSize = 256;
+        analyserNode.smoothingTimeConstant = 0.4;
+        freqData = new Uint8Array(analyserNode.frequencyBinCount);
+
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.9;
+        masterGain.connect(analyserNode);
+        analyserNode.connect(audioCtx.destination);
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playKick(time) {
+      if (!audioCtx || !masterGain) return;
+      onBeatDrop(1.0);
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.setValueAtTime(150, time);
+      osc.frequency.exponentialRampToValueAtTime(36, time + 0.12);
+      gain.gain.setValueAtTime(1.0, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.28);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(time);
+      osc.stop(time + 0.28);
+    }
+
+    function playSnare(time) {
+      if (!audioCtx || !masterGain) return;
+      onBeatDrop(0.7);
+      const bufferSize = Math.floor(audioCtx.sampleRate * 0.1);
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 850;
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.75, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.14);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+      noise.start(time);
+      noise.stop(time + 0.15);
+    }
+
+    function playHat(time) {
+      if (!audioCtx || !masterGain) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(9000, time);
+      gain.gain.setValueAtTime(0.35, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.04);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(time);
+      osc.stop(time + 0.05);
+    }
+
+    function playBass(time, freq) {
+      if (!audioCtx || !masterGain) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, time);
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(400, time);
+      filter.frequency.exponentialRampToValueAtTime(90, time + 0.2);
+      gain.gain.setValueAtTime(0.45, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.25);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+      osc.start(time);
+      osc.stop(time + 0.25);
+    }
+
+    function onBeatStep() {
+      const step = stepCount % 16;
+      const now = audioCtx ? audioCtx.currentTime : 0;
+
+      if (activeBeatTrack === 'cyber') {
+        // Electro Tecktonik (128 BPM): 4x4 Kick, Offbeat Hat, Snare on 4/12, Rolling bass
+        if (step % 4 === 0) playKick(now);
+        if (step % 4 === 2) playHat(now);
+        if (step === 4 || step === 12) playSnare(now);
+        if (step % 2 === 0) {
+          const notes = [55, 55, 65.4, 55, 55, 55, 73.4, 65.4];
+          playBass(now, notes[Math.floor(step / 2)]);
+        }
+      } else if (activeBeatTrack === 'rave') {
+        // Fast Cyber Rave
+        if (step % 4 === 0) playKick(now);
+        playHat(now);
+        if (step === 4 || step === 12) playSnare(now);
+        if (step % 4 === 0) playBass(now, 58);
+      } else if (activeBeatTrack === 'lofi') {
+        // Relaxed Groove
+        if (step === 0 || step === 7) playKick(now);
+        if (step === 4 || step === 12) playSnare(now);
+        if (step % 4 === 2) playHat(now);
+      }
+
+      stepCount++;
+    }
+
+    function startBeatClock() {
+      stopBeatClock();
+      const intervalMs = (60 / currentBPM / 4) * 1000; // 16th note steps
+      beatInterval = setInterval(onBeatStep, intervalMs);
+    }
+
+    function stopBeatClock() {
+      if (beatInterval) {
+        clearInterval(beatInterval);
+        beatInterval = null;
+      }
+    }
+
+    // Visual drop & pulse effect on kick/bass
+    function onBeatDrop(intensity = 1.0) {
+      const glow = document.getElementById('stage-glow');
+      glow.classList.add('bass-drop');
+      setTimeout(() => glow.classList.remove('bass-drop'), 160);
+
+      const statusBadge = document.getElementById('dance-status');
+      statusBadge.classList.add('pulse');
+      setTimeout(() => statusBadge.classList.remove('pulse'), 140);
+
+      // Flash stroboscopic lights
+      leftStrobe.intensity = 4.5 * (1 + intensity * 0.8);
+      rightStrobe.intensity = 4.5 * (1 + intensity * 0.8);
+      mainSpot.intensity = 6.0 * (1 + intensity * 0.6);
+      danceRing.scale.set(1 + intensity * 0.12, 1 + intensity * 0.12, 1);
+
+      setTimeout(() => {
+        leftStrobe.intensity = 4.5;
+        rightStrobe.intensity = 4.5;
+        mainSpot.intensity = 6.0;
+        danceRing.scale.set(1, 1, 1);
+      }, 120);
+
+      // Cam punch in Dynamic Beat Cam mode
+      if (cameraMode === 'dynamic') {
+        camera.position.y += 0.04 * intensity;
+        setTimeout(() => {
+          camera.position.y -= 0.04 * intensity;
+        }, 120);
+      }
+    }
+
+    // =========================================================================
+    // 5. ANIMATION PLAYBACK & CHOREOGRAPHY MANAGER
+    // =========================================================================
+    function playAnimation(clipId, fadeDuration = 0.25) {
+      if (!mixer) return;
+      const clip = clipsMap.get(clipId);
+      if (!clip) {
+        console.warn('Clip no encontrado:', clipId);
+        return;
+      }
+
+      const nextAction = mixer.clipAction(clip);
+      // Ajustar velocidad de reproducción directamente al tempo BPM
+      const effectiveSpeed = currentBPM / 128;
+      nextAction.setEffectiveTimeScale(effectiveSpeed);
+
+      if (activeAction !== nextAction) {
+        if (activeAction) {
+          activeAction.fadeOut(fadeDuration);
+        }
+        nextAction.reset();
+        nextAction.fadeIn(fadeDuration);
+        nextAction.play();
+        activeAction = nextAction;
+      }
+    }
+
+    function updateMoveDisplay(move) {
+      document.getElementById('move-icon').innerText = move.icon || '🕺';
+      document.getElementById('move-name').innerText = move.name;
+      document.getElementById('move-phase').innerText = `${move.beats} Beats al compás (${currentBPM} BPM)`;
+    }
+
+    function advanceChoreography(delta) {
+      if (!isDancing || isLiveFigureLocked) return;
+
+      const beatDuration = 60 / currentBPM;
+      choreoBeatTimer += delta / beatDuration;
+
+      const currentStep = TECKTONIK_ROUTINE[choreoIndex % TECKTONIK_ROUTINE.length];
+      if (choreoBeatTimer >= currentStep.beats) {
+        choreoBeatTimer = 0;
+        choreoIndex = (choreoIndex + 1) % TECKTONIK_ROUTINE.length;
+
+        // Cada ciclo completo barajamos de nuevo las figuras para no repetir la misma rutina
+        if (choreoIndex === 0) {
+          rebuildTecktonikRoutine();
+        }
+
+        const nextStep = TECKTONIK_ROUTINE[choreoIndex];
+        playAnimation(nextStep.id, nextStep.fade || 0.3);
+        updateMoveDisplay(nextStep);
+      }
+    }
+
+    // Disparar figura en directo (Live Pad)
+    window.triggerMoveNow = function(clipId) {
+      if (!mixer) return;
+      initAudio();
+
+      const padBtn = Array.from(document.querySelectorAll('.pad-btn')).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(clipId));
+      if (padBtn) {
+        padBtn.classList.add('firing');
+        setTimeout(() => padBtn.classList.remove('firing'), 300);
+      }
+
+      const moveObj = TECKTONIK_MOVES.find(m => m.id === clipId) || { name: clipId, icon: '⚡', beats: 4 };
+      updateMoveDisplay(moveObj);
+
+      isLiveFigureLocked = true;
+      if (liveFigureTimeout) clearTimeout(liveFigureTimeout);
+
+      playAnimation(clipId, 0.2);
+      onBeatDrop(1.2);
+
+      const clip = clipsMap.get(clipId);
+      const effectiveSpeed = currentBPM / 128;
+      const durationSec = (clip ? clip.duration / effectiveSpeed : (60 / currentBPM) * 4);
+
+      liveFigureTimeout = setTimeout(() => {
+        isLiveFigureLocked = false;
+        choreoBeatTimer = 0;
+        // Volver inmediatamente al groove natural
+        playAnimation('dance_loop_fit', 0.3);
+        updateMoveDisplay({ name: '🕺 Groove Natural Electro', icon: '🕺', beats: 4 });
+      }, Math.max(durationSec * 1000 - 150, 800));
+
+      if (!isDancing) {
+        toggleDance(true);
+      }
+    };
+
+    // Toggle Principal Play / Pausa
+    function toggleDance(forcePlay = null) {
+      initAudio();
+      if (forcePlay !== null) {
+        isDancing = forcePlay;
+      } else {
+        isDancing = !isDancing;
+      }
+
+      const playBtn = document.getElementById('btn-play-toggle');
+      const iconPlay = document.getElementById('icon-play');
+      const iconPause = document.getElementById('icon-pause');
+      const statusText = document.getElementById('status-text');
+      const statusDot = document.getElementById('status-dot');
+
+      if (isDancing) {
+        iconPlay.style.display = 'none';
+        iconPause.style.display = 'block';
+        playBtn.classList.remove('paused');
+        statusText.innerText = `Bailando al ritmo (${currentBPM} BPM)`;
+        statusDot.innerText = '🟢';
+
+        if (activeBeatTrack === 'sample') {
+          html5Audio.play().catch(e => console.log('Audio wait user gesture'));
+        } else {
+          startBeatClock();
+        }
+
+        const step = TECKTONIK_ROUTINE[choreoIndex % TECKTONIK_ROUTINE.length];
+        playAnimation(step.id, 0.25);
+        updateMoveDisplay(step);
+      } else {
+        iconPlay.style.display = 'block';
+        iconPause.style.display = 'none';
+        playBtn.classList.add('paused');
+        statusText.innerText = 'Pausa (Esperando beat)';
+        statusDot.innerText = '⏸️';
+
+        stopBeatClock();
+        html5Audio.pause();
+
+        // En pausa el personaje se detiene suavemente en pose estilizada
+        if (mixer) {
+          playAnimation('tecktonik_freeze', 0.25);
+          updateMoveDisplay({ name: '❄️ Freeze Lock (Pausa)', icon: '❄️', beats: 0 });
+        }
+      }
+    }
+
+    document.getElementById('btn-play-toggle').addEventListener('click', () => toggleDance());
+
+    // Teclado rápido (Espacio = Play/Pause, 1-0 = Pads)
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        toggleDance();
+      } else if (e.key >= '0' && e.key <= '9') {
+        const keyMap = {
+          '1': 'tecktonik_windmills',
+          '2': 'tecktonik_headpass',
+          '3': 'tecktonik_chestcross',
+          '4': 'tecktonik_block',
+          '5': 'tecktonik_highguard',
+          '6': 'tecktonik_punch_combo',
+          '7': 'tecktonik_harvest',
+          '8': 'tecktonik_scratch',
+          '9': 'tecktonik_freeze',
+          '0': 'tecktonik_victory'
+        };
+        if (keyMap[e.key]) {
+          triggerMoveNow(keyMap[e.key]);
+        }
+      }
+    });
+
+    // Control de Pista de Sonido
+    window.setBeatTrack = function(track) {
+      activeBeatTrack = track;
+      document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById(`trk-${track}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      if (track === 'sample') {
+        stopBeatClock();
+        html5Audio.src = 'beat_baile.wav';
+        html5Audio.loop = true;
+        if (isDancing) html5Audio.play();
+      } else {
+        html5Audio.pause();
+        if (isDancing) startBeatClock();
+      }
+    };
+
+    // Control de BPM
+    window.changeBPM = function(delta) {
+      currentBPM = Math.max(90, Math.min(170, currentBPM + delta));
+      document.getElementById('bpm-val').innerText = `${currentBPM} BPM`;
+      if (activeAction) {
+        activeAction.setEffectiveTimeScale(currentBPM / 128);
+      }
+      if (isDancing && activeBeatTrack !== 'sample') {
+        startBeatClock();
+      }
+    };
+
+    // Subir archivo MP3/WAV propio del usuario
+    window.loadUserAudioFile = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      initAudio();
+
+      const objectUrl = URL.createObjectURL(file);
+      html5Audio.src = objectUrl;
+      html5Audio.loop = true;
+
+      if (!customAudioSource && audioCtx) {
+        customAudioSource = audioCtx.createMediaElementSource(html5Audio);
+        customAudioSource.connect(masterGain);
+      }
+
+      stopBeatClock();
+      activeBeatTrack = 'custom';
+      document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
+
+      toggleDance(true);
+      html5Audio.play();
+      document.getElementById('status-text').innerText = `Reproduciendo: ${file.name.substring(0, 18)}...`;
+    };
+
+    // =========================================================================
+    // 6. CÁMARAS & ILUMINACIÓN
+    // =========================================================================
+    let cameraMode = 'dynamic'; // 'dynamic' | 'stage' | 'close' | 'orbit'
+    let orbitAngle = 0;
+
+    window.setCameraMode = function(mode) {
+      cameraMode = mode;
+      document.querySelectorAll('.stage-tools .tool-btn').forEach(b => {
+        if (b.id && b.id.startsWith('cam-')) b.classList.remove('active');
+      });
+      const btn = document.getElementById(`cam-${mode}`);
+      if (btn) btn.classList.add('active');
+
+      if (mode === 'stage') {
+        camera.position.set(0, 1.4, 4.0);
+        controls.target.set(0, 0.95, 0);
+      } else if (mode === 'close') {
+        camera.position.set(0, 1.35, 1.8);
+        controls.target.set(0, 1.25, 0);
+      } else if (mode === 'dynamic') {
+        camera.position.set(0, 1.35, 3.2);
+        controls.target.set(0, 0.95, 0);
+      }
+    };
+
+    window.setLightingTheme = function(theme) {
+      document.querySelectorAll('.stage-tools .tool-btn').forEach(b => {
+        if (b.id && b.id.startsWith('light-')) b.classList.remove('active');
+      });
+      const btn = document.getElementById(`light-${theme}`);
+      if (btn) btn.classList.add('active');
+
+      if (theme === 'cyber') {
+        mainSpot.color.setHex(0x00f2fe);
+        leftStrobe.color.setHex(0xf72585);
+        rightStrobe.color.setHex(0x7209b7);
+        grid.material.color.setHex(0x00f2fe);
+      } else if (theme === 'laser') {
+        mainSpot.color.setHex(0xff0055);
+        leftStrobe.color.setHex(0x00ffcc);
+        rightStrobe.color.setHex(0xff0055);
+        grid.material.color.setHex(0xff0055);
+      } else if (theme === 'gold') {
+        mainSpot.color.setHex(0xffb703);
+        leftStrobe.color.setHex(0xfb8500);
+        rightStrobe.color.setHex(0x219ebc);
+        grid.material.color.setHex(0xffb703);
+      }
+    };
+
+    // =========================================================================
+    // 7. CARGA DEL MODELO GLB MASTER (actionforge_85_clips_fit.glb)
+    // =========================================================================
+    const loader = new THREE.GLTFLoader();
+    loader.load(
+      'actionforge_85_clips_fit.glb?v=' + Date.now(),
+      (gltf) => {
+        currentModel = gltf.scene;
+        scene.add(currentModel);
+
+        currentModel.traverse((node) => {
+          if (node.isMesh) {
+            node.castShadow = true;
+            node.receiveShadow = true;
+          }
+        });
+
+        // Registrar todas las animaciones
+        mixer = new THREE.AnimationMixer(currentModel);
+        gltf.animations.forEach((clip) => {
+          clipsMap.set(clip.name, clip);
+        });
+
+        // Generar figuras compuestas de baile
+        buildTecktonikComposites();
+
+        // Ocultar pantalla de carga
+        const loaderScreen = document.getElementById('loader');
+        loaderScreen.style.opacity = '0';
+        setTimeout(() => loaderScreen.style.display = 'none', 400);
+
+        // Iniciar en pose de baile lista
+        playAnimation('dance_loop_fit', 0.1);
+        updateMoveDisplay({ name: '🕺 Groove Natural Electro', icon: '🕺', beats: 4 });
+      },
+      (xhr) => {
+        if (xhr.lengthComputable) {
+          const pct = Math.round((xhr.loaded / xhr.total) * 100);
+          document.getElementById('loader-sub').innerText = `Descargando animaciones y rig: ${pct}%...`;
+        }
+      },
+      (error) => {
+        console.error('Error cargando modelo:', error);
+        document.getElementById('loader-sub').innerHTML = `⚠️ Error cargando <b>actionforge_85_clips_fit.glb</b>.<br>Asegúrate de ejecutar con un servidor local o en GitHub Pages.`;
+      }
+    );
+
+    // =========================================================================
+    // 8. RENDER LOOP & REALTIME VISUALIZER
+    // =========================================================================
+    const visCanvas = document.getElementById('visualizer-canvas');
+    const visCtx = visCanvas.getContext('2d');
+    const clock = new THREE.Clock();
+
+    function renderVisualizer() {
+      if (!analyserNode || !freqData) {
+        visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
+        return;
+      }
+      analyserNode.getByteFrequencyData(freqData);
+
+      visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
+      const barWidth = (visCanvas.width / 16) - 1.5;
+      for (let i = 0; i < 16; i++) {
+        const val = freqData[i * 4] || 0;
+        const h = (val / 255) * visCanvas.height;
+        const grad = visCtx.createLinearGradient(0, visCanvas.height, 0, 0);
+        grad.addColorStop(0, '#00f2fe');
+        grad.addColorStop(1, '#f72585');
+        visCtx.fillStyle = grad;
+        visCtx.fillRect(i * (barWidth + 1.5), visCanvas.height - h, barWidth, h);
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+
+      if (mixer) {
+        mixer.update(delta);
+      }
+
+      advanceChoreography(delta);
+
+      // Cámara Orbital Automática
+      if (cameraMode === 'orbit') {
+        orbitAngle += delta * 0.45;
+        camera.position.x = Math.sin(orbitAngle) * 3.4;
+        camera.position.z = Math.cos(orbitAngle) * 3.4;
+        camera.lookAt(0, 1.0, 0);
+      } else {
+        controls.update();
+      }
+
+      renderVisualizer();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
