@@ -1,0 +1,3725 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guerrero 3D Studio — 84 Animaciones & Ritmo Musical</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #08090d;
+      --panel-bg: rgba(14, 18, 28, 0.78);
+      --panel-border: rgba(255, 255, 255, 0.09);
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-indigo: #6366f1;
+      --accent-purple: #8b5cf6;
+      --accent-emerald: #10b981;
+      --accent-rose: #f43f5e;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Top Left Header */
+    .brand-bar {
+      position: absolute;
+      top: 18px;
+      left: 20px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 8px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+    .badge-rig {
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+    }
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .brand-sub {
+      font-size: 11px;
+      color: #10b981;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.12);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    /* Main Floating Animation Selector Center Bar */
+    .selector-bar {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 25;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: 8px 14px;
+      border-radius: 18px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.55);
+      max-width: 90vw;
+    }
+
+    .anim-dropdown-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    select.anim-select {
+      background: #151b28;
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      max-width: 280px;
+      transition: all 0.2s ease;
+    }
+    select.anim-select:hover, select.anim-select:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+    }
+
+    .nav-arrow-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--panel-border);
+      color: #cbd5e1;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: bold;
+      transition: all 0.2s ease;
+    }
+    .nav-arrow-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      transform: scale(1.05);
+    }
+
+    /* Mode Toggles: In-Place vs Root Motion & Music */
+    .switch-group {
+      display: flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .switch-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .switch-btn.active {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+    }
+    .switch-btn.music-active {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6) !important;
+      color: #ffffff !important;
+      box-shadow: 0 2px 10px rgba(236, 72, 153, 0.45);
+    }
+
+    /* Category Filter Pills */
+    .categories-bar {
+      position: absolute;
+      top: 74px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 22;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(14, 18, 28, 0.65);
+      backdrop-filter: blur(16px);
+      padding: 5px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      max-width: 95vw;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .categories-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .cat-pill {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 11.5px;
+      font-weight: 500;
+      padding: 5px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .cat-pill:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+    }
+    .cat-pill.active {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(59, 130, 246, 0.5);
+      color: #60a5fa;
+      font-weight: 600;
+    }
+
+    /* Right Studio Action Panel */
+    .top-right-tools {
+      position: absolute;
+      top: 18px;
+      right: 20px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tool-btn {
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      color: #e2e8f0;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .tool-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateY(-1px);
+    }
+    .tool-btn.active {
+      background: linear-gradient(135deg, #8b5cf6, #d946ef);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 4px 14px rgba(217, 70, 239, 0.35);
+    }
+
+    /* Floating Music & Beat Studio Card */
+    .music-studio-card {
+      position: absolute;
+      top: 116px;
+      right: 20px;
+      z-index: 20;
+      width: 330px;
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+      background: var(--panel-bg);
+      backdrop-filter: blur(24px);
+      border-radius: 16px;
+      border: 1px solid var(--panel-border);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    }
+    .music-studio-card.collapsed {
+      transform: translateX(370px);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .studio-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .studio-title {
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #f1f5f9;
+    }
+    .beat-visualizer {
+      width: 100%;
+      height: 42px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+      display: block;
+    }
+    .sync-status-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 5px 8px;
+      border-radius: 8px;
+      text-align: center;
+      letter-spacing: 0.2px;
+    }
+    .tap-tempo-btn {
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.12s ease;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      user-select: none;
+    }
+    .tap-tempo-btn:hover {
+      background: linear-gradient(135deg, #0ea5e9, #818cf8);
+      transform: scale(1.02);
+    }
+    .tap-tempo-btn:active, .tap-tempo-btn.pulse {
+      transform: scale(0.97);
+      background: linear-gradient(135deg, #ec4899, #8b5cf6) !important;
+      box-shadow: 0 0 18px rgba(236, 72, 153, 0.65) !important;
+    }
+    .action-btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .mini-action-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #f1f5f9;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 7px 6px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .mini-action-btn:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: #38bdf8;
+      color: white;
+    }
+    .mini-action-btn:active {
+      transform: scale(0.96);
+    }
+    .bpm-controls-container {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .bpm-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .bpm-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    .nudge-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: white;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .nudge-btn:hover {
+      background: rgba(56, 189, 248, 0.3);
+      border-color: #38bdf8;
+    }
+    .nudge-btn:active {
+      transform: scale(0.92);
+    }
+    input[type=range] {
+      accent-color: #38bdf8;
+      cursor: pointer;
+    }
+    .custom-track-card {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .custom-track-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #e0f2fe;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .custom-track-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .track-btn {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: white;
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .track-btn:hover {
+      background: #0284c7;
+    }
+    .stop-music-btn {
+      background: rgba(239, 68, 68, 0.25) !important;
+      border-color: #ef4444 !important;
+      color: #fca5a5 !important;
+      font-weight: 700 !important;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .stop-music-btn:hover {
+      background: rgba(239, 68, 68, 0.5) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+    }
+    .stop-music-btn.active-silence {
+      background: rgba(100, 116, 139, 0.25) !important;
+      border-color: #64748b !important;
+      color: #cbd5e1 !important;
+      box-shadow: none !important;
+    }
+    .global-stop-btn {
+      width: 100%;
+      padding: 7px 10px;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      border-radius: 8px;
+      color: #fca5a5;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      transition: all 0.2s;
+    }
+    .global-stop-btn:hover {
+      background: rgba(239, 68, 68, 0.45);
+      border-color: #ef4444;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    }
+    .dance-mode-header {
+      font-size: 10px;
+      font-weight: 700;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 8px 0 4px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dance-mode-tabs {
+      display: grid;
+      grid-template-columns: 1.25fr 1.1fr 0.95fr;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+    .dance-mode-btn {
+      padding: 6px 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dance-mode-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+    .dance-mode-btn.active[data-mode="tecktonik"] {
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.35), rgba(249, 115, 22, 0.35));
+      border-color: #eab308;
+      color: #fef08a;
+      box-shadow: 0 0 10px rgba(234, 179, 8, 0.35);
+    }
+    .dance-mode-btn.active[data-mode="battle"] {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(59, 130, 246, 0.3));
+      border-color: #a855f7;
+      color: #f3e8ff;
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
+    }
+    .dance-mode-btn.active[data-mode="loop"] {
+      background: rgba(16, 185, 129, 0.25);
+      border-color: #10b981;
+      color: #a7f3d0;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    }
+    .live-pads-title {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin: 6px 0 3px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    .live-pads-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .live-pad-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 5px 2px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .live-pad-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+    .live-pad-btn:active, .live-pad-btn.firing {
+      background: #a855f7 !important;
+      color: white !important;
+      border-color: #c084fc !important;
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.8) !important;
+      transform: scale(0.95);
+    }
+    .track-vol-wrap {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+    }
+    .beat-selector-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .beat-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .beat-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: white;
+    }
+    .beat-btn.active {
+      background: linear-gradient(135deg, #06b6d4, #3b82f6);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 2px 8px rgba(6, 182, 212, 0.35);
+    }
+    .audio-upload-label {
+      font-size: 11px;
+      color: #c084fc;
+      cursor: pointer;
+      text-align: center;
+      padding: 8px 10px;
+      border: 1px dashed rgba(192, 132, 252, 0.4);
+      border-radius: 10px;
+      background: rgba(168, 85, 247, 0.06);
+      transition: all 0.2s;
+    }
+    .audio-upload-label:hover {
+      background: rgba(168, 85, 247, 0.15);
+      border-color: #a855f7;
+    }
+    .guide-tips {
+      font-size: 10.5px;
+      color: #94a3b8;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+      padding: 8px 10px;
+      line-height: 1.45;
+    }
+    .guide-tips b {
+      color: #f1f5f9;
+    }
+
+    /* Organic Reactive Dance Controls */
+    .organic-panel {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-top: 4px;
+    }
+    .organic-toggle-btn {
+      width: 100%;
+      padding: 8px 10px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(168, 85, 247, 0.15));
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 8px;
+      color: #38bdf8;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+    .organic-toggle-btn.active {
+      background: linear-gradient(135deg, #0284c7, #9333ea);
+      color: #ffffff;
+      border-color: #38bdf8;
+      box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3);
+    }
+    .organic-leds-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 9.5px;
+    }
+    .organic-led {
+      flex: 1;
+      padding: 4px 5px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: #94a3b8;
+      font-weight: 600;
+      transition: all 0.08s ease;
+    }
+    .organic-led.led-kick.active {
+      background: rgba(234, 179, 8, 0.35);
+      border-color: #facc15;
+      color: #fef08a;
+      box-shadow: 0 0 12px rgba(250, 204, 21, 0.8);
+      transform: scale(1.05);
+    }
+    .organic-led.led-snare.active {
+      background: rgba(56, 189, 248, 0.35);
+      border-color: #38bdf8;
+      color: #bae6fd;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+      transform: scale(1.05);
+    }
+    .organic-led.led-silence.active {
+      background: rgba(239, 68, 68, 0.35);
+      border-color: #ef4444;
+      color: #fca5a5;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+    }
+    .organic-slider-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+    .organic-slider-row span:last-child {
+      font-family: 'JetBrains Mono', monospace;
+      color: #38bdf8;
+      font-weight: bold;
+    }
+
+    /* Left Info Card */
+    .info-card {
+      position: absolute;
+      bottom: 24px;
+      left: 20px;
+      z-index: 15;
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px);
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid var(--panel-border);
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      color: var(--text-muted);
+      min-width: 210px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+    }
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .info-item b {
+      color: #f1f5f9;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+    }
+    .status-ok {
+      color: #10b981 !important;
+    }
+
+    /* Bottom Player Bar */
+    .bottom-bar {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      width: min(780px, 92vw);
+      background: var(--panel-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: 12px 18px;
+      border-radius: 18px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .timeline-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .time-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      min-width: 44px;
+    }
+    .progress-bar {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .progress-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #06b6d4, #3b82f6, #a855f7);
+      border-radius: 4px;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .controls-left, .controls-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f1f5f9;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 7px 12px;
+      border-radius: 9px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+    .btn.active {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 2px 10px rgba(59, 130, 246, 0.35);
+    }
+    .btn-play {
+      background: linear-gradient(135deg, #06b6d4, #3b82f6);
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      justify-content: center;
+      border-radius: 50%;
+      border: none;
+      color: white;
+      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.4);
+    }
+    .btn-play:hover {
+      transform: scale(1.06);
+      background: linear-gradient(135deg, #38bdf8, #60a5fa);
+    }
+
+    /* Camera preset buttons */
+    .cam-presets {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .cam-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .cam-btn:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Loading Overlay */
+    #loader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-dark);
+      z-index: 60;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      transition: opacity 0.4s ease;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(255, 255, 255, 0.08);
+      border-top-color: #06b6d4;
+      border-right-color: #8b5cf6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    #loader-text {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Beat indicator pulse ring on canvas */
+    .beat-pulse-fx {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 400px;
+      height: 400px;
+      margin-left: -200px;
+      margin-top: -200px;
+      border-radius: 50%;
+      border: 2px solid rgba(6, 182, 212, 0.4);
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.6);
+      transition: all 0.3s cubic-bezier(0, 0.7, 0.3, 1);
+      z-index: 2;
+    }
+    .beat-pulse-fx.pulsing {
+      opacity: 1;
+      transform: scale(1.3);
+      border-color: rgba(217, 70, 239, 0.6);
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- Beat pulse background FX -->
+  <div class="beat-pulse-fx" id="beat-fx"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <div id="loader-text">Cargando Guerrero Studio (84 Animaciones)...</div>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <!-- Header / Brand -->
+  <div class="brand-bar">
+    <span class="badge-rig">ActionForge Rig</span>
+    <span class="brand-title">⚔️ Guerrero Studio 3D</span>
+    <span class="brand-sub">84 CLIPS NATIVOS</span>
+  </div>
+
+  <!-- Main Animation Selector Bar -->
+  <div class="selector-bar">
+    <button class="nav-arrow-btn" id="btn-prev" title="Animación Anterior">◀</button>
+
+    <div class="anim-dropdown-wrapper">
+      <select class="anim-select" id="anim-select">
+        <!-- Dynamically populated -->
+      </select>
+    </div>
+
+    <button class="nav-arrow-btn" id="btn-next" title="Siguiente Animación">▶</button>
+
+    <!-- In-Place vs Root Motion Switch -->
+    <div class="switch-group" title="Control de movimiento de raíz">
+      <button class="switch-btn active" id="btn-inplace">📍 En el Sitio</button>
+      <button class="switch-btn" id="btn-rootmotion">🚀 Desplazamiento</button>
+    </div>
+
+    <!-- Music Beat Sync Toggle & Direct Stop Button -->
+    <button class="tool-btn" id="btn-toggle-music">🎵 Estudio de Ritmo</button>
+    <button class="tool-btn stop-music-btn" id="btn-stop-music" style="display:none;" title="Silenciar / Detener toda la música">⏹ Parar Música</button>
+  </div>
+
+  <!-- Category Filter Pills -->
+  <div class="categories-bar" id="categories-bar">
+    <button class="cat-pill active" data-cat="all">✨ Todas (84)</button>
+    <button class="cat-pill" data-cat="locomotion">🚶 Locomoción (10)</button>
+    <button class="cat-pill" data-cat="sword">⚔️ Espada & Escudo (15)</button>
+    <button class="cat-pill" data-cat="melee">🥊 Combate (4)</button>
+    <button class="cat-pill" data-cat="dance">🕺 Baile & Tecktonik (14)</button>
+    <button class="cat-pill" data-cat="parkour">🤸 Saltos & Parkour (11)</button>
+    <button class="cat-pill" data-cat="idle">🧍 Reposo (10)</button>
+    <button class="cat-pill" data-cat="damage">💥 Daño & Impactos (5)</button>
+    <button class="cat-pill" data-cat="guns">🔫 Armas Fuego (6)</button>
+    <button class="cat-pill" data-cat="magic">🔮 Magia (4)</button>
+    <button class="cat-pill" data-cat="life">🧰 Interacciones (17)</button>
+  </div>
+
+  <!-- Right Floating Music Studio Card -->
+  <div class="music-studio-card collapsed" id="music-studio">
+    <div class="studio-head">
+      <span class="studio-title">🎧 Sincronizador de Ritmo & Audio</span>
+      <button class="btn" style="padding: 2px 6px; font-size: 10px;" id="btn-close-music">✕</button>
+    </div>
+
+    <!-- Botón Global para Detener Música -->
+    <button class="global-stop-btn" id="btn-stop-music-drawer" title="Detener toda la música y sonidos">⏹ DETENER MÚSICA POR COMPLETO</button>
+
+    <!-- Visualizador Espectral Reactivo -->
+    <canvas class="beat-visualizer" id="visualizer-canvas" width="298" height="42"></canvas>
+
+    <!-- Estado de Sincronización en Vivo -->
+    <div class="sync-status-badge" id="sync-status-badge">
+      🟢 Sincronizado a 120 BPM • Baile: 1.00x
+    </div>
+
+    <!-- Botón Principal Tap Tempo (Tocar al Ritmo) -->
+    <button class="tap-tempo-btn" id="btn-tap-tempo" title="Haz clic o pulsa la tecla 'T' al ritmo de la música">
+      <span style="font-size: 13px;">🥁 TOCAR AL RITMO (Tap Tempo)</span>
+      <span id="tap-tempo-sub" style="font-size: 10.5px; opacity: 0.9; font-weight: normal;">Haz clic 3 o 4 veces al ritmo de tu canción</span>
+    </button>
+
+    <!-- Controles de Alineación & Acceso Rápido -->
+    <div class="action-btn-row">
+      <button class="mini-action-btn" id="btn-align-beat" title="Alinea el paso 1 al golpe del bombo (Atajo: tecla 'S')">
+        ⚡ Alinear al Golpe 1
+      </button>
+      <button class="mini-action-btn" id="btn-switch-dance" style="background: rgba(234, 179, 8, 0.25); border-color: rgba(234, 179, 8, 0.6); color: #fef08a; font-weight: 700;" title="Activa la especialización de baile Tecktonik / Electro Dance">
+        ⚡ Baile Tecktonik Pro
+      </button>
+    </div>
+
+    <!-- Selector de Especialización de Baile -->
+    <div class="dance-mode-header">
+      <span>🕺 Especialización de Baile:</span>
+    </div>
+    <div class="dance-mode-tabs">
+      <button class="dance-mode-btn active" id="btn-mode-tecktonik" data-mode="tecktonik" title="Baile Tecktonik / Electro Dance: Molinetes, pases de cabeza y cruces de brazos">
+        ⚡ Tecktonik Electro
+      </button>
+      <button class="dance-mode-btn" id="btn-mode-battle" data-mode="battle" title="Danza de Combate: Rutina marcial con boxeo, espada y acrobacias">
+        🥋 Danza Combate
+      </button>
+      <button class="dance-mode-btn" id="btn-mode-loop" data-mode="loop" title="Bucle simple de paso de baile">
+        🔄 Bucle Simple
+      </button>
+    </div>
+
+    <!-- Live Action Pads: Dispara movimientos al compás en directo (Ambos Brazos) -->
+    <div class="live-pads-title">
+      <span id="live-pads-label">🎮 Pads Electro en Vivo (Ambos Brazos):</span>
+      <span style="opacity: 0.75;">Teclas 1 - 8</span>
+    </div>
+    <div class="live-pads-grid">
+      <button class="live-pad-btn" id="pad-1" title="Molinetes continuos circulares con ambos brazos (Tecla 1)">🌀 Molinete [1]</button>
+      <button class="live-pad-btn" id="pad-2" title="Pase doble por cabeza y nuca con ambos brazos (Tecla 2)">👑 Cabeza [2]</button>
+      <button class="live-pad-btn" id="pad-3" title="Doble bloqueo geométrico a 90° + empuje frontal con ambos brazos (Tecla 3)">🛡️ Bloqueo [3]</button>
+      <button class="live-pad-btn" id="pad-4" title="Guardia alta activa rítmica con ambos brazos (Tecla 4)">🥊 Guardia [4]</button>
+      <button class="live-pad-btn" id="pad-5" title="Barrido amplio rasgar cultivos + rasgado electro con ambos brazos (Tecla 5)">🌾 Cultivos [5]</button>
+      <button class="live-pad-btn" id="pad-6" title="Ráfaga 4 puñetazos alternados con ambos brazos: Jab + Cross + Gancho (Tecla 6)">💥 Puños 1-4 [6]</button>
+      <button class="live-pad-btn" id="pad-7" title="Doble rasgado y zarpazo electro con ambas manos (Tecla 7)">🐾 Rasgado [7]</button>
+      <button class="live-pad-btn" id="pad-8" title="Freeze electropop lock con brazos cruzados (Tecla 8)">❄️ Freeze [8]</button>
+    </div>
+
+    <!-- Tempo BPM con Ajuste Fino (+ / - 1) y Slider -->
+    <div class="bpm-controls-container">
+      <div class="bpm-row">
+        <span>Tempo (BPM):</span>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button class="nudge-btn" id="btn-bpm-minus" title="Restar 1 BPM">-1</button>
+          <span class="bpm-display" id="bpm-val">120 BPM</span>
+          <button class="nudge-btn" id="btn-bpm-plus" title="Sumar 1 BPM">+1</button>
+        </div>
+      </div>
+      <input type="range" id="bpm-slider" min="60" max="190" value="120" step="1">
+    </div>
+
+    <!-- Panel de Baile Orgánico Reactivo a Cada Sonido -->
+    <div class="organic-panel">
+      <button class="organic-toggle-btn active" id="btn-toggle-organic" title="Alternar entre baile procedural orgánico reactivo o loop estático">
+        <span>🕺 Baile Orgánico Reactivo</span>
+        <span id="organic-toggle-status" style="font-size:10px; background:#10b981; color:black; padding:2px 6px; border-radius:6px; font-weight:800;">ACTIVO</span>
+      </button>
+
+      <!-- Indicadores LED de Respuesta en Tiempo Real -->
+      <div class="organic-leds-row">
+        <div class="organic-led led-kick" id="led-kick">
+          <span>💥</span> <span>BOMBO</span>
+        </div>
+        <div class="organic-led led-snare" id="led-snare">
+          <span>🥁</span> <span>CAJA</span>
+        </div>
+        <div class="organic-led led-silence" id="led-silence">
+          <span>🔇</span> <span>SILENCIO</span>
+        </div>
+      </div>
+
+      <!-- Ajustes de Sensibilidad de Respuesta -->
+      <div class="organic-slider-row">
+        <span>Rebote de Rodillas (Bombo):</span>
+        <span id="val-kick-sens">1.0x</span>
+      </div>
+      <input type="range" id="slider-kick-sens" min="0.3" max="2.2" step="0.1" value="1.0" style="margin-top:-4px;">
+
+      <div class="organic-slider-row">
+        <span>Amplitud de Movimientos:</span>
+        <span id="val-head-sens">1.0x</span>
+      </div>
+      <input type="range" id="slider-head-sens" min="0.3" max="2.0" step="0.1" value="1.0" style="margin-top:-4px;">
+
+      <div class="organic-slider-row">
+        <span>Freno en Silencios:</span>
+        <span id="val-silence-thresh">Medio</span>
+      </div>
+      <input type="range" id="slider-silence-thresh" min="4" max="25" step="1" value="10" style="margin-top:-4px;">
+    </div>
+
+    <!-- Tarjeta del Archivo de Audio Subido (Aparece cuando subes tu pista) -->
+    <div class="custom-track-card" id="custom-track-card" style="display:none;">
+      <div class="custom-track-title" id="custom-track-name">🎵 Mi Canción.mp3</div>
+      <div class="custom-track-controls">
+        <button class="track-btn" id="btn-track-play">⏸ Pausar</button>
+        <button class="track-btn" id="btn-track-restart">🔁 Reiniciar</button>
+        <div class="track-vol-wrap">
+          <span style="font-size: 10px;">🔊</span>
+          <input type="range" id="custom-vol-slider" min="0" max="1" step="0.05" value="0.85" style="width: 55px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Botón Subir Canción Propia -->
+    <label class="audio-upload-label" id="audio-upload-label">
+      📁 Subir tu canción (MP3 / WAV / OGG)
+      <span style="display:block; font-size:9.5px; opacity:0.8; margin-top:2px;">⚡ Auto-Detección de BPM y sincronización automática</span>
+      <input type="file" id="audio-input" accept="audio/*" style="display:none;">
+    </label>
+
+    <!-- Presets de Beats de Prueba -->
+    <div style="font-size: 10px; color: var(--text-muted); margin-top: 1px;">O prueba beats sintetizados:</div>
+    <div class="beat-selector-group">
+      <button class="beat-btn" data-beat="epic">🥁 Batalla (120)</button>
+      <button class="beat-btn" data-beat="cyber">⚡ Cyber (128)</button>
+      <button class="beat-btn" data-beat="lofi">☕ Lo-Fi (90)</button>
+      <button class="beat-btn active" data-beat="off">🔇 Silencio</button>
+    </div>
+
+    <!-- Guía Rápida de Sincronización -->
+    <div class="guide-tips">
+      💡 <b>¿Cómo sincronizar cualquier canción?</b><br>
+      <b>1.</b> Sube tu MP3 (se detectará el tempo automáticamente).<br>
+      <b>2.</b> Pulsa <b>'🥁 Tocar al Ritmo'</b> 3 o 4 veces siguiendo los golpes.<br>
+      <b>3.</b> Pulsa <b>'⚡ Alinear al Golpe 1'</b> justo en el compás fuerte.
+    </div>
+  </div>
+
+  <!-- Top Right Model & Camera Presets -->
+  <div class="top-right-tools">
+    <div class="cam-presets">
+      <button class="cam-btn" id="cam-front" title="Cuerpo entero">Cuerpo</button>
+      <button class="cam-btn" id="cam-face" title="Primer plano rostro y dragones">Rostro</button>
+      <button class="cam-btn" id="cam-side" title="Perfil lateral">Perfil</button>
+    </div>
+  </div>
+
+  <!-- Left Model & Rig Info -->
+  <div class="info-card">
+    <div class="info-item"><span>Estatura:</span><b>1.80 m (Escala Real)</b></div>
+    <div class="info-item"><span>Huesos (Rig):</span><b class="status-ok">71 Huesos Nativos</b></div>
+    <div class="info-item"><span>Hombreras Dragón:</span><b class="status-ok">100% Rígidas</b></div>
+    <div class="info-item"><span>Deformación:</span><b class="status-ok">0.0% (Perfecto)</b></div>
+    <div class="info-item"><span>Malla:</span><b id="info-faces">79,500 Triángulos</b></div>
+    <div class="info-item"><span>Animación:</span><b id="info-anim" style="color:#38bdf8;">walk_loop_fit</b></div>
+  </div>
+
+  <!-- Bottom Player & Timeline Bar -->
+  <div class="bottom-bar">
+    <div class="timeline-container">
+      <span class="time-label" id="current-time">0:00</span>
+      <div class="progress-bar" id="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <span class="time-label" id="total-time">0:00</span>
+    </div>
+
+    <div class="controls-row">
+      <div class="controls-left">
+        <button class="btn btn-play" id="btn-play" title="Reproducir/Pausar">
+          <svg id="icon-play" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="display:none;">
+            <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+          </svg>
+          <svg id="icon-pause" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/>
+          </svg>
+        </button>
+        <button class="btn" id="btn-restart" title="Reiniciar animación">↺ Reset</button>
+        <button class="btn" id="btn-speed" title="Velocidad">1.0x</button>
+      </div>
+
+      <div class="controls-right">
+        <button class="btn" id="btn-skeleton">🦴 Esqueleto</button>
+        <button class="btn" id="btn-wireframe">🕸️ Malla</button>
+        <button class="btn active" id="btn-grid">🌐 Suelo</button>
+        <button class="btn" id="btn-autorotate">🔄 Giro 360°</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    // ANIMATION DATABASE (Categorized with Spanish Titles and BPM)
+    const ANIMATIONS_DB = [
+      // Locomoción
+      { id: "walk_loop_fit", name: "Caminata Estándar", cat: "locomotion", icon: "🚶", bpmBase: 110 },
+      { id: "walk_formal_loop_fit", name: "Caminata Marcial / Formal", cat: "locomotion", icon: "💂", bpmBase: 105 },
+      { id: "walk_carry_loop_fit", name: "Caminar con Carga", cat: "locomotion", icon: "📦", bpmBase: 100 },
+      { id: "jog_fwd_loop_fit", name: "Trote Ligero", cat: "locomotion", icon: "🏃", bpmBase: 140 },
+      { id: "sprint_loop_fit", name: "Carrera Rápida (Sprint)", cat: "locomotion", icon: "⚡", bpmBase: 165 },
+      { id: "crouch_fwd_loop_fit", name: "Caminar Agachado (Sigilo)", cat: "locomotion", icon: "🥷", bpmBase: 85 },
+      { id: "crouch_idle_loop_fit", name: "Reposo Agachado", cat: "locomotion", icon: "🧎", bpmBase: 80 },
+      { id: "zombie_walk_fwd_loop_fit", name: "Caminata Zombie / Bestia", cat: "locomotion", icon: "🧟", bpmBase: 90 },
+      { id: "swim_fwd_loop_fit", name: "Nadar hacia Adelante", cat: "locomotion", icon: "🏊", bpmBase: 95 },
+      { id: "swim_idle_loop_fit", name: "Flotar Nadando", cat: "locomotion", icon: "🌊", bpmBase: 70 },
+
+      // Combate Espada & Escudo
+      { id: "sword_idle_fit", name: "Guardia con Espada", cat: "sword", icon: "⚔️", bpmBase: 90 },
+      { id: "sword_attack_fit", name: "Ataque Corte con Espada", cat: "sword", icon: "🗡️", bpmBase: 115 },
+      { id: "sword_regular_a_fit", name: "Ataque Espada Corte A", cat: "sword", icon: "⚔️", bpmBase: 120 },
+      { id: "sword_regular_a_rec_fit", name: "Recuperación de Corte A", cat: "sword", icon: "🗡️", bpmBase: 110 },
+      { id: "sword_regular_b_fit", name: "Ataque Espada Corte B", cat: "sword", icon: "⚔️", bpmBase: 120 },
+      { id: "sword_regular_b_rec_fit", name: "Recuperación de Corte B", cat: "sword", icon: "🗡️", bpmBase: 110 },
+      { id: "sword_regular_c_fit", name: "Ataque Espada Corte C", cat: "sword", icon: "⚔️", bpmBase: 120 },
+      { id: "sword_regular_combo_fit", name: "Combo Triple de Espada", cat: "sword", icon: "🔥", bpmBase: 125 },
+      { id: "sword_heavy_combo_fit", name: "Super Combo Pesado Espada", cat: "sword", icon: "💥", bpmBase: 120 },
+      { id: "sword_dash_fit", name: "Embestida con Espada", cat: "sword", icon: "💨", bpmBase: 130 },
+      { id: "sword_block_fit", name: "Bloqueo / Parada Defensiva", cat: "sword", icon: "🛡️", bpmBase: 100 },
+      { id: "idle_shield_loop_fit", name: "Guardia Alta con Escudo", cat: "sword", icon: "🛡️", bpmBase: 90 },
+      { id: "shield_dash_fit", name: "Carga / Golpe con Escudo", cat: "sword", icon: "🛡️", bpmBase: 125 },
+      { id: "shield_oneshot_fit", name: "Golpe Contundente de Escudo", cat: "sword", icon: "💥", bpmBase: 115 },
+      { id: "idle_shield_break_fit", name: "Rotura de Guardia", cat: "sword", icon: "⚠️", bpmBase: 100 },
+
+      // Combate Cuerpo a Cuerpo
+      { id: "punch_jab_fit", name: "Puñetazo Jab Directo", cat: "melee", icon: "🥊", bpmBase: 130 },
+      { id: "punch_cross_fit", name: "Puñetazo Cruzado (Cross)", cat: "melee", icon: "🥊", bpmBase: 125 },
+      { id: "melee_hook_fit", name: "Gancho Ganador (Hook)", cat: "melee", icon: "👊", bpmBase: 135 },
+      { id: "melee_hook_rec_fit", name: "Recuperación de Gancho", cat: "melee", icon: "🥊", bpmBase: 110 },
+
+      // Baile & Ritmo Musical / Especialización Tecktonik (14)
+      { id: "dance_loop_fit", name: "Groove & Footwork Electro", cat: "dance", icon: "🕺", bpmBase: 128 },
+      { id: "tecktonik_windmills", name: "Molinetes Circulares de Brazos (Windmills)", cat: "dance", icon: "🌀", bpmBase: 128 },
+      { id: "tecktonik_headpass", name: "Pase Doble de Brazos por Cabeza (Head Pass)", cat: "dance", icon: "👑", bpmBase: 128 },
+      { id: "tecktonik_chestcross", name: "Cruces Geométricos de Pecho (Chest Cross)", cat: "dance", icon: "⚡", bpmBase: 128 },
+      { id: "tecktonik_block", name: "Doble Bloqueo Geométrico (Parada Alta + Empuje)", cat: "dance", icon: "🛡️", bpmBase: 128 },
+      { id: "tecktonik_highguard", name: "Guardia Alta Electro Activa (Ambos Brazos)", cat: "dance", icon: "🥊", bpmBase: 128 },
+      { id: "tecktonik_punch_combo", name: "Ráfaga 4 Puñetazos (Jab + Cross + Gancho Bilateral)", cat: "dance", icon: "💥", bpmBase: 128 },
+      { id: "tecktonik_harvest", name: "Barrido Doble Rasgar Cultivos (Cosecha + Zarpazo)", cat: "dance", icon: "🌾", bpmBase: 128 },
+      { id: "tecktonik_scratch", name: "Doble Rasgado & Zarpazo Electro (Ambas Manos)", cat: "dance", icon: "🐾", bpmBase: 128 },
+      { id: "tecktonik_slicing", name: "Cortes Dobles de Brazos (Electro Slices)", cat: "dance", icon: "🔪", bpmBase: 128 },
+      { id: "tecktonik_flurry", name: "Ráfaga Marcial Electro (Flujo Completo Ambos Brazos)", cat: "dance", icon: "⚡", bpmBase: 128 },
+      { id: "tecktonik_freeze", name: "Freeze & Lock Electropop (Brazos Cruzados)", cat: "dance", icon: "❄️", bpmBase: 128 },
+      { id: "tecktonik_victory", name: "Swagger & Celebración Electro (Ambos Brazos)", cat: "dance", icon: "🎉", bpmBase: 128 },
+      { id: "yes_fit", name: "Gesto de Victoria / Celebración", cat: "dance", icon: "🎉", bpmBase: 110 },
+
+      // Acrobacias, Saltos & Parkour
+      { id: "jump_start_fit", name: "Inicio de Salto (Despegue)", cat: "parkour", icon: "🦘", bpmBase: 115 },
+      { id: "jump_loop_fit", name: "Salto en el Aire", cat: "parkour", icon: "🦅", bpmBase: 100 },
+      { id: "jump_land_fit", name: "Aterrizaje Firme", cat: "parkour", icon: "🦶", bpmBase: 115 },
+      { id: "ninjajump_start_fit", name: "Salto Ninja Acrobático", cat: "parkour", icon: "🥋", bpmBase: 130 },
+      { id: "ninjajump_idle_loop_fit", name: "Suspensión de Salto Ninja", cat: "parkour", icon: "🥷", bpmBase: 110 },
+      { id: "ninjajump_land_fit", name: "Aterrizaje Ninja en Posición", cat: "parkour", icon: "🥋", bpmBase: 120 },
+      { id: "roll_fit", name: "Voltereta Evasiva (Roll)", cat: "parkour", icon: "🤸", bpmBase: 135 },
+      { id: "slide_start_fit", name: "Inicio de Deslizamiento", cat: "parkour", icon: "⛸️", bpmBase: 130 },
+      { id: "slide_loop_fit", name: "Deslizamiento por Suelo", cat: "parkour", icon: "⛷️", bpmBase: 120 },
+      { id: "slide_exit_fit", name: "Fin de Deslizamiento (Levantarse)", cat: "parkour", icon: "🏃", bpmBase: 120 },
+      { id: "climbup_1m_fit", name: "Trepar Muro de 1 Metro", cat: "parkour", icon: "🧗", bpmBase: 100 },
+
+      // Reposo & Posturas
+      { id: "idle_loop_fit", name: "Reposo Guerrero Natural", cat: "idle", icon: "🧍", bpmBase: 80 },
+      { id: "idle_foldarms_loop_fit", name: "Brazos Cruzados (Imponente)", cat: "idle", icon: "💪", bpmBase: 75 },
+      { id: "idle_torch_loop_fit", name: "Sostener Antorcha Encendida", cat: "idle", icon: "🔥", bpmBase: 80 },
+      { id: "idle_lantern_loop_fit", name: "Sostener Farol / Linterna", cat: "idle", icon: "🏮", bpmBase: 80 },
+      { id: "idle_talking_loop_fit", name: "Conversación Casual", cat: "idle", icon: "💬", bpmBase: 90 },
+      { id: "idle_talkingphone_loop_fit", name: "Hablar por Comunicador", cat: "idle", icon: "📱", bpmBase: 85 },
+      { id: "idle_no_loop_fit", name: "Gesto de Negación (No)", cat: "idle", icon: "🙅", bpmBase: 80 },
+      { id: "idle_rail_loop_fit", name: "Apoyado en Barandilla", cat: "idle", icon: "🪵", bpmBase: 75 },
+      { id: "idle_rail_call_fit", name: "Llamar desde Barandilla", cat: "idle", icon: "🗣️", bpmBase: 85 },
+      { id: "zombie_idle_loop_fit", name: "Reposo Bestia / Zombie", cat: "idle", icon: "🧟", bpmBase: 70 },
+
+      // Impactos & Daño
+      { id: "hit_chest_fit", name: "Impacto en el Pecho", cat: "damage", icon: "💥", bpmBase: 120 },
+      { id: "hit_head_fit", name: "Impacto en la Cabeza", cat: "damage", icon: "💫", bpmBase: 120 },
+      { id: "hit_knockback_fit", name: "Retroceso por Golpe Fuerte", cat: "damage", icon: "🌪️", bpmBase: 120 },
+      { id: "death01_fit", name: "Muerte Dramática y Caída", cat: "damage", icon: "☠️", bpmBase: 60 },
+      { id: "laytoidle_fit", name: "Levantarse desde el Suelo", cat: "damage", icon: "🌅", bpmBase: 90 },
+
+      // Armas de Fuego (Pistola)
+      { id: "pistol_idle_loop_fit", name: "Guardia con Pistola", cat: "guns", icon: "🔫", bpmBase: 90 },
+      { id: "pistol_aim_neutral_fit", name: "Apuntar Neutral al Frente", cat: "guns", icon: "🎯", bpmBase: 90 },
+      { id: "pistol_aim_up_fit", name: "Apuntar Elevado hacia Arriba", cat: "guns", icon: "🎯", bpmBase: 90 },
+      { id: "pistol_aim_down_fit", name: "Apuntar hacia Abajo", cat: "guns", icon: "🎯", bpmBase: 90 },
+      { id: "pistol_shoot_fit", name: "Disparar Pistola con Retroceso", cat: "guns", icon: "💥", bpmBase: 130 },
+      { id: "pistol_reload_fit", name: "Recargar Cargador", cat: "guns", icon: "🔄", bpmBase: 100 },
+
+      // Magia & Hechizos
+      { id: "spell_simple_enter_fit", name: "Inicio de Conjuración", cat: "magic", icon: "🔮", bpmBase: 100 },
+      { id: "spell_simple_idle_loop_fit", name: "Canalizar Flujo Mágico", cat: "magic", icon: "✨", bpmBase: 95 },
+      { id: "spell_simple_shoot_fit", name: "Lanzar Proyectil Arcano", cat: "magic", icon: "⚡", bpmBase: 125 },
+      { id: "spell_simple_exit_fit", name: "Cierre / Disipación Mágica", cat: "magic", icon: "🌀", bpmBase: 100 },
+
+      // Interacciones & Vida Cotidiana
+      { id: "chest_open_fit", name: "Abrir Cofre de Botín", cat: "life", icon: "🧰", bpmBase: 95 },
+      { id: "pickup_table_fit", name: "Recoger Objeto de Mesa", cat: "life", icon: "🤲", bpmBase: 100 },
+      { id: "consume_fit", name: "Beber Poción / Alimento", cat: "life", icon: "🧪", bpmBase: 95 },
+      { id: "push_loop_fit", name: "Empujar Objeto Pesado", cat: "life", icon: "🚜", bpmBase: 80 },
+      { id: "fixing_kneeling_fit", name: "Reparar de Rodillas", cat: "life", icon: "🔧", bpmBase: 85 },
+      { id: "sitting_enter_fit", name: "Sentarse en Banco / Silla", cat: "life", icon: "🪑", bpmBase: 90 },
+      { id: "sitting_idle_loop_fit", name: "Reposo Sentado Relajado", cat: "life", icon: "🧘", bpmBase: 70 },
+      { id: "sitting_talking_loop_fit", name: "Hablar Sentado", cat: "life", icon: "🗣️", bpmBase: 85 },
+      { id: "sitting_exit_fit", name: "Levantarse de la Silla", cat: "life", icon: "🧍", bpmBase: 95 },
+      { id: "driving_loop_fit", name: "Conducir Vehículo / Montar", cat: "life", icon: "🚗", bpmBase: 100 },
+      { id: "treechopping_loop_fit", name: "Talar con Hacha", cat: "life", icon: "🪓", bpmBase: 110 },
+      { id: "overhandthrow_fit", name: "Lanzar Objeto / Granada", cat: "life", icon: "💣", bpmBase: 120 },
+      { id: "interact_fit", name: "Pulsar Botón / Palanca", cat: "life", icon: "🔘", bpmBase: 95 },
+      { id: "farm_harvest_fit", name: "Cosechar Cultivo", cat: "life", icon: "🌾", bpmBase: 90 },
+      { id: "farm_plantseed_fit", name: "Plantar Semilla", cat: "life", icon: "🌱", bpmBase: 90 },
+      { id: "farm_watering_fit", name: "Regar Cultivos", cat: "life", icon: "🚿", bpmBase: 85 },
+      { id: "zombie_scratch_fit", name: "Arañazo de Monstruo", cat: "life", icon: "🐾", bpmBase: 115 }
+    ];
+
+    // Scene & Renderer Setup
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x08090d);
+    scene.fog = new THREE.Fog(0x08090d, 8, 26);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.35, 3.2);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(0, 0.95, 0);
+    controls.maxPolarAngle = Math.PI / 2 + 0.05;
+    controls.minDistance = 0.6;
+    controls.maxDistance = 15;
+
+    // Studio Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.25);
+    scene.add(ambientLight);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
+    keyLight.position.set(4, 7, 4);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 2048;
+    keyLight.shadow.mapSize.height = 2048;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 15;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x38bdf8, 1.4);
+    fillLight.position.set(-4, 3, -2);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xc084fc, 1.8);
+    rimLight.position.set(0, 4, -4);
+    scene.add(rimLight);
+
+    // Floor Grid & Shadow
+    const grid = new THREE.GridHelper(24, 48, 0x3b82f6, 0x1e293b);
+    grid.position.y = -0.001;
+    scene.add(grid);
+
+    const shadowPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(36, 36),
+      new THREE.ShadowMaterial({ opacity: 0.4 })
+    );
+    shadowPlane.rotation.x = -Math.PI / 2;
+    shadowPlane.receiveShadow = true;
+    scene.add(shadowPlane);
+
+    // State Variables
+    let currentModel = null;
+    let baseModelY = 0;
+    let skeletonHelper = null;
+    let mixer = null;
+    let activeAction = null;
+    let currentClipId = "walk_loop_fit";
+    let isPlaying = true;
+    let playbackSpeed = 1.0;
+    const speeds = [0.25, 0.5, 1.0, 1.5, 2.0];
+    let speedIdx = 2;
+    let isWireframe = false;
+    let showSkeleton = false;
+    let isInPlace = true; // Default In-Place for viewer
+    let rootBone = null;
+    let clipsMap = new Map();
+
+    // Audio Sync Global State
+    let isMusicPlaying = false;
+    let isCustomAudioPlaying = false;
+    let currentBPM = 120;
+    let activeBeatType = 'off'; // Default pure silence ('epic', 'cyber', 'lofi', 'custom', 'off')
+
+    // Especializaciones de Baile & Rutinas Coreográficas
+    let danceSpecialization = 'tecktonik'; // 'tecktonik' | 'battle' | 'loop'
+    let isRoutineRunning = false;
+    let isChoreoMode = true;
+    let choreoIndex = 0;
+    let choreoBeatTimer = 0;
+    let isLiveActionLocked = false;
+    let liveActionTimeout = null;
+
+    // Rutina de Especialización Tecktonik / Electro Dance (128 BPM - Ambos Brazos Activos)
+    // Repertorio de figuras: cada una se intercala con el groove natural
+    const TECKTONIK_MOVES = [
+      { id: 'tecktonik_windmills', name: '🌀 Molinetes Dobles de Brazos (Windmills)', beats: 8, fade: 0.3 },
+      { id: 'tecktonik_headpass', name: '👑 Pase Doble por Cabeza (Head Pass)', beats: 4, fade: 0.3 },
+      { id: 'tecktonik_chestcross', name: '⚡ Cruces Geométricos (Chest Cross)', beats: 4, fade: 0.3 },
+      { id: 'tecktonik_highguard', name: '🥊 Guardia Alta Electro (Ambos Brazos)', beats: 4, fade: 0.3 },
+      { id: 'tecktonik_block', name: '🛡️ Bloqueo Geométrico de Ambos Brazos', beats: 4, fade: 0.3 },
+      { id: 'tecktonik_punch_combo', name: '💥 Ráfaga 4 Puñetazos (Jab + Cross + Gancho)', beats: 4, fade: 0.3 },
+      { id: 'tecktonik_harvest', name: '🌾 Barrido Doble (Rasgar Cultivos)', beats: 8, fade: 0.3 },
+      { id: 'tecktonik_scratch', name: '🐾 Rasgado & Zarpazo Electro (Scratch)', beats: 4, fade: 0.3 },
+      { id: 'tecktonik_slicing', name: '🔪 Cortes Dobles de Brazos (Slices)', beats: 4, fade: 0.3 },
+      { id: 'tecktonik_flurry', name: '⚡ Ráfaga Marcial Electro (Combo Completo)', beats: 8, fade: 0.3 },
+      { id: 'tecktonik_freeze', name: '❄️ Electropop Lock (Freeze Pose)', beats: 4, fade: 0.25 },
+      { id: 'tecktonik_victory', name: '🎉 Swagger & Celebración Electro', beats: 8, fade: 0.3 }
+    ];
+    const TECKTONIK_ROUTINE = [];
+    // Construye: groove → figura → groove → figura... en orden aleatorio cada ciclo
+    function rebuildTecktonikRoutine() {
+      const shuffled = TECKTONIK_MOVES.slice();
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      // Evitar repetir la última figura del ciclo anterior al empezar
+      const lastMove = TECKTONIK_ROUTINE.length ? TECKTONIK_ROUTINE[TECKTONIK_ROUTINE.length - 1].id : null;
+      if (shuffled[0].id === lastMove && shuffled.length > 1) {
+        [shuffled[0], shuffled[1]] = [shuffled[1], shuffled[0]];
+      }
+      TECKTONIK_ROUTINE.length = 0;
+      shuffled.forEach(move => {
+        const grooveBeats = Math.random() < 0.5 ? 4 : 8; // groove de 1 o 2 compases
+        TECKTONIK_ROUTINE.push({ id: 'dance_loop_fit', name: '🕺 Groove Natural Electro', beats: grooveBeats, fade: 0.35 });
+        TECKTONIK_ROUTINE.push(move);
+      });
+    }
+    rebuildTecktonikRoutine();
+
+    // Rutina de Especialización Danza de Combate Marcial
+    const BATTLE_ROUTINE = [
+      { id: 'dance_loop_fit', name: 'Groove de Baile & Ritmo', beats: 16, fade: 0.25 },
+      { id: 'punch_jab_fit', name: 'Combo: Jab Directo al Compás', beats: 4, fade: 0.2 },
+      { id: 'punch_cross_fit', name: 'Combo: Golpe Cruzado Potente', beats: 4, fade: 0.2 },
+      { id: 'melee_hook_fit', name: 'Combo: Gancho de Impacto', beats: 4, fade: 0.2 },
+      { id: 'dance_loop_fit', name: 'Ritmo & Footwork', beats: 16, fade: 0.25 },
+      { id: 'sword_regular_a_fit', name: 'Danza de Espada: Corte A', beats: 4, fade: 0.2 },
+      { id: 'sword_attack_fit', name: 'Danza de Espada: Estocada', beats: 4, fade: 0.2 },
+      { id: 'dance_loop_fit', name: 'Ritmo & Groove', beats: 8, fade: 0.25 },
+      { id: 'roll_fit', name: 'Acrobacia: Voltereta (Roll)', beats: 4, fade: 0.2 },
+      { id: 'ninjajump_land_fit', name: 'Aterrizaje Ninja en Suelo', beats: 4, fade: 0.2 },
+      { id: 'yes_fit', name: 'Pose de Victoria & Éxito', beats: 8, fade: 0.25 },
+      { id: 'dance_loop_fit', name: 'Groove de Baile', beats: 16, fade: 0.25 },
+      { id: 'idle_foldarms_loop_fit', name: 'Postura Imponente (Freeze)', beats: 8, fade: 0.25 }
+    ];
+
+    const CHOREOGRAPHY_ROUTINE = TECKTONIK_ROUTINE;
+
+    const loader = new GLTFLoader();
+    const loaderElem = document.getElementById('loader');
+    const loaderText = document.getElementById('loader-text');
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    function updatePlayButton() {
+      document.getElementById('icon-play').style.display = isPlaying ? 'none' : 'block';
+      document.getElementById('icon-pause').style.display = isPlaying ? 'block' : 'none';
+    }
+
+    // Populate Selector Dropdown
+    const selectElem = document.getElementById('anim-select');
+    function populateDropdown(filterCategory = 'all') {
+      selectElem.innerHTML = '';
+      const list = filterCategory === 'all' 
+        ? ANIMATIONS_DB 
+        : ANIMATIONS_DB.filter(a => a.cat === filterCategory);
+
+      list.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = `${item.icon} ${item.name}`;
+        if (item.id === currentClipId) opt.selected = true;
+        selectElem.appendChild(opt);
+      });
+    }
+    populateDropdown('all');
+
+    // Switch Animation Action with Smooth Crossfade
+    function playAnimation(clipId, duration = 0.35) {
+      if (!mixer || !clipsMap.has(clipId)) return;
+      const nextClip = clipsMap.get(clipId);
+      const nextAction = mixer.clipAction(nextClip);
+
+      if (activeAction !== nextAction) {
+        if (activeAction) {
+          activeAction.fadeOut(duration);
+        }
+        nextAction.reset();
+        nextAction.setEffectiveTimeScale(getEffectiveSpeed(clipId));
+        nextAction.setEffectiveWeight(1);
+        nextAction.fadeIn(duration);
+        nextAction.play();
+        activeAction = nextAction;
+      }
+
+      currentClipId = clipId;
+      // Ensure select element reflects current clip even if filtered
+      const optionExists = Array.from(selectElem.options).some(o => o.value === clipId);
+      if (!optionExists) {
+        selectCategory('all');
+      }
+      selectElem.value = clipId;
+      document.getElementById('info-anim').innerText = clipId;
+      document.getElementById('total-time').innerText = formatTime(nextClip.duration);
+
+      // Check In-Place state
+      applyInPlaceMode();
+      activeAction.paused = !isPlaying;
+      activeAction.setEffectiveTimeScale(getEffectiveSpeed(clipId));
+      updateSyncStatusBadge();
+    }
+
+    function getEffectiveSpeed(clipId) {
+      if (!isMusicPlaying && !isCustomAudioPlaying && activeBeatType === 'off') return playbackSpeed;
+      const meta = ANIMATIONS_DB.find(a => a.id === clipId);
+      const isDance = meta && (meta.cat === 'dance' || clipId.includes('dance') || clipId.includes('tecktonik') || isRoutineRunning);
+      if (!isDance) {
+        return playbackSpeed;
+      }
+      const base = meta ? meta.bpmBase : 120;
+      return (currentBPM / base) * playbackSpeed;
+    }
+
+    function applyInPlaceMode() {
+      if (!rootBone) return;
+      if (isInPlace) {
+        // Lock root position to origin so character stays in place
+        rootBone.position.set(0, 0, 0);
+      }
+    }
+
+    function bindRigBones(model) {
+      if (!model) return;
+      model.traverse((node) => {
+        if (node.isBone && node.name === 'root') {
+          rootBone = node;
+        }
+      });
+      console.log('✅ Rig bound. Root bone:', rootBone ? 'Found' : 'Default');
+    }
+
+    // =========================================================================
+    // TECKTONIK / ELECTRO DANCE COMPOSITE ANIMATION SYNTHESIS
+    // Combina el footwork y groove de dance_loop_fit en el tren inferior
+    // con figuras emblemáticas de Tecktonik (molinetes, pases por cabeza,
+    // cruces geométricos, cortes rítmicos y poses freeze) en el tren superior.
+    // 100% nativo a nivel de keyframes sin manipular cuaterniones procedurales.
+    // =========================================================================
+    function initTecktonikClips() {
+      const baseClip = clipsMap.get('dance_loop_fit');
+      if (!baseClip) {
+        console.warn('⚠️ dance_loop_fit no encontrado para generar clips Tecktonik');
+        return;
+      }
+
+      const isUpperBodyTrack = (trackName) => {
+        const upperPrefixes = [
+          'spine_02', 'spine_03', 'clavicle', 'upperarm', 'lowerarm', 'hand',
+          'neck', 'head', 'index', 'middle', 'ring', 'pinky', 'thumb', 'weapon', 'socket'
+        ];
+        const boneName = trackName.split('.')[0].toLowerCase();
+        return upperPrefixes.some(p => boneName.includes(p));
+      };
+
+      function slerpQuat(qA, qB, t) {
+        let cosHalfTheta = qA[0]*qB[0] + qA[1]*qB[1] + qA[2]*qB[2] + qA[3]*qB[3];
+        let target = [qB[0], qB[1], qB[2], qB[3]];
+        if (cosHalfTheta < 0) {
+          target = [-qB[0], -qB[1], -qB[2], -qB[3]];
+          cosHalfTheta = -cosHalfTheta;
+        }
+        if (Math.abs(cosHalfTheta) >= 1.0) {
+          return [qA[0], qA[1], qA[2], qA[3]];
+        }
+        const halfTheta = Math.acos(cosHalfTheta);
+        const sinHalfTheta = Math.sqrt(1.0 - cosHalfTheta * cosHalfTheta);
+        if (Math.abs(sinHalfTheta) < 0.001) {
+          return [0.5*(qA[0]+target[0]), 0.5*(qA[1]+target[1]), 0.5*(qA[2]+target[2]), 0.5*(qA[3]+target[3])];
+        }
+        const rA = Math.sin((1 - t) * halfTheta) / sinHalfTheta;
+        const rB = Math.sin(t * halfTheta) / sinHalfTheta;
+        return [qA[0]*rA + target[0]*rB, qA[1]*rA + target[1]*rB, qA[2]*rA + target[2]*rB, qA[3]*rA + target[3]*rB];
+      }
+
+      function lerpVec(vA, vB, t) {
+        const res = [];
+        for (let i = 0; i < vA.length; i++) res.push(vA[i] * (1 - t) + vB[i] * t);
+        return res;
+      }
+
+      function repeatTrackToDuration(track, srcDur, targetDur) {
+        const valSize = track.getValueSize ? track.getValueSize() : (track.values.length / track.times.length);
+
+        if (srcDur <= 0 || targetDur <= srcDur) {
+          let count = 0;
+          while (count < track.times.length && track.times[count] <= targetDur) {
+            count++;
+          }
+          if (count === track.times.length && Math.abs(track.times[track.times.length - 1] - targetDur) < 0.001) {
+            return track.clone();
+          }
+          const newTimes = [];
+          const newValues = [];
+          for (let i = 0; i < count; i++) {
+            newTimes.push(track.times[i]);
+            for (let v = 0; v < valSize; v++) newValues.push(track.values[i * valSize + v]);
+          }
+          if (newTimes.length === 0 || newTimes[newTimes.length - 1] < targetDur) {
+            newTimes.push(targetDur);
+            const lastIdx = Math.max(0, count - 1) * valSize;
+            for (let v = 0; v < valSize; v++) newValues.push(track.values[lastIdx + v]);
+          }
+          const cloned = track.clone();
+          cloned.times = new Float32Array(newTimes);
+          cloned.values = new Float32Array(newValues);
+          return cloned;
+        }
+
+        const newTimes = [];
+        const newValues = [];
+        const numCycles = Math.ceil(targetDur / srcDur);
+
+        for (let cycle = 0; cycle < numCycles; cycle++) {
+          const timeOffset = cycle * srcDur;
+          for (let i = 0; i < track.times.length; i++) {
+            const t = timeOffset + track.times[i];
+            if (t > targetDur) break;
+            if (newTimes.length > 0 && Math.abs(t - newTimes[newTimes.length - 1]) < 0.0001) {
+              continue;
+            }
+            newTimes.push(t);
+            for (let v = 0; v < valSize; v++) {
+              newValues.push(track.values[i * valSize + v]);
+            }
+          }
+        }
+
+        if (newTimes.length === 0 || newTimes[newTimes.length - 1] < targetDur) {
+          newTimes.push(targetDur);
+          const lastIdx = (track.times.length - 1) * valSize;
+          for (let v = 0; v < valSize; v++) {
+            newValues.push(track.values[lastIdx + v]);
+          }
+        }
+
+        const cloned = track.clone();
+        cloned.times = new Float32Array(newTimes);
+        cloned.values = new Float32Array(newValues);
+        return cloned;
+      }
+
+      function createCompositeClip(newClipId, upperSourceId, desiredDuration = null, speedMultiplier = 1.0) {
+        const upperSource = clipsMap.get(upperSourceId);
+        if (!upperSource) return null;
+
+        let targetDuration = desiredDuration !== null ? desiredDuration : upperSource.duration;
+        if (speedMultiplier !== 1.0) {
+          targetDuration = targetDuration / speedMultiplier;
+        }
+
+        const tracks = [];
+
+        // 1. Tren inferior y pelvis de dance_loop_fit sincronizado a targetDuration
+        baseClip.tracks.forEach(track => {
+          if (!isUpperBodyTrack(track.name)) {
+            tracks.push(repeatTrackToDuration(track, baseClip.duration, targetDuration));
+          }
+        });
+
+        // 2. Tren superior de la figura de baile (brazos, manos, cabeza)
+        upperSource.tracks.forEach(track => {
+          if (isUpperBodyTrack(track.name)) {
+            if (speedMultiplier !== 1.0) {
+              const cloned = track.clone();
+              const newTimes = new Float32Array(cloned.times.length);
+              for (let i = 0; i < cloned.times.length; i++) {
+                newTimes[i] = cloned.times[i] / speedMultiplier;
+              }
+              cloned.times = newTimes;
+              tracks.push(repeatTrackToDuration(cloned, upperSource.duration / speedMultiplier, targetDuration));
+            } else {
+              tracks.push(repeatTrackToDuration(track, upperSource.duration, targetDuration));
+            }
+          }
+        });
+
+        const compositeClip = new THREE.AnimationClip(newClipId, targetDuration, tracks);
+        clipsMap.set(newClipId, compositeClip);
+        return compositeClip;
+      }
+
+      function createMultiSequenceCompositeClip(newClipId, segments) {
+        const validSegments = segments.map(s => {
+          const clip = clipsMap.get(s.id);
+          if (!clip) {
+            console.warn('Clip no encontrado para secuencia:', s.id);
+            return null;
+          }
+          const dur = s.dur !== undefined ? s.dur : (clip.duration / (s.speed || 1.0));
+          return { id: s.id, clip, dur };
+        }).filter(Boolean);
+
+        if (validSegments.length === 0) return null;
+        const totalDuration = validSegments.reduce((sum, s) => sum + s.dur, 0);
+
+        const tracks = [];
+
+        // 1. Tren inferior repetido rítmicamente en toda la duración
+        baseClip.tracks.forEach(track => {
+          if (!isUpperBodyTrack(track.name)) {
+            tracks.push(repeatTrackToDuration(track, baseClip.duration, totalDuration));
+          }
+        });
+
+        // 2. Recopilar todos los tracks de tren superior de los segmentos
+        const allUpperNames = new Set();
+        validSegments.forEach(s => {
+          s.trackMap = new Map();
+          s.clip.tracks.forEach(t => {
+            if (isUpperBodyTrack(t.name)) {
+              s.trackMap.set(t.name, t);
+              allUpperNames.add(t.name);
+            }
+          });
+        });
+
+        // 3. Concatenar y suavizar transiciones en los bordes de cada segmento
+        allUpperNames.forEach(name => {
+          const newTimes = [];
+          const newValues = [];
+          let curTimeOffset = 0;
+          const isQuat = name.endsWith('.quaternion');
+          const valSize = isQuat ? 4 : 3;
+
+          validSegments.forEach((seg, sIdx) => {
+            const track = seg.trackMap.get(name);
+            const segDur = seg.dur;
+            const srcDur = seg.clip.duration;
+            const timeScale = segDur / srcDur;
+            const blendWindow = Math.min(0.08, segDur * 0.25);
+
+            if (track) {
+              const srcValSize = track.getValueSize ? track.getValueSize() : (track.values.length / track.times.length);
+              for (let i = 0; i < track.times.length; i++) {
+                const rawLocalT = track.times[i] * timeScale;
+                const t = curTimeOffset + rawLocalT;
+
+                if (newTimes.length > 0 && t <= newTimes[newTimes.length - 1] + 0.0001) continue;
+
+                let val = [];
+                for (let v = 0; v < srcValSize; v++) val.push(track.values[i * srcValSize + v]);
+
+                // Transición ultra-suave entre movimientos de brazos consecutivos
+                if (sIdx > 0 && rawLocalT < blendWindow && newValues.length >= valSize) {
+                  const blendAlpha = rawLocalT / blendWindow;
+                  const prevVal = newValues.slice(-valSize);
+                  val = isQuat ? slerpQuat(prevVal, val, blendAlpha) : lerpVec(prevVal, val, blendAlpha);
+                }
+
+                newTimes.push(t);
+                for (let v = 0; v < valSize; v++) newValues.push(val[v]);
+              }
+            } else {
+              // Mantener postura si un clip de apoyo no contiene este nodo secundario
+              const lastVal = newValues.slice(-valSize);
+              newTimes.push(curTimeOffset, curTimeOffset + segDur);
+              for (let k = 0; k < 2; k++) {
+                for (let v = 0; v < valSize; v++) newValues.push(lastVal.length === valSize ? lastVal[v] : (isQuat && v === 3 ? 1 : 0));
+              }
+            }
+
+            curTimeOffset += segDur;
+          });
+
+          // Asegurar tiempo final exacto
+          if (newTimes.length === 0 || newTimes[newTimes.length - 1] < totalDuration) {
+            newTimes.push(totalDuration);
+            for (let v = 0; v < valSize; v++) newValues.push(newValues[newValues.length - valSize + v]);
+          }
+
+          const clonedRef = (validSegments[0].trackMap.get(name) || baseClip.tracks[0]).clone();
+          clonedRef.times = new Float32Array(newTimes);
+          clonedRef.values = new Float32Array(newValues);
+          tracks.push(clonedRef);
+        });
+
+        const compositeClip = new THREE.AnimationClip(newClipId, totalDuration, tracks);
+        clipsMap.set(newClipId, compositeClip);
+        return compositeClip;
+      }
+
+      // Constantes de tiempo musical a 128 BPM
+      const b1 = 60 / 128;      // ~0.46875s (1 beat)
+      const b2 = (60 / 128) * 2; // ~0.9375s  (2 beats)
+      const b4 = (60 / 128) * 4; // ~1.875s   (4 beats / 1 compás)
+      const b8 = (60 / 128) * 8; // ~3.75s    (8 beats / 2 compases)
+
+      // =======================================================================
+      // GENERACIÓN DEL REPERTORIO BILATERAL COMPLETO (AMBOS BRAZOS EN ACCIÓN)
+      // Copiando y combinando fielmente las funciones del catálogo:
+      //  1. "PUÑETAZO"       -> 4 golpes alternados: Jab Izq + Cross Der + Gancho Bilateral + Cross Der
+      //  2. "BLOQUEO"        -> Parada alta a 90° con ambos brazos + empuje defensivo frontal
+      //  3. "GUARDIA ALTA"   -> Snap de guardia abierta y guardia alta activa rebotando al compás
+      //  4. "RASGAR CULTIVOS"-> Barrido amplio de siega + zarpazo electro hacia adelante
+      //  5. "RASGADO MONSTRUO"-> Doble rasgado y cortes frontales de aspas
+      //  6. "CORTES SLICING" -> Cortes de espada A + B + aspas mágicas
+      //  7. "RÁFAGA COMPLETA"-> Combo de 8 compases combinando todos los movimientos de brazos
+      // =======================================================================
+
+      // 1. Ráfaga de 4 Puñetazos (Ambos brazos golpean rítmicamente en cada beat)
+      createMultiSequenceCompositeClip('tecktonik_punch_combo', [
+        { id: 'punch_jab_fit', dur: b1 },    // Beat 1: Jab directo con brazo izquierdo
+        { id: 'punch_cross_fit', dur: b1 },  // Beat 2: Cross potente con brazo derecho
+        { id: 'melee_hook_fit', dur: b1 },   // Beat 3: Gancho bilateral con ambos brazos rotando >100°
+        { id: 'punch_cross_fit', dur: b1 }   // Beat 4: Remate cruzado con brazo derecho
+      ]);
+
+      // 2. Doble Bloqueo Geométrico (Ambos brazos bloquean arriba y al frente)
+      createMultiSequenceCompositeClip('tecktonik_block', [
+        { id: 'sword_block_fit', dur: b2 },  // Beats 1-2: Parada alta geométrica a 90° con ambos brazos
+        { id: 'shield_dash_fit', dur: b2 }   // Beats 3-4: Empuje frontal de choque defensivo con ambos brazos
+      ]);
+
+      // 3. Guardia Alta Electro Activa (Ambos brazos activos protegiendo cabeza y barbilla)
+      createMultiSequenceCompositeClip('tecktonik_highguard', [
+        { id: 'idle_shield_break_fit', dur: b2 }, // Beats 1-2: Snap de guardia abierta a guardia cerrada
+        { id: 'sword_block_fit', dur: b2 }        // Beats 3-4: Parada alta isométrica con ambos brazos
+      ]);
+
+      // 4. Barrido y Rasgado de Cultivos (Ambos brazos barren abajo y desgarran al frente)
+      createMultiSequenceCompositeClip('tecktonik_harvest', [
+        { id: 'farm_harvest_fit', dur: b4 }, // Beats 1-4: Barrido amplio de siega cruzando el torso
+        { id: 'zombie_scratch_fit', dur: b4 } // Beats 5-8: Doble zarpazo y rasgado electro con ambas manos
+      ]);
+
+      // 5. Doble Rasgado & Zarpazo Electro (Ambas manos al frente)
+      createMultiSequenceCompositeClip('tecktonik_scratch', [
+        { id: 'zombie_scratch_fit', dur: b2 },
+        { id: 'spell_simple_shoot_fit', dur: b2 }
+      ]);
+
+      // 6. Cortes Dobles de Brazos (Slices estilo electro dance)
+      createMultiSequenceCompositeClip('tecktonik_slicing', [
+        { id: 'sword_regular_a_fit', dur: b1 },
+        { id: 'sword_regular_b_fit', dur: b1 },
+        { id: 'spell_simple_shoot_fit', dur: b2 }
+      ]);
+
+      // 7. Ráfaga Marcial Electro (Combo maestro de 8 compases con todos los movimientos)
+      createMultiSequenceCompositeClip('tecktonik_flurry', [
+        { id: 'sword_block_fit', dur: b1 },
+        { id: 'idle_shield_break_fit', dur: b1 },
+        { id: 'punch_jab_fit', dur: b1 },
+        { id: 'punch_cross_fit', dur: b1 },
+        { id: 'melee_hook_fit', dur: b1 },
+        { id: 'farm_harvest_fit', dur: b1 },
+        { id: 'zombie_scratch_fit', dur: b1 },
+        { id: 'idle_foldarms_loop_fit', dur: b1 }
+      ]);
+
+      // 8-12. Figuras icónicas continuas
+      createCompositeClip('tecktonik_windmills', 'spell_simple_idle_loop_fit', 2.0, 1.05); // Molinetes circulares
+      createCompositeClip('tecktonik_headpass', 'spell_simple_enter_fit', b2, 1.0);        // Pase doble por cabeza
+      createCompositeClip('tecktonik_chestcross', 'spell_simple_exit_fit', b2, 1.0);       // Cruces de pecho
+      createCompositeClip('tecktonik_freeze', 'idle_foldarms_loop_fit', b4, 1.0);          // Pose freeze brazos cruzados
+      createCompositeClip('tecktonik_victory', 'yes_fit', b4, 1.25);                       // Celebración con ambos brazos
+
+      console.log('⚡ Especialización Tecktonik inicializada con 12 figuras bilaterales compuestas de ambos brazos.');
+    }
+
+    // Load Master GLB Model
+    function loadStudioModel() {
+      loaderElem.style.display = 'flex';
+      loaderElem.style.opacity = '1';
+      loaderText.innerText = 'Cargando guerrero y 84 animaciones...';
+
+      if (window.location.protocol === 'file:') {
+        loaderText.innerHTML = `⚠️ <b>Aviso de seguridad del navegador</b><br><br>
+        Los modelos 3D locales no se pueden cargar abriendo directamente el archivo HTML por restricciones CORS de Chrome/Safari.<br><br>
+        👉 <b>Para abrir el visor correctamente:</b><br>
+        Haz doble clic en el archivo <b><code>Iniciar Visor.command</code></b><br>
+        o accede a través de: <a href="http://localhost:8080/index.html" style="color:#38bdf8; text-decoration:underline;">http://localhost:8080/index.html</a>`;
+        return;
+      }
+
+      // Load actionforge_85_clips_fit.glb
+      loader.load(
+        'actionforge_85_clips_fit.glb?v=' + Date.now(),
+        (gltf) => {
+          currentModel = gltf.scene;
+          bindRigBones(currentModel);
+
+          const toRemove = [];
+          currentModel.traverse((node) => {
+            if (node.isMesh) {
+              if (node.name.includes("Esfera") || node.name.includes("Sphere") || node.name.includes("Cube")) {
+                toRemove.push(node);
+                return;
+              }
+              node.castShadow = true;
+              node.receiveShadow = true;
+              if (node.material) {
+                node.material.transparent = false;
+                node.material.depthWrite = true;
+                node.material.depthTest = true;
+                if (isWireframe) node.material.wireframe = true;
+              }
+            }
+          });
+
+          toRemove.forEach(n => {
+            if (n.parent) n.parent.remove(n);
+          });
+
+          // Ensure proper height & position
+          const box = new THREE.Box3().setFromObject(currentModel);
+          const size = box.getSize(new THREE.Vector3());
+          currentModel.position.y -= box.min.y;
+          baseModelY = currentModel.position.y;
+          scene.add(currentModel);
+
+          controls.target.set(0, 0.95, 0);
+          controls.update();
+
+          // Skeleton Helper
+          currentModel.traverse((child) => {
+            if (child.isSkinnedMesh && !skeletonHelper) {
+              skeletonHelper = new THREE.SkeletonHelper(child.skeleton.bones[0]);
+              skeletonHelper.visible = showSkeleton;
+              scene.add(skeletonHelper);
+            }
+          });
+
+          // Build Animations Map
+          mixer = new THREE.AnimationMixer(currentModel);
+          clipsMap.clear();
+          gltf.animations.forEach(clip => {
+            clipsMap.set(clip.name, clip);
+          });
+
+          // Synthesize specialized Tecktonik clips from base animations
+          initTecktonikClips();
+
+          console.log(`Loaded ${clipsMap.size} animation clips successfully (including Tecktonik Pro).`);
+
+          // Re-populate dropdown so dance category has all 9 entries
+          const activeCatPill = document.querySelector('.cat-pill.active');
+          const currentCat = activeCatPill ? activeCatPill.getAttribute('data-cat') : 'all';
+          populateDropdown(currentCat);
+
+          // Play initial animation (walk)
+          if (clipsMap.has(currentClipId)) {
+            playAnimation(currentClipId, 0.0);
+          } else if (gltf.animations.length > 0) {
+            playAnimation(gltf.animations[0].name, 0.0);
+          }
+
+          loaderElem.style.opacity = '0';
+          setTimeout(() => { loaderElem.style.display = 'none'; }, 400);
+        },
+        (xhr) => {
+          if (xhr.lengthComputable) {
+            const pct = Math.round((xhr.loaded / xhr.total) * 100);
+            loaderText.innerText = `Cargando 84 animaciones... ${pct}%`;
+          }
+        },
+        (err) => {
+          console.error(err);
+          loaderText.innerHTML = `⚠️ Error al cargar el modelo 3D.<br><br>
+          Asegúrate de que el servidor local está activo y accede desde:<br>
+          <a href="http://localhost:8080/index.html" style="color:#38bdf8; text-decoration:underline;">http://localhost:8080/index.html</a><br><br>
+          <button onclick="location.reload()" style="padding:6px 14px; background:#38bdf8; border:none; border-radius:8px; color:black; font-weight:bold; cursor:pointer;">Reintentar</button>`;
+        }
+      );
+    }
+
+    // UI Listeners
+    selectElem.addEventListener('change', (e) => {
+      const selectedId = e.target.value;
+      const meta = ANIMATIONS_DB.find(a => a.id === selectedId);
+      if (meta && (meta.cat === 'dance' || selectedId.includes('dance'))) {
+        startBattleDanceRoutine();
+      } else {
+        isRoutineRunning = false;
+        playAnimation(selectedId);
+      }
+    });
+
+    // Prev / Next Buttons (Cycles within active category or all)
+    document.getElementById('btn-prev').addEventListener('click', () => {
+      const activeCatPill = document.querySelector('.cat-pill.active');
+      const currentCat = activeCatPill ? activeCatPill.getAttribute('data-cat') : 'all';
+      if (currentCat !== 'dance') isRoutineRunning = false;
+      const list = (currentCat && currentCat !== 'all') 
+        ? ANIMATIONS_DB.filter(a => a.cat === currentCat) 
+        : ANIMATIONS_DB;
+      const idx = list.findIndex(a => a.id === currentClipId);
+      const prevIdx = (idx <= 0) ? list.length - 1 : idx - 1;
+      playAnimation(list[prevIdx].id);
+    });
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+      const activeCatPill = document.querySelector('.cat-pill.active');
+      const currentCat = activeCatPill ? activeCatPill.getAttribute('data-cat') : 'all';
+      if (currentCat !== 'dance') isRoutineRunning = false;
+      const list = (currentCat && currentCat !== 'all') 
+        ? ANIMATIONS_DB.filter(a => a.cat === currentCat) 
+        : ANIMATIONS_DB;
+      const idx = list.findIndex(a => a.id === currentClipId);
+      const nextIdx = (idx === -1 || idx >= list.length - 1) ? 0 : idx + 1;
+      playAnimation(list[nextIdx].id);
+    });
+
+    // Category Filter Helper
+    function selectCategory(cat) {
+      document.querySelectorAll('.cat-pill').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-cat') === cat);
+      });
+      populateDropdown(cat);
+    }
+
+    // Category Filter Pills
+    document.querySelectorAll('.cat-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cat = btn.getAttribute('data-cat');
+        selectCategory(cat);
+        if (cat === 'dance') {
+          startBattleDanceRoutine();
+        } else {
+          isRoutineRunning = false;
+        }
+      });
+    });
+
+    // In-Place vs Root Motion Toggles
+    const btnInPlace = document.getElementById('btn-inplace');
+    const btnRootMotion = document.getElementById('btn-rootmotion');
+
+    btnInPlace.addEventListener('click', () => {
+      isInPlace = true;
+      btnInPlace.classList.add('active');
+      btnRootMotion.classList.remove('active');
+      applyInPlaceMode();
+    });
+
+    btnRootMotion.addEventListener('click', () => {
+      isInPlace = false;
+      btnRootMotion.classList.add('active');
+      btnInPlace.classList.remove('active');
+    });
+
+    // Player controls (Synchronized with 3D and Audio)
+    document.getElementById('btn-play').addEventListener('click', () => {
+      if (!activeAction) return;
+      isPlaying = !isPlaying;
+      activeAction.paused = !isPlaying;
+      updatePlayButton();
+
+      // Sincronizar pausa/reanudación de música con el reproductor
+      if (!isPlaying) {
+        activeAction.paused = true;
+        if (customAudioEl && !customAudioEl.paused) {
+          customAudioEl.pause();
+        }
+        if (customAudioSource) {
+          try { customAudioSource.stop(0); } catch(e) {}
+        }
+        if (beatTimer) {
+          clearInterval(beatTimer);
+          beatTimer = null;
+        }
+        if (btnTrackPlay) btnTrackPlay.innerText = '▶ Reproducir';
+        updateSyncStatusBadge('⏸ En Pausa');
+      } else {
+        activeAction.paused = false;
+        activeAction.setEffectiveTimeScale(getEffectiveSpeed(currentClipId));
+        if (isCustomAudioPlaying && customAudioEl && customAudioEl.paused) {
+          customAudioEl.play().catch(() => {});
+          if (btnTrackPlay) btnTrackPlay.innerText = '⏸ Pausar';
+        } else if (isMusicPlaying && activeBeatType !== 'off' && activeBeatType !== 'custom' && !beatTimer) {
+          startBeatClock();
+        }
+        updateSyncStatusBadge();
+      }
+    });
+
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      if (!activeAction) return;
+      activeAction.reset();
+      activeAction.play();
+      isPlaying = true;
+      updatePlayButton();
+      if (rootBone && isInPlace) rootBone.position.set(0, 0, 0);
+
+      // Reiniciar música al inicio si está activa
+      if (isCustomAudioPlaying && customAudioEl) {
+        try {
+          customAudioEl.currentTime = 0;
+          if (isPlaying) customAudioEl.play().catch(() => {});
+        } catch(e) {}
+      }
+      alignToDownbeat();
+    });
+
+    document.getElementById('btn-speed').addEventListener('click', (e) => {
+      speedIdx = (speedIdx + 1) % speeds.length;
+      playbackSpeed = speeds[speedIdx];
+      e.target.innerText = `${playbackSpeed}x`;
+      if (activeAction) {
+        activeAction.setEffectiveTimeScale(getEffectiveSpeed(currentClipId));
+      }
+    });
+
+    document.getElementById('btn-skeleton').addEventListener('click', (e) => {
+      showSkeleton = !showSkeleton;
+      e.target.classList.toggle('active', showSkeleton);
+      if (skeletonHelper) skeletonHelper.visible = showSkeleton;
+    });
+
+    document.getElementById('btn-wireframe').addEventListener('click', (e) => {
+      isWireframe = !isWireframe;
+      e.target.classList.toggle('active', isWireframe);
+      if (currentModel) {
+        currentModel.traverse((node) => {
+          if (node.isMesh && node.material) {
+            node.material.wireframe = isWireframe;
+          }
+        });
+      }
+    });
+
+    document.getElementById('btn-grid').addEventListener('click', (e) => {
+      grid.visible = !grid.visible;
+      shadowPlane.visible = grid.visible;
+      e.target.classList.toggle('active', grid.visible);
+    });
+
+    document.getElementById('btn-autorotate').addEventListener('click', (e) => {
+      controls.autoRotate = !controls.autoRotate;
+      e.target.classList.toggle('active', controls.autoRotate);
+    });
+
+    // Camera Presets
+    document.getElementById('cam-front').addEventListener('click', () => {
+      controls.target.set(0, 0.95, 0);
+      camera.position.set(0, 1.35, 3.2);
+      controls.update();
+    });
+
+    document.getElementById('cam-face').addEventListener('click', () => {
+      controls.target.set(0, 1.55, 0);
+      camera.position.set(0, 1.6, 1.15);
+      controls.update();
+    });
+
+    document.getElementById('cam-side').addEventListener('click', () => {
+      controls.target.set(0, 0.95, 0);
+      camera.position.set(3.0, 1.35, 0);
+      controls.update();
+    });
+
+    // Timeline Scrub
+    const progressBar = document.getElementById('progress-bar');
+    progressBar.addEventListener('click', (e) => {
+      if (!activeAction || !activeAction.getClip()) return;
+      const rect = progressBar.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const pct = Math.max(0, Math.min(1, clickX / rect.width));
+      const dur = activeAction.getClip().duration;
+      activeAction.time = pct * dur;
+    });
+
+    // =========================================================================
+    // WEB AUDIO SYNTHESIZER & BEAT SYNCHRONIZATION SYSTEM
+    // =========================================================================
+    let audioCtx = null;
+    let analyserNode = null;
+    let masterGain = null;
+    let freqDataArray = null;
+
+    let beatTimer = null;
+    let stepCount = 0;
+
+    // Custom Audio File State (Hybrid Native Element + Web Audio Analyzer)
+    const customAudioEl = new Audio();
+    customAudioEl.loop = true;
+    customAudioEl.crossOrigin = 'anonymous';
+    let customAudioNode = null;
+    let customAudioSource = null;
+    let customAudioBuffer = null;
+    let customAudioGain = null;
+    let customAudioStartTime = 0;
+    let customAudioPauseOffset = 0;
+
+    // Tap Tempo State
+    let tapTimes = [];
+    let tapTimeout = null;
+
+    const visualizerCanvas = document.getElementById('visualizer-canvas');
+    const vCtx = visualizerCanvas.getContext('2d');
+    const beatPulseFx = document.getElementById('beat-fx');
+    const bpmSlider = document.getElementById('bpm-slider');
+    const bpmVal = document.getElementById('bpm-val');
+    const syncStatusBadge = document.getElementById('sync-status-badge');
+    const customTrackCard = document.getElementById('custom-track-card');
+    const customTrackName = document.getElementById('custom-track-name');
+    const btnTrackPlay = document.getElementById('btn-track-play');
+    const btnTrackRestart = document.getElementById('btn-track-restart');
+    const customVolSlider = document.getElementById('custom-vol-slider');
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyserNode = audioCtx.createAnalyser();
+        analyserNode.fftSize = 1024;
+        analyserNode.smoothingTimeConstant = 0.35;
+        freqDataArray = new Uint8Array(analyserNode.frequencyBinCount);
+
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 1.0;
+        masterGain.connect(analyserNode);
+        analyserNode.connect(audioCtx.destination);
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // Play Kick Drum (Deep 808 Style)
+    function playKick(time) {
+      if (!audioCtx || !masterGain) return;
+      danceEvent('kick', 1.0);
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.frequency.setValueAtTime(140, time);
+      osc.frequency.exponentialRampToValueAtTime(32, time + 0.12);
+
+      gain.gain.setValueAtTime(1.0, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.28);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+
+      osc.start(time);
+      osc.stop(time + 0.28);
+    }
+
+    // Play Snare / Clap
+    function playSnare(time) {
+      if (!audioCtx || !masterGain) return;
+      danceEvent('snare', 1.0);
+      const bufferSize = Math.floor(audioCtx.sampleRate * 0.12);
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 800;
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.7, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.14);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+
+      noise.start(time);
+      noise.stop(time + 0.15);
+    }
+
+    // Play Hi-Hat
+    function playHat(time) {
+      if (!audioCtx || !masterGain) return;
+      danceEvent('hat', 0.6);
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(8000, time);
+
+      gain.gain.setValueAtTime(0.3, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.04);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(time);
+      osc.stop(time + 0.05);
+    }
+
+    // Play Bass Note
+    function playBassNote(time, freq) {
+      if (!audioCtx || !masterGain) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, time);
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(350, time);
+      filter.frequency.exponentialRampToValueAtTime(80, time + 0.2);
+
+      gain.gain.setValueAtTime(0.4, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + 0.25);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+
+      osc.start(time);
+      osc.stop(time + 0.25);
+    }
+
+    // Sequencer Clock Tick for Preset Synthesized Beats
+    function onBeatStep() {
+      const stepInMeasure = stepCount % 16;
+      const now = audioCtx ? audioCtx.currentTime : 0;
+
+      if (activeBeatType === 'epic') {
+        if (stepInMeasure === 0 || stepInMeasure === 4 || stepInMeasure === 8 || stepInMeasure === 12 || stepInMeasure === 14) {
+          playKick(now);
+          triggerBeatVisual();
+        }
+        if (stepInMeasure === 4 || stepInMeasure === 12) playSnare(now);
+        if (stepInMeasure % 2 === 0) playHat(now);
+        if (stepInMeasure === 0) playBassNote(now, 55);
+        if (stepInMeasure === 8) playBassNote(now, 65.4);
+        if (stepInMeasure === 12) playBassNote(now, 49);
+      } else if (activeBeatType === 'cyber') {
+        // Electro Tecktonik House (128 BPM): Four-on-the-floor, offbeat hat, claps & bajo electro rodante
+        if (stepInMeasure % 4 === 0) {
+          playKick(now);
+          triggerBeatVisual();
+        }
+        if (stepInMeasure % 4 === 2) {
+          playHat(now);
+        }
+        if (stepInMeasure === 4 || stepInMeasure === 12) {
+          playSnare(now);
+        }
+        // Bajo sintetizado rodante característico de electro house / Tecktonik
+        if (stepInMeasure % 2 === 0) {
+          const bassProgression = [55, 55, 65.4, 55, 55, 55, 73.4, 65.4];
+          const noteIdx = Math.floor(stepInMeasure / 2);
+          playBassNote(now, bassProgression[noteIdx]);
+        }
+      } else if (activeBeatType === 'lofi') {
+        if (stepInMeasure === 0 || stepInMeasure === 7) {
+          playKick(now);
+          triggerBeatVisual();
+        }
+        if (stepInMeasure === 4 || stepInMeasure === 12) playSnare(now);
+        if (stepInMeasure % 4 === 2) playHat(now);
+      }
+
+      stepCount++;
+    }
+
+    function triggerBeatVisual() {
+      if (!beatPulseFx) return;
+      beatPulseFx.classList.add('pulsing');
+      setTimeout(() => beatPulseFx.classList.remove('pulsing'), 180);
+    }
+
+    function resumeAudioOutput() {
+      initAudio();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      if (masterGain && audioCtx) {
+        masterGain.gain.cancelScheduledValues(0);
+        masterGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+      }
+      if (customAudioEl) {
+        const vol = parseFloat(customVolSlider ? customVolSlider.value : 0.85);
+        customAudioEl.volume = vol;
+      }
+      const btnStopTop = document.getElementById('btn-stop-music');
+      if (btnStopTop) {
+        btnStopTop.classList.remove('active-silence');
+        btnStopTop.style.display = 'inline-flex';
+        btnStopTop.innerHTML = '⏹ Parar Música';
+      }
+      const ledSil = document.getElementById('led-silence');
+      if (ledSil) ledSil.classList.remove('active');
+    }
+
+    function startBeatClock() {
+      if (beatTimer) clearInterval(beatTimer);
+      if (activeBeatType === 'off' || activeBeatType === 'custom') {
+        return;
+      }
+      resumeAudioOutput();
+      isMusicPlaying = true;
+      isPlaying = true;
+      updatePlayButton();
+
+      const intervalMs = (60 / currentBPM / 4) * 1000;
+      beatTimer = setInterval(onBeatStep, intervalMs);
+
+      if (activeAction) {
+        activeAction.paused = false;
+        activeAction.setEffectiveTimeScale(getEffectiveSpeed(currentClipId));
+      }
+      updateSyncStatusBadge();
+    }
+
+    function stopBeatClock() {
+      if (beatTimer) clearInterval(beatTimer);
+      beatTimer = null;
+      if (activeBeatType !== 'custom') {
+        isMusicPlaying = false;
+        if (activeAction) {
+          activeAction.setEffectiveTimeScale(playbackSpeed);
+        }
+      }
+      updateSyncStatusBadge();
+    }
+
+    function stopAllMusic() {
+      // 1. Inmediatamente silenciar y pausar Audio HTML5
+      if (customAudioEl) {
+        try {
+          customAudioEl.pause();
+          customAudioEl.currentTime = 0;
+          customAudioEl.volume = 0;
+        } catch(e) {}
+      }
+
+      // 2. Detener y desconectar fuentes Web Audio activas
+      if (customAudioSource) {
+        try { customAudioSource.stop(0); } catch(e) {}
+        try { customAudioSource.disconnect(); } catch(e) {}
+        customAudioSource = null;
+      }
+      customAudioPauseOffset = 0;
+
+      // 3. Detener reloj sintetizado
+      if (beatTimer) {
+        clearInterval(beatTimer);
+        beatTimer = null;
+      }
+
+      // 4. Silenciar Master Gain a 0 y suspender AudioContext (silencio absoluto garantizado)
+      if (masterGain && audioCtx) {
+        try {
+          masterGain.gain.cancelScheduledValues(0);
+          masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        } catch(e) {}
+      }
+      if (audioCtx && audioCtx.state === 'running') {
+        try { audioCtx.suspend(); } catch(e) {}
+      }
+
+      // 5. Flags de estado
+      isMusicPlaying = false;
+      isCustomAudioPlaying = false;
+      activeBeatType = 'off';
+
+      // 6. UI: Botón de parar del topbar y resetear botones
+      const btnStopTop = document.getElementById('btn-stop-music');
+      if (btnStopTop) {
+        btnStopTop.style.display = 'none';
+      }
+      if (btnToggleMusic) {
+        btnToggleMusic.classList.remove('music-active');
+      }
+      if (btnTrackPlay) btnTrackPlay.innerText = '▶ Reproducir';
+
+      document.querySelectorAll('.beat-btn').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-beat') === 'off');
+      });
+
+      // 7. Resetear LEDs orgánicos y muelles físicos
+      const ledK = document.getElementById('led-kick');
+      const ledS = document.getElementById('led-snare');
+      const ledSil = document.getElementById('led-silence');
+      if (ledK) ledK.classList.remove('active');
+      if (ledS) ledS.classList.remove('active');
+      if (ledSil) ledSil.classList.remove('active');
+
+      relaxSprings();
+      if (currentModel && baseModelY !== null) {
+        currentModel.position.y = baseModelY;
+      }
+
+      // 8. Normalizar velocidad de animación sin congelar permanentemente
+      if (activeAction) {
+        activeAction.paused = !isPlaying;
+        activeAction.setEffectiveTimeScale(playbackSpeed);
+      }
+
+      updateSyncStatusBadge('Música apagada');
+    }
+
+    // Dynamic Tempo Setter
+    function setTempoBPM(bpm, source = '') {
+      currentBPM = Math.max(50, Math.min(220, Math.round(bpm)));
+      if (bpmSlider) bpmSlider.value = currentBPM;
+      if (bpmVal) bpmVal.innerText = `${currentBPM} BPM`;
+
+      if (activeAction) {
+        activeAction.setEffectiveTimeScale(getEffectiveSpeed(currentClipId));
+      }
+
+      if (isMusicPlaying && activeBeatType !== 'custom' && activeBeatType !== 'off') {
+        startBeatClock();
+      }
+
+      updateSyncStatusBadge(source);
+    }
+
+    function updateSyncStatusBadge(info = '') {
+      if (!syncStatusBadge) return;
+      const meta = ANIMATIONS_DB.find(a => a.id === currentClipId);
+      const isDance = meta && (meta.cat === 'dance' || currentClipId.includes('dance') || isRoutineRunning);
+      const base = meta ? meta.bpmBase : 120;
+      const effectiveRate = ((currentBPM / base) * playbackSpeed).toFixed(2);
+
+      if (activeBeatType === 'off' && !isCustomAudioPlaying) {
+        if (isDance) {
+          syncStatusBadge.innerText = `🟢 Baile Activo (${currentBPM} BPM) • Pulsa 'Conectar Baile a Música' para ritmo`;
+        } else {
+          syncStatusBadge.innerText = `⏸ Audio en Silencio • ${meta ? meta.name : currentClipId}`;
+        }
+        syncStatusBadge.style.color = 'var(--text-muted)';
+        syncStatusBadge.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+      } else {
+        const extra = info ? ` (${info})` : '';
+        if (isDance) {
+          syncStatusBadge.innerText = `🟢 Baile Conectado: ${currentBPM} BPM${extra} • Ritmo: ${effectiveRate}x`;
+          syncStatusBadge.style.color = '#10b981';
+          syncStatusBadge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        } else {
+          syncStatusBadge.innerText = `🎵 Música (${currentBPM} BPM) • ${meta ? meta.name : currentClipId}`;
+          syncStatusBadge.style.color = '#38bdf8';
+          syncStatusBadge.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+        }
+      }
+    }
+
+    // Tap Tempo Engine
+    function handleTapTempo() {
+      initAudio();
+      const now = performance.now();
+      clearTimeout(tapTimeout);
+
+      if (tapTimes.length > 0 && (now - tapTimes[tapTimes.length - 1]) > 2200) {
+        tapTimes = [];
+      }
+      tapTimes.push(now);
+
+      const tapBtn = document.getElementById('btn-tap-tempo');
+      if (tapBtn) {
+        tapBtn.classList.add('pulse');
+        setTimeout(() => tapBtn.classList.remove('pulse'), 140);
+      }
+
+      const subElem = document.getElementById('tap-tempo-sub');
+      if (tapTimes.length === 1) {
+        if (subElem) subElem.innerText = '¡Sigue tocando! (Golpe 1)';
+        return;
+      }
+
+      const intervals = [];
+      const startIdx = Math.max(0, tapTimes.length - 6);
+      for (let i = startIdx + 1; i < tapTimes.length; i++) {
+        intervals.push(tapTimes[i] - tapTimes[i - 1]);
+      }
+
+      const avgMs = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      let calculatedBpm = Math.round(60000 / avgMs);
+
+      if (calculatedBpm >= 50 && calculatedBpm <= 220) {
+        setTempoBPM(calculatedBpm, `Tap #${tapTimes.length}`);
+        if (subElem) subElem.innerText = `🎯 ${calculatedBpm} BPM detectado (Tap ${tapTimes.length})`;
+      }
+
+      tapTimeout = setTimeout(() => {
+        tapTimes = [];
+        if (subElem) subElem.innerText = 'Haz clic 3 o 4 veces al ritmo de tu canción';
+      }, 2200);
+    }
+
+    // Downbeat / 1st Beat Step Alignment
+    function alignToDownbeat() {
+      if (!activeAction || !activeAction.getClip()) return;
+      activeAction.time = 0;
+      triggerBeatVisual();
+      if (syncStatusBadge) {
+        syncStatusBadge.innerText = '⚡ ¡Golpe 1 alineado con el compás!';
+        syncStatusBadge.style.color = '#a855f7';
+        setTimeout(() => updateSyncStatusBadge(), 1200);
+      }
+    }
+
+    // Robust Client-Side Auto-BPM Estimator
+    function estimateBPM(audioBuffer) {
+      try {
+        const sampleRate = audioBuffer.sampleRate;
+        const channelData = audioBuffer.getChannelData(0);
+        const duration = Math.min(audioBuffer.duration, 20);
+        const totalSamples = Math.floor(duration * sampleRate);
+
+        const targetSampleRate = 2205;
+        const downsampleFactor = Math.max(1, Math.floor(sampleRate / targetSampleRate));
+        const downsampledLength = Math.floor(totalSamples / downsampleFactor);
+        const downsampled = new Float32Array(downsampledLength);
+
+        for (let i = 0; i < downsampledLength; i++) {
+          let sum = 0;
+          const start = i * downsampleFactor;
+          for (let j = 0; j < downsampleFactor; j++) {
+            sum += Math.abs(channelData[start + j]);
+          }
+          downsampled[i] = sum / downsampleFactor;
+        }
+
+        const hopSize = 22; // ~10ms
+        const numHops = Math.floor(downsampledLength / hopSize);
+        const energy = new Float32Array(numHops);
+        for (let i = 0; i < numHops; i++) {
+          let e = 0;
+          const start = i * hopSize;
+          for (let j = 0; j < hopSize; j++) {
+            e += downsampled[start + j] * downsampled[start + j];
+          }
+          energy[i] = e;
+        }
+
+        const onsets = new Float32Array(numHops);
+        for (let i = 1; i < numHops; i++) {
+          const diff = energy[i] - energy[i - 1];
+          onsets[i] = diff > 0 ? diff : 0;
+        }
+
+        const hopsPerSec = targetSampleRate / hopSize;
+        const minLag = Math.floor((60 / 175) * hopsPerSec);
+        const maxLag = Math.floor((60 / 75) * hopsPerSec);
+
+        let bestLag = minLag;
+        let maxCorr = -Infinity;
+
+        for (let lag = minLag; lag <= maxLag; lag++) {
+          let corr = 0;
+          const count = numHops - lag;
+          for (let i = 0; i < count; i++) {
+            corr += onsets[i] * onsets[i + lag];
+          }
+          if (corr > maxCorr) {
+            maxCorr = corr;
+            bestLag = lag;
+          }
+        }
+
+        let detectedBPM = Math.round((60 * hopsPerSec) / bestLag);
+        while (detectedBPM < 75) detectedBPM *= 2;
+        while (detectedBPM > 175) detectedBPM = Math.round(detectedBPM / 2);
+
+        return (isNaN(detectedBPM) || detectedBPM <= 0) ? 120 : detectedBPM;
+      } catch (err) {
+        console.warn('Error estimating BPM:', err);
+        return 120;
+      }
+    }
+
+    // Custom Audio Playback Engine (Supports both native Audio Element and Web Audio Buffer)
+    function playCustomAudio(offset = 0) {
+      resumeAudioOutput();
+      stopBeatClock();
+      document.querySelectorAll('.beat-btn').forEach(b => b.classList.remove('active'));
+
+      const vol = parseFloat(customVolSlider ? customVolSlider.value : 0.85);
+
+      if (customAudioEl && customAudioEl.src) {
+        if (!customAudioNode && analyserNode) {
+          try {
+            customAudioNode = audioCtx.createMediaElementSource(customAudioEl);
+            customAudioNode.connect(analyserNode);
+          } catch(e) {
+            console.warn('createMediaElementSource note:', e.message);
+          }
+        }
+        if (offset > 0) {
+          try { customAudioEl.currentTime = offset; } catch(e) {}
+        }
+        customAudioEl.volume = vol;
+        customAudioEl.play().catch(e => console.warn('Audio play notice:', e.message));
+
+        isCustomAudioPlaying = true;
+        isMusicPlaying = true;
+        isPlaying = true;
+        updatePlayButton();
+
+        if (btnTrackPlay) btnTrackPlay.innerText = '⏸ Pausar';
+        if (activeAction) {
+          activeAction.paused = false;
+          activeAction.setEffectiveTimeScale(getEffectiveSpeed(currentClipId));
+        }
+        updateSyncStatusBadge('Reproduciendo');
+        return;
+      }
+
+      if (!customAudioBuffer || !audioCtx) return;
+
+      if (customAudioSource) {
+        try { customAudioSource.stop(); } catch(e) {}
+        customAudioSource.disconnect();
+        customAudioSource = null;
+      }
+
+      customAudioSource = audioCtx.createBufferSource();
+      customAudioSource.buffer = customAudioBuffer;
+      customAudioSource.loop = true;
+
+      if (!customAudioGain) {
+        customAudioGain = audioCtx.createGain();
+      }
+      customAudioGain.gain.value = vol;
+
+      customAudioSource.connect(customAudioGain);
+      customAudioGain.connect(masterGain);
+
+      const startOffset = offset % customAudioBuffer.duration;
+      customAudioSource.start(0, startOffset);
+      customAudioStartTime = audioCtx.currentTime - startOffset;
+
+      isCustomAudioPlaying = true;
+      isMusicPlaying = true;
+      isPlaying = true;
+      updatePlayButton();
+      activeBeatType = 'custom';
+
+      if (btnTrackPlay) btnTrackPlay.innerText = '⏸ Pausar';
+      if (activeAction) {
+        activeAction.paused = false;
+        activeAction.setEffectiveTimeScale(getEffectiveSpeed(currentClipId));
+      }
+      updateSyncStatusBadge('Reproduciendo');
+    }
+
+    function pauseCustomAudio() {
+      if (customAudioEl && customAudioEl.src) {
+        customAudioEl.pause();
+      }
+      if (customAudioSource) {
+        try { customAudioSource.stop(); } catch(e) {}
+        customAudioSource.disconnect();
+        customAudioSource = null;
+      }
+      isCustomAudioPlaying = false;
+      isMusicPlaying = false;
+
+      if (btnTrackPlay) btnTrackPlay.innerText = '▶ Reproducir';
+      if (isRoutineRunning && activeAction) {
+        activeAction.paused = true;
+        activeAction.setEffectiveTimeScale(0);
+      } else if (activeAction) {
+        activeAction.setEffectiveTimeScale(playbackSpeed);
+      }
+      relaxSprings();
+      updateSyncStatusBadge('Música en pausa');
+    }
+
+    function toggleCustomAudio() {
+      if (isCustomAudioPlaying) {
+        pauseCustomAudio();
+      } else {
+        const offset = (customAudioEl && customAudioEl.src) ? customAudioEl.currentTime : customAudioPauseOffset;
+        playCustomAudio(offset);
+      }
+    }
+
+    // Real-Time Spectrum Visualizer Loop
+    function renderVisualizer() {
+      requestAnimationFrame(renderVisualizer);
+      vCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+
+      const numBars = 26;
+      const barWidth = Math.floor(visualizerCanvas.width / numBars) - 2;
+
+      if (analyserNode && (isMusicPlaying || isCustomAudioPlaying)) {
+        analyserNode.getByteFrequencyData(freqDataArray);
+
+        // Flash screen beat effect if bass punch detected in custom music
+        const bassVal = (freqDataArray[0] + freqDataArray[1] + freqDataArray[2]) / 3;
+        if (bassVal > 195 && activeBeatType === 'custom') {
+          triggerBeatVisual();
+        }
+
+        for (let i = 0; i < numBars; i++) {
+          const freqIndex = Math.floor((i / numBars) * freqDataArray.length);
+          const rawVal = freqDataArray[freqIndex] || 0;
+          const h = Math.max(3, (rawVal / 255) * (visualizerCanvas.height - 4));
+
+          const grad = vCtx.createLinearGradient(0, visualizerCanvas.height, 0, 0);
+          grad.addColorStop(0, '#06b6d4');
+          grad.addColorStop(0.5, '#3b82f6');
+          grad.addColorStop(1, '#a855f7');
+          vCtx.fillStyle = grad;
+          vCtx.fillRect(i * (barWidth + 2) + 2, visualizerCanvas.height - h, barWidth, h);
+        }
+      } else {
+        // Idle ambient waves
+        for (let i = 0; i < numBars; i++) {
+          const h = 3;
+          vCtx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+          vCtx.fillRect(i * (barWidth + 2) + 2, visualizerCanvas.height - h, barWidth, h);
+        }
+      }
+    }
+    renderVisualizer();
+
+    // Tap Tempo Button Listener
+    const btnTapTempo = document.getElementById('btn-tap-tempo');
+    if (btnTapTempo) {
+      btnTapTempo.addEventListener('click', handleTapTempo);
+    }
+
+    // Downbeat Alignment Button
+    const btnAlignBeat = document.getElementById('btn-align-beat');
+    if (btnAlignBeat) {
+      btnAlignBeat.addEventListener('click', alignToDownbeat);
+    }
+
+    // Stop Music Buttons (Top bar & Drawer)
+    const btnStopMusicTop = document.getElementById('btn-stop-music');
+    if (btnStopMusicTop) {
+      btnStopMusicTop.addEventListener('click', stopAllMusic);
+    }
+    const btnStopMusicDrawer = document.getElementById('btn-stop-music-drawer');
+    if (btnStopMusicDrawer) {
+      btnStopMusicDrawer.addEventListener('click', stopAllMusic);
+    }
+
+    // Fast Switch to Tecktonik Dance Button (Preserves full dropdown accessibility)
+    const btnSwitchDance = document.getElementById('btn-switch-dance');
+    if (btnSwitchDance) {
+      btnSwitchDance.addEventListener('click', () => {
+        selectCategory('dance');
+        selectDanceSpecialization('tecktonik');
+      });
+    }
+
+    // BPM Slider & Nudge Buttons
+    if (bpmSlider) {
+      bpmSlider.addEventListener('input', (e) => {
+        setTempoBPM(parseInt(e.target.value, 10));
+      });
+    }
+    const btnBpmMinus = document.getElementById('btn-bpm-minus');
+    if (btnBpmMinus) {
+      btnBpmMinus.addEventListener('click', () => {
+        setTempoBPM(currentBPM - 1);
+      });
+    }
+    const btnBpmPlus = document.getElementById('btn-bpm-plus');
+    if (btnBpmPlus) {
+      btnBpmPlus.addEventListener('click', () => {
+        setTempoBPM(currentBPM + 1);
+      });
+    }
+
+    // Beat Selector Buttons (Preset Synthesizer)
+    document.querySelectorAll('.beat-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        initAudio();
+        // If custom audio was playing, pause it
+        if (isCustomAudioPlaying) {
+          pauseCustomAudio();
+        }
+        document.querySelectorAll('.beat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeBeatType = btn.getAttribute('data-beat');
+        if (activeBeatType === 'off') {
+          stopAllMusic();
+        } else {
+          startBeatClock();
+        }
+      });
+    });
+
+    // Custom Track Player Controls
+    if (btnTrackPlay) {
+      btnTrackPlay.addEventListener('click', toggleCustomAudio);
+    }
+    if (btnTrackRestart) {
+      btnTrackRestart.addEventListener('click', () => {
+        customAudioPauseOffset = 0;
+        if (customAudioEl && customAudioEl.src) {
+          try { customAudioEl.currentTime = 0; } catch(e) {}
+        }
+        playCustomAudio(0);
+        alignToDownbeat();
+      });
+    }
+    if (customVolSlider) {
+      customVolSlider.addEventListener('input', (e) => {
+        const vol = parseFloat(e.target.value);
+        if (customAudioEl) customAudioEl.volume = vol;
+        if (customAudioGain) customAudioGain.gain.value = vol;
+      });
+    }
+
+    // Toggle Music Studio Drawer
+    const musicStudio = document.getElementById('music-studio');
+    const btnToggleMusic = document.getElementById('btn-toggle-music');
+    btnToggleMusic.addEventListener('click', () => {
+      initAudio();
+      musicStudio.classList.toggle('collapsed');
+      btnToggleMusic.classList.toggle('music-active', !musicStudio.classList.contains('collapsed'));
+    });
+    document.getElementById('btn-close-music').addEventListener('click', () => {
+      musicStudio.classList.add('collapsed');
+      btnToggleMusic.classList.remove('music-active');
+    });
+
+    // Global Keyboard Shortcuts (T: Tap Tempo, S: Snap Beat, 1-8: Action Pads, Space: Play/Pause)
+    window.addEventListener('keydown', (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+      if (e.key === 't' || e.key === 'T') {
+        handleTapTempo();
+      } else if (e.key === 's' || e.key === 'S') {
+        alignToDownbeat();
+      } else if (e.key === '1') {
+        triggerLivePadAction(1);
+      } else if (e.key === '2') {
+        triggerLivePadAction(2);
+      } else if (e.key === '3') {
+        triggerLivePadAction(3);
+      } else if (e.key === '4') {
+        triggerLivePadAction(4);
+      } else if (e.key === '5') {
+        triggerLivePadAction(5);
+      } else if (e.key === '6') {
+        triggerLivePadAction(6);
+      } else if (e.key === '7') {
+        triggerLivePadAction(7);
+      } else if (e.key === '8') {
+        triggerLivePadAction(8);
+      } else if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        const btnPlay = document.getElementById('btn-play');
+        if (btnPlay) btnPlay.click();
+      }
+    });
+
+    // Custom Audio File Uploader & Auto-Sync Engine (Instant Playback & Safe Background BPM Analysis)
+    document.getElementById('audio-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      initAudio();
+
+      // Ensure music studio is visible so user sees the controls
+      musicStudio.classList.remove('collapsed');
+      btnToggleMusic.classList.add('music-active');
+
+      // Stop any synthesizer sequence
+      stopBeatClock();
+      document.querySelectorAll('.beat-btn').forEach(b => b.classList.remove('active'));
+
+      // Configure UI immediately without blocking the screen
+      if (customTrackCard) customTrackCard.style.display = 'flex';
+      if (customTrackName) customTrackName.innerText = `🎵 ${file.name}`;
+      updateSyncStatusBadge('⚡ Analizando ritmo...');
+
+      // Instant playback via native audio element (supports MP3, M4A, WAV, AAC, FLAC)
+      const fileUrl = URL.createObjectURL(file);
+      customAudioEl.src = fileUrl;
+      customAudioEl.load();
+
+      // Enter the authentic synchronized dance routine
+      isRoutineRunning = true;
+      choreoIndex = 0;
+      choreoBeatTimer = 0;
+      playAnimation(isChoreoMode ? CHOREOGRAPHY_ROUTINE[0].id : 'dance_loop_fit', 0.25);
+
+      // Start custom track right away!
+      customAudioPauseOffset = 0;
+      playCustomAudio(0);
+      alignToDownbeat();
+
+      // Background BPM Analysis with 2.5s strict timeout (never hangs)
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const decodePromise = new Promise((resolve, reject) => {
+          try {
+            const p = audioCtx.decodeAudioData(arrayBuffer.slice(0), resolve, reject);
+            if (p && typeof p.then === 'function') p.then(resolve).catch(reject);
+          } catch(err) { reject(err); }
+        });
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Decode timeout')), 2500));
+
+        const buffer = await Promise.race([decodePromise, timeoutPromise]);
+        customAudioBuffer = buffer;
+
+        let detectedBPM = 120;
+        try {
+          detectedBPM = estimateBPM(buffer);
+        } catch(bpmErr) {
+          console.warn('estimateBPM note:', bpmErr);
+        }
+        setTempoBPM(detectedBPM, 'Auto-BPM');
+        updateSyncStatusBadge(`${detectedBPM} BPM Detectado`);
+      } catch (bpmErr) {
+        console.warn('Background BPM detection skipped/timed out, using standard tempo:', bpmErr.message);
+        updateSyncStatusBadge(`${currentBPM} BPM (Usa 'T' para ritmo)`);
+      }
+    });
+
+    // Drag & Drop 3D Model Support
+    window.addEventListener('dragover', (e) => { e.preventDefault(); });
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (!file || (!file.name.endsWith('.glb') && !file.name.endsWith('.gltf'))) return;
+      loaderElem.style.display = 'flex';
+      loaderElem.style.opacity = '1';
+      loaderText.innerText = `Cargando ${file.name}...`;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        loader.parse(ev.target.result, '', (gltf) => {
+          if (currentModel) scene.remove(currentModel);
+          currentModel = gltf.scene;
+          bindRigBones(currentModel);
+          scene.add(currentModel);
+          baseModelY = currentModel.position.y;
+          if (gltf.animations.length > 0) {
+            mixer = new THREE.AnimationMixer(currentModel);
+            clipsMap.clear();
+            gltf.animations.forEach(c => clipsMap.set(c.name, c));
+            playAnimation(gltf.animations[0].name, 0);
+          }
+          loaderElem.style.opacity = '0';
+          setTimeout(() => { loaderElem.style.display = 'none'; }, 400);
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    // Window Resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // =========================================================================
+    // ORGANIC AUDIO-REACTIVE DANCE & PROCEDURAL PHYSICS ENGINE
+    // =========================================================================
+    let isOrganicMode = true;
+    let kickSensitivity = 1.0;
+    let headTorsoIntensity = 1.0;
+    let silenceThreshold = 10.0;
+
+    // Physical Spring States
+    let pelvisOffsetY = 0;
+    let pelvisVelocityY = 0;
+    let pelvisSwayZ = 0;
+    let swayDirection = 1;
+
+    let headOffsetX = 0;
+    let headVelocityX = 0;
+
+    let spineOffsetX = 0;
+    let spineVelocityX = 0;
+
+    let armOffsetZ = 0;
+    let armVelocityZ = 0;
+
+    // Audio Analysis & Silence Trackers
+    let prevBass = 0;
+    let prevMid = 0;
+    let lastKickTime = 0;
+    let lastSnareTime = 0;
+    let silenceTimer = 0;
+    let isSilenceActive = false;
+    let smoothedRMS = 0;
+
+    // DOM Handles for Organic Controls & LEDs
+    const btnToggleOrganic = document.getElementById('btn-toggle-organic');
+    const organicToggleStatus = document.getElementById('organic-toggle-status');
+    const ledKick = document.getElementById('led-kick');
+    const ledSnare = document.getElementById('led-snare');
+    const ledSilence = document.getElementById('led-silence');
+    const sliderKickSens = document.getElementById('slider-kick-sens');
+    const valKickSens = document.getElementById('val-kick-sens');
+    const sliderHeadSens = document.getElementById('slider-head-sens');
+    const valHeadSens = document.getElementById('val-head-sens');
+    const sliderSilenceThresh = document.getElementById('slider-silence-thresh');
+    const valSilenceThresh = document.getElementById('val-silence-thresh');
+
+    let kickLedTimeout = null;
+    function triggerKickVisual() {
+      if (ledKick) {
+        ledKick.classList.add('active');
+        clearTimeout(kickLedTimeout);
+        kickLedTimeout = setTimeout(() => { ledKick.classList.remove('active'); }, 120);
+      }
+      triggerBeatVisual();
+    }
+
+    let snareLedTimeout = null;
+    function triggerSnareVisual() {
+      if (ledSnare) {
+        ledSnare.classList.add('active');
+        clearTimeout(snareLedTimeout);
+        snareLedTimeout = setTimeout(() => { ledSnare.classList.remove('active'); }, 120);
+      }
+    }
+
+    function updateSilenceUI(silent) {
+      if (ledSilence) {
+        ledSilence.classList.toggle('active', silent);
+      }
+      if (silent) {
+        updateSyncStatusBadge('🔇 Silencio (Pausado esperando ritmo)');
+      } else {
+        updateSyncStatusBadge('🟢 Ritmo Activo • Respondiendo a cada golpe');
+      }
+    }
+
+    if (btnToggleOrganic) {
+      btnToggleOrganic.addEventListener('click', () => {
+        isOrganicMode = !isOrganicMode;
+        btnToggleOrganic.classList.toggle('active', isOrganicMode);
+        if (organicToggleStatus) {
+          organicToggleStatus.innerText = isOrganicMode ? 'ACTIVO' : 'LOOP';
+          organicToggleStatus.style.background = isOrganicMode ? '#10b981' : '#64748b';
+        }
+        if (!isOrganicMode) {
+          relaxSprings(1.0);
+          isSilenceActive = false;
+          if (ledSilence) ledSilence.classList.remove('active');
+          if (activeAction) {
+            activeAction.setEffectiveTimeScale(getEffectiveSpeed(currentClipId));
+          }
+        }
+      });
+    }
+
+    if (sliderKickSens) {
+      sliderKickSens.addEventListener('input', (e) => {
+        kickSensitivity = parseFloat(e.target.value);
+        if (valKickSens) valKickSens.innerText = `${kickSensitivity.toFixed(1)}x`;
+      });
+    }
+
+    if (sliderHeadSens) {
+      sliderHeadSens.addEventListener('input', (e) => {
+        headTorsoIntensity = parseFloat(e.target.value);
+        if (valHeadSens) valHeadSens.innerText = `${headTorsoIntensity.toFixed(1)}x`;
+      });
+    }
+
+    if (sliderSilenceThresh) {
+      sliderSilenceThresh.addEventListener('input', (e) => {
+        silenceThreshold = parseFloat(e.target.value);
+        if (valSilenceThresh) {
+          if (silenceThreshold < 7) valSilenceThresh.innerText = 'Sensible';
+          else if (silenceThreshold <= 14) valSilenceThresh.innerText = 'Medio';
+          else valSilenceThresh.innerText = 'Fuerte';
+        }
+      });
+    }
+
+    // =========================================================================
+    // ORGANIC AUDIO-REACTIVE DANCE & PHYSICS ENGINE
+    // Responde en directo a cada sonido:
+    //  - Bombo (Kick) -> Rebote físico vertical y acento rítmico en rodillas/suelo
+    //  - Caja (Snare) -> Pulso de percusión y LED reactivo
+    //  - Silencio     -> ¡PAUSA INMEDIATA! El personaje se detiene en su postura esperando al compás
+    //  - Ritmo        -> Velocidad sincronizada dinámicamente a los BPM y energía del audio
+    //  - 100% Nativo  -> 0% tors    // =========================================================================
+    // DYNAMIC DANCE SPECIALIZATION & LIVE ACTION PADS ENGINE
+    // =========================================================================
+    function getActiveRoutine() {
+      return (danceSpecialization === 'tecktonik') ? TECKTONIK_ROUTINE : BATTLE_ROUTINE;
+    }
+
+    function advanceChoreography(delta) {
+      if (danceSpecialization === 'loop' || !isRoutineRunning || isLiveActionLocked) return;
+      const routine = getActiveRoutine();
+      const beatDuration = 60 / currentBPM;
+      choreoBeatTimer += delta / beatDuration;
+
+      const currentStep = routine[choreoIndex % routine.length];
+      if (choreoBeatTimer >= currentStep.beats) {
+        choreoBeatTimer = 0;
+        choreoIndex = (choreoIndex + 1) % routine.length;
+        if (choreoIndex === 0 && danceSpecialization === 'tecktonik') {
+          rebuildTecktonikRoutine(); // Nuevo orden aleatorio cada ciclo
+        }
+        const nextStep = routine[choreoIndex];
+        playAnimation(nextStep.id, nextStep.fade || 0.25);
+        if (syncStatusBadge) {
+          const modeIcon = (danceSpecialization === 'tecktonik') ? '⚡' : '🥋';
+          syncStatusBadge.innerText = `${modeIcon} ${nextStep.name} (${currentBPM} BPM)`;
+          syncStatusBadge.style.color = (danceSpecialization === 'tecktonik') ? '#38bdf8' : '#a855f7';
+          syncStatusBadge.style.borderColor = (danceSpecialization === 'tecktonik') ? 'rgba(56, 189, 248, 0.5)' : 'rgba(168, 85, 247, 0.5)';
+        }
+      }
+    }
+
+    function selectDanceSpecialization(mode, autoPlay = true) {
+      danceSpecialization = mode;
+
+      document.querySelectorAll('.dance-mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-mode') === mode);
+      });
+
+      updateLivePadsUI();
+
+      if (mode === 'tecktonik') {
+        setTempoBPM(128, 'Tecktonik');
+        if (autoPlay) {
+          startTecktonikRoutine();
+        }
+      } else if (mode === 'battle') {
+        setTempoBPM(120, 'Batalla');
+        if (autoPlay) {
+          startBattleDanceRoutine();
+        }
+      } else if (mode === 'loop') {
+        isRoutineRunning = false;
+        playAnimation('dance_loop_fit', 0.25);
+        if (syncStatusBadge) {
+          syncStatusBadge.innerText = `🔄 Bucle Simple: Paso base a ${currentBPM} BPM`;
+          syncStatusBadge.style.color = '#10b981';
+          syncStatusBadge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        }
+      }
+    }
+
+    function updateLivePadsUI() {
+      const label = document.getElementById('live-pads-label');
+      const pads = [1, 2, 3, 4, 5, 6, 7, 8].map(i => document.getElementById(`pad-${i}`));
+
+      if (danceSpecialization === 'tecktonik' || danceSpecialization === 'loop') {
+        if (label) label.innerText = '🎮 Pads Electro en Vivo (Ambos Brazos Activos):';
+        const tecktonikPadsData = [
+          { text: '🌀 Molinete [1]', title: 'Molinetes continuos circulares con ambos brazos (Tecla 1)' },
+          { text: '👑 Cabeza [2]', title: 'Pase doble por cabeza y nuca con ambos brazos (Tecla 2)' },
+          { text: '🛡️ Bloqueo [3]', title: 'Doble bloqueo geométrico a 90° + empuje frontal con ambos brazos (Tecla 3)' },
+          { text: '🥊 Guardia [4]', title: 'Guardia alta activa rítmica con ambos brazos protegiendo (Tecla 4)' },
+          { text: '🌾 Cultivos [5]', title: 'Barrido amplio rasgar cultivos + rasgado electro con ambos brazos (Tecla 5)' },
+          { text: '💥 Puños 1-4 [6]', title: 'Ráfaga 4 puñetazos alternados: Jab Izq + Cross Der + Gancho Bilateral + Cross (Tecla 6)' },
+          { text: '🐾 Rasgado [7]', title: 'Doble rasgado y zarpazo electro con ambas manos al compás (Tecla 7)' },
+          { text: '❄️ Freeze [8]', title: 'Bloqueo y pose freeze electropop con brazos cruzados (Tecla 8)' }
+        ];
+        pads.forEach((pad, i) => {
+          if (pad && tecktonikPadsData[i]) {
+            pad.innerText = tecktonikPadsData[i].text;
+            pad.title = tecktonikPadsData[i].title;
+          }
+        });
+      } else {
+        if (label) label.innerText = '🎮 Pads Combate en Vivo (Ambos Brazos):';
+        const battlePadsData = [
+          { text: '🥊 Jab [1]', title: 'Combo: Jab Directo al Compás (Tecla 1)' },
+          { text: '💥 Cross [2]', title: 'Puñetazo Cruzado Potente (Tecla 2)' },
+          { text: '⚔️ Espada [3]', title: 'Danza de Espada: Corte A (Tecla 3)' },
+          { text: '🗡️ Estocada [4]', title: 'Danza de Espada: Estocada (Tecla 4)' },
+          { text: '🛡️ Bloqueo [5]', title: 'Bloqueo Defensivo con Ambos Brazos (Tecla 5)' },
+          { text: '🤸 Voltereta [6]', title: 'Acrobacia: Voltereta Evasiva (Tecla 6)' },
+          { text: '🥋 Ninja [7]', title: 'Aterrizaje Ninja en Suelo (Tecla 7)' },
+          { text: '🎉 Victoria [8]', title: 'Pose de Victoria & Swagger (Tecla 8)' }
+        ];
+        pads.forEach((pad, i) => {
+          if (pad && battlePadsData[i]) {
+            pad.innerText = battlePadsData[i].text;
+            pad.title = battlePadsData[i].title;
+          }
+        });
+      }
+    }
+
+    function startTecktonikRoutine() {
+      initAudio();
+      resumeAudioOutput();
+
+      danceSpecialization = 'tecktonik';
+      rebuildTecktonikRoutine();
+      isRoutineRunning = true;
+      choreoIndex = 0;
+      choreoBeatTimer = 0;
+      isPlaying = true;
+      updatePlayButton();
+
+      playAnimation(TECKTONIK_ROUTINE[0].id, 0.25);
+      alignToDownbeat();
+
+      // Arrancar beat sintetizado electro a 128 BPM si no hay música activa
+      if (!isMusicPlaying && !isCustomAudioPlaying) {
+        if (customAudioEl && customAudioEl.src) {
+          playCustomAudio(customAudioEl.currentTime || 0);
+        } else {
+          activeBeatType = 'cyber';
+          document.querySelectorAll('.beat-btn').forEach(b => {
+            b.classList.toggle('active', b.getAttribute('data-beat') === 'cyber');
+          });
+          startBeatClock();
+        }
+      }
+
+      if (syncStatusBadge) {
+        syncStatusBadge.innerText = `⚡ Tecktonik Electro: ${TECKTONIK_ROUTINE[0].name} (128 BPM)`;
+        syncStatusBadge.style.color = '#38bdf8';
+        syncStatusBadge.style.borderColor = 'rgba(56, 189, 248, 0.5)';
+      }
+    }
+
+    function startBattleDanceRoutine() {
+      initAudio();
+      resumeAudioOutput();
+
+      danceSpecialization = 'battle';
+      isRoutineRunning = true;
+      choreoIndex = 0;
+      choreoBeatTimer = 0;
+      isPlaying = true;
+      updatePlayButton();
+
+      playAnimation(BATTLE_ROUTINE[0].id, 0.25);
+      alignToDownbeat();
+
+      // Arrancar beat de batalla si no hay música activa
+      if (!isMusicPlaying && !isCustomAudioPlaying) {
+        if (customAudioEl && customAudioEl.src) {
+          playCustomAudio(customAudioEl.currentTime || 0);
+        } else {
+          activeBeatType = 'epic';
+          document.querySelectorAll('.beat-btn').forEach(b => {
+            b.classList.toggle('active', b.getAttribute('data-beat') === 'epic');
+          });
+          startBeatClock();
+        }
+      }
+
+      if (syncStatusBadge) {
+        syncStatusBadge.innerText = `🥋 Danza de Combate: ${BATTLE_ROUTINE[0].name} (120 BPM)`;
+        syncStatusBadge.style.color = '#a855f7';
+        syncStatusBadge.style.borderColor = 'rgba(168, 85, 247, 0.5)';
+      }
+    }
+
+    function triggerLiveAction(clipId, name, btnId) {
+      if (!clipsMap.has(clipId)) return;
+      isLiveActionLocked = true;
+      playAnimation(clipId, 0.15);
+      alignToDownbeat();
+
+      const btn = document.getElementById(btnId);
+      if (btn) {
+        btn.classList.add('firing');
+        setTimeout(() => btn.classList.remove('firing'), 350);
+      }
+
+      if (syncStatusBadge) {
+        syncStatusBadge.innerText = `🔥 Acción en Vivo: ${name}!`;
+        syncStatusBadge.style.color = '#f59e0b';
+        syncStatusBadge.style.borderColor = 'rgba(245, 158, 11, 0.5)';
+      }
+
+      const clip = clipsMap.get(clipId);
+      const effectiveSpeed = getEffectiveSpeed(clipId) || 1.0;
+      const actionDuration = (clip ? clip.duration : 1.875) / effectiveSpeed;
+      clearTimeout(liveActionTimeout);
+      liveActionTimeout = setTimeout(() => {
+        isLiveActionLocked = false;
+        if (isRoutineRunning) {
+          const routine = getActiveRoutine();
+          const step = (danceSpecialization === 'loop') ? { id: 'dance_loop_fit', fade: 0.25 } : routine[choreoIndex % routine.length];
+          playAnimation(step.id, 0.25);
+        }
+      }, actionDuration * 1000);
+    }
+
+    function triggerLivePadAction(padNum) {
+      const btnId = `pad-${padNum}`;
+      if (danceSpecialization === 'tecktonik' || danceSpecialization === 'loop') {
+        switch (padNum) {
+          case 1:
+            triggerLiveAction('tecktonik_windmills', '🌀 Molinetes Circulares (Ambos Brazos)', btnId);
+            break;
+          case 2:
+            triggerLiveAction('tecktonik_headpass', '👑 Pase Doble por Cabeza (Ambos Brazos)', btnId);
+            break;
+          case 3:
+            triggerLiveAction('tecktonik_block', '🛡️ Doble Bloqueo Geométrico (Ambos Brazos)', btnId);
+            break;
+          case 4:
+            triggerLiveAction('tecktonik_highguard', '🥊 Guardia Alta Activa (Ambos Brazos)', btnId);
+            break;
+          case 5:
+            triggerLiveAction('tecktonik_harvest', '🌾 Barrido Doble Rasgar Cultivos (Ambos Brazos)', btnId);
+            break;
+          case 6:
+            triggerLiveAction('tecktonik_punch_combo', '💥 Ráfaga 4 Puñetazos (Jab + Cross + Gancho)', btnId);
+            break;
+          case 7:
+            triggerLiveAction('tecktonik_scratch', '🐾 Doble Rasgado & Zarpazo (Ambas Manos)', btnId);
+            break;
+          case 8:
+            triggerLiveAction('tecktonik_freeze', '❄️ Lock Electropop Freeze (Brazos Cruzados)', btnId);
+            break;
+        }
+      } else {
+        switch (padNum) {
+          case 1:
+            triggerLiveAction('punch_jab_fit', '🥊 Puñetazo Jab', btnId);
+            break;
+          case 2:
+            triggerLiveAction('punch_cross_fit', '💥 Puñetazo Cruzado', btnId);
+            break;
+          case 3:
+            triggerLiveAction('sword_regular_a_fit', '⚔️ Corte de Espada', btnId);
+            break;
+          case 4:
+            triggerLiveAction('sword_attack_fit', '🗡️ Estocada de Espada', btnId);
+            break;
+          case 5:
+            triggerLiveAction('sword_block_fit', '🛡️ Bloqueo Defensivo', btnId);
+            break;
+          case 6:
+            triggerLiveAction('roll_fit', '🤸 Voltereta (Roll)', btnId);
+            break;
+          case 7:
+            triggerLiveAction('ninjajump_land_fit', '🥋 Aterrizaje Ninja', btnId);
+            break;
+          case 8:
+            triggerLiveAction('yes_fit', '🎉 Pose de Victoria', btnId);
+            break;
+        }
+      }
+    }
+
+    // Wiring Live Pads Buttons (1 to 8)
+    for (let i = 1; i <= 8; i++) {
+      const padEl = document.getElementById(`pad-${i}`);
+      if (padEl) {
+        padEl.addEventListener('click', () => triggerLivePadAction(i));
+      }
+    }
+
+    // Wiring Specialization Mode Selector Tabs
+    const btnModeTecktonik = document.getElementById('btn-mode-tecktonik');
+    if (btnModeTecktonik) {
+      btnModeTecktonik.addEventListener('click', () => selectDanceSpecialization('tecktonik'));
+    }
+
+    const btnModeBattle = document.getElementById('btn-mode-battle');
+    if (btnModeBattle) {
+      btnModeBattle.addEventListener('click', () => selectDanceSpecialization('battle'));
+    }
+
+    const btnModeLoop = document.getElementById('btn-mode-loop');
+    if (btnModeLoop) {
+      btnModeLoop.addEventListener('click', () => selectDanceSpecialization('loop'));
+    }
+
+    function updateOrganicMotion(delta) {
+      if (!currentModel || baseModelY === null) return;
+
+      const isAudioActive = (isMusicPlaying || isCustomAudioPlaying || (activeBeatType !== 'off' && beatTimer !== null));
+      const currentMeta = ANIMATIONS_DB.find(a => a.id === currentClipId);
+      const isDanceAnim = currentMeta && (currentMeta.cat === 'dance' || currentClipId.includes('dance') || currentClipId.includes('tecktonik') || isRoutineRunning);
+
+      // Si la reproducción general está en pausa (botón play/pause de la barra)
+      if (!isPlaying) {
+        relaxSprings();
+        if (activeAction) {
+          activeAction.paused = true;
+          activeAction.setEffectiveTimeScale(0);
+        }
+        return;
+      }
+
+      // Si el audio está apagado pero el reproductor 3D está activo
+      if (!isAudioActive) {
+        relaxSprings();
+        if (activeAction) {
+          activeAction.paused = false;
+          activeAction.setEffectiveTimeScale(playbackSpeed);
+        }
+        return;
+      }
+
+      // 1. Análisis de frecuencias y volumen (RMS) en tiempo real
+      let currentRMS = 0;
+      let bassVal = 0;
+      let midVal = 0;
+
+      if (analyserNode && freqDataArray) {
+        analyserNode.getByteFrequencyData(freqDataArray);
+
+        // Frecuencias graves (0..3, ~0-170Hz) -> Bombo / Kick
+        bassVal = (freqDataArray[0] * 2.0 + freqDataArray[1] * 1.5 + freqDataArray[2] + freqDataArray[3]) / 5.5;
+
+        // Frecuencias medias (8..20, ~700-1800Hz) -> Caja / Snare
+        let midSum = 0;
+        for (let i = 8; i <= 20; i++) midSum += freqDataArray[i];
+        midVal = midSum / 13;
+
+        // Energía general (RMS)
+        let sum = 0;
+        const binLimit = Math.min(256, freqDataArray.length);
+        for (let i = 1; i < binLimit; i++) sum += freqDataArray[i];
+        currentRMS = sum / (binLimit - 1);
+      }
+
+      smoothedRMS += (currentRMS - smoothedRMS) * Math.min(1, delta * 15);
+      const now = performance.now();
+
+      // 2. Detección de silencios en la música (Freeze en seco instantáneo)
+      const isSilentNow = smoothedRMS < silenceThreshold;
+      if (isSilentNow) {
+        silenceTimer += delta;
+      } else {
+        silenceTimer = 0;
+      }
+
+      const currentlySilent = silenceTimer > 0.08; // 80ms de silencio consecutivo
+      if (currentlySilent !== isSilenceActive) {
+        isSilenceActive = currentlySilent;
+        updateSilenceUI(isSilenceActive);
+      }
+
+      // 3. Respuesta del personaje al ritmo y al silencio
+      if (isDanceAnim && isOrganicMode) {
+        if (isSilenceActive) {
+          // ¡SILENCIO EN LA CANCIÓN!: El guerrero se congela instantáneamente en la pose actual
+          if (activeAction) {
+            activeAction.paused = true;
+            activeAction.setEffectiveTimeScale(0);
+          }
+          relaxSprings();
+          return;
+        } else {
+          // RITMO ACTIVO: Ajuste exacto de velocidad según tempo BPM y energía
+          if (activeAction) {
+            activeAction.paused = false;
+            const baseSpeed = getEffectiveSpeed(currentClipId);
+            const energyFactor = 0.9 + Math.min(0.25, (smoothedRMS / 180) * 0.25);
+            activeAction.setEffectiveTimeScale(baseSpeed * energyFactor);
+          }
+          // Avanzar coreografía si la especialización no es bucle simple
+          if (danceSpecialization !== 'loop' && isRoutineRunning && !isLiveActionLocked) {
+            advanceChoreography(delta);
+          }
+        }
+      } else if (activeAction) {
+        // En animaciones no danzarias, reproducir a velocidad estándar
+        activeAction.paused = false;
+        activeAction.setEffectiveTimeScale(playbackSpeed);
+      }
+
+      // 4. Detección de golpes en música cargada (MP3 / WAV)
+      if (activeBeatType === 'custom' && !isSilenceActive) {
+        const bassDelta = bassVal - prevBass;
+        const kickThresh = 24 / Math.max(0.2, kickSensitivity);
+        if (bassDelta > kickThresh && (now - lastKickTime > 170)) {
+          lastKickTime = now;
+          const power = Math.min(2.0, (bassDelta / 24)) * kickSensitivity;
+          triggerKickReaction(power);
+        }
+
+        const midDelta = midVal - prevMid;
+        const snareThresh = 20;
+        if (midDelta > snareThresh && (now - lastSnareTime > 150)) {
+          lastSnareTime = now;
+          triggerSnareReaction(1.0);
+        }
+      }
+      prevBass = bassVal;
+      prevMid = midVal;
+
+      // 5. Física de rebote elástico vertical (Spring Physics suave sin tocar huesos)
+      const fPelvisY = -320 * pelvisOffsetY - 24 * pelvisVelocityY;
+      pelvisVelocityY += fPelvisY * delta;
+      pelvisOffsetY += pelvisVelocityY * delta;
+      pelvisOffsetY = Math.max(-0.032, Math.min(0.012, pelvisOffsetY));
+      currentModel.position.y = baseModelY + pelvisOffsetY;
+    }
+
+    function relaxSprings() {
+      pelvisOffsetY += (0 - pelvisOffsetY) * 0.15;
+      pelvisVelocityY *= 0.8;
+      if (currentModel && baseModelY !== null) {
+        currentModel.position.y = baseModelY + pelvisOffsetY;
+      }
+    }
+
+    // Main Animation Loop
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const rawDelta = Math.min(clock.getDelta(), 0.1);
+
+      if (mixer) {
+        if (isPlaying) {
+          // Analizar frecuencias de audio, respuesta a golpes y coreografía
+          updateOrganicMotion(rawDelta);
+
+          // Mixer avanza solo si la acción no está en pausa (ej. durante silencio musical)
+          const isActionPlaying = activeAction && !activeAction.paused;
+          mixer.update(isActionPlaying ? rawDelta : 0);
+        } else {
+          relaxSprings();
+        }
+
+        // Mantener posición en el sitio si está activo
+        if (isInPlace && rootBone) {
+          rootBone.position.set(0, 0, 0);
+        }
+
+        if (activeAction && activeAction.getClip()) {
+          const curTime = activeAction.time % activeAction.getClip().duration;
+          const dur = activeAction.getClip().duration;
+          document.getElementById('current-time').innerText = formatTime(curTime);
+          document.getElementById('progress-fill').style.width = `${(curTime / dur) * 100}%`;
+        }
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    // Initialize Studio
+    loadStudioModel();
+    animate();
+  </script>
+</body>
+</html>

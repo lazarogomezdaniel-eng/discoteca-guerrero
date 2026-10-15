@@ -1,0 +1,24 @@
+# Sistema y temporales
+.DS_Store
+Thumbs.db
+*.log
+scratch/
+.tempmediaStorage/
+
+# Archivos pesados de Blender y 3D intermedios
+*.blend
+*.blend1
+*.fbx
+*.obj
+*.mtl
+*.zip
+*.mp4
+
+# Modelos antiguos / pesados no usados en la web (GitHub tiene límite de 100MB)
+guerrero.glb
+guerrero_180cm.glb
+guerrero_animado_perfecto.glb
+dance_loop_walk_formal_loop_composite_adjusted_fit.glb
+character_rest_pose.glb
+guerrero_completo_84_animaciones_inplace.glb
+actionforge_85_clips_fit_inplace/
