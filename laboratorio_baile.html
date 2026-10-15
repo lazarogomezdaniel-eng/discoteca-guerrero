@@ -613,6 +613,7 @@
         this.initQuats = {};
         this.targetQuats = {};
         this.currentQuats = {};
+        this.initPositions = {};
         this.detectedBonesList = [];
 
         this.initBones(modelOrSkeleton);
@@ -659,6 +660,7 @@
               this.initQuats[key] = match.quaternion.clone();
               this.targetQuats[key] = match.quaternion.clone();
               this.currentQuats[key] = match.quaternion.clone();
+              this.initPositions[key] = match.position.clone();
               this.detectedBonesList.push(`${key} -> ${match.name}`);
               break;
             }
@@ -732,6 +734,7 @@
           pelvis: new THREE.Quaternion(),
           spine: new THREE.Quaternion(),
           chest: new THREE.Quaternion(),
+          neck: new THREE.Quaternion(),
           head: new THREE.Quaternion(),
           clavicle_l: new THREE.Quaternion(),
           upperarm_l: new THREE.Quaternion(),
@@ -740,151 +743,208 @@
           clavicle_r: new THREE.Quaternion(),
           upperarm_r: new THREE.Quaternion(),
           lowerarm_r: new THREE.Quaternion(),
-          hand_r: new THREE.Quaternion()
+          hand_r: new THREE.Quaternion(),
+          thigh_l: new THREE.Quaternion(),
+          calf_l: new THREE.Quaternion(),
+          thigh_r: new THREE.Quaternion(),
+          calf_r: new THREE.Quaternion()
         };
 
         const euler = new THREE.Euler();
 
+        // Rebote continuo de cadera y rodillas en todos los modos a 135 BPM
+        const bounce = Math.abs(Math.sin(phase)) * 0.05 * amp;
+        if (this.bones.pelvis && this.initPositions.pelvis) {
+          this.bones.pelvis.position.y = this.initPositions.pelvis.y - bounce;
+        }
+        euler.set(bounce * 1.5, 0, 0);
+        qDelta.thigh_l.setFromEuler(euler);
+        qDelta.thigh_r.setFromEuler(euler);
+        euler.set(-bounce * 2.2, 0, 0);
+        qDelta.calf_l.setFromEuler(euler);
+        qDelta.calf_r.setFromEuler(euler);
+
+        // ---------------------------------------------------------------------
+        // 1. "EL MOLINO" (Windmills)
+        // Hombros arriba, codos a 90° y antebrazos girando rápido con desfase de PI/2
+        // ---------------------------------------------------------------------
         if (mode === 'molino') {
-          const bounce = Math.abs(Math.sin(phase)) * 0.08 * amp;
-          if (this.bones.pelvis) {
-            this.bones.pelvis.position.y = (bounce * -0.2);
-          }
+          // Hombros levantados (encogimiento Tecktonik)
+          euler.set(0.1, 0, 0.3 * amp);
+          qDelta.clavicle_l.setFromEuler(euler);
+          euler.set(0.1, 0, -0.3 * amp);
+          qDelta.clavicle_r.setFromEuler(euler);
 
-          euler.set(0.3 * amp, 0, 1.25 * amp);
+          // Codos hacia afuera a la altura del pecho
+          euler.set(0.8 * amp, 0, 0.6 * amp);
           qDelta.upperarm_l.setFromEuler(euler);
-
-          euler.set(0.3 * amp, 0, -1.25 * amp);
+          euler.set(0.8 * amp, 0, -0.6 * amp);
           qDelta.upperarm_r.setFromEuler(euler);
 
+          // Molino real: antebrazos describiendo un círculo completo 360° en el espacio 3D con desfase PI/2
           const rotSpeed = t * (Math.PI * 2 / beatDur) * 2;
-          const spinL = this.sharpWave(rotSpeed, 0.3) * (Math.PI * 0.8) * amp;
-          const spinR = this.sharpWave(rotSpeed + Math.PI / 2, 0.3) * (Math.PI * 0.8) * amp;
-
-          euler.set(spinL, 0, -1.35 * amp);
+          const exL = Math.cos(rotSpeed) * 1.35 * amp;
+          const ezL = Math.sin(rotSpeed) * 1.35 * amp;
+          euler.set(exL, 0, ezL);
           qDelta.lowerarm_l.setFromEuler(euler);
 
-          euler.set(spinR, 0, 1.35 * amp);
+          const exR = Math.cos(rotSpeed + Math.PI / 2) * 1.35 * amp;
+          const ezR = -Math.sin(rotSpeed + Math.PI / 2) * 1.35 * amp;
+          euler.set(exR, 0, ezR);
           qDelta.lowerarm_r.setFromEuler(euler);
 
-          euler.set(0, Math.sin(rotSpeed * 2) * 0.5 * amp, 0);
+          // Muñecas que acompañan la inercia circular
+          euler.set(Math.cos(rotSpeed) * 0.5 * amp, 0, Math.sin(rotSpeed) * 0.5 * amp);
           qDelta.hand_l.setFromEuler(euler);
+          euler.set(Math.cos(rotSpeed + Math.PI / 2) * 0.5 * amp, 0, -Math.sin(rotSpeed + Math.PI / 2) * 0.5 * amp);
           qDelta.hand_r.setFromEuler(euler);
 
+        // ---------------------------------------------------------------------
+        // 2. "LA PEINADA" (Head-Pass / Comb)
+        // Alternar codo por encima de cabeza, antebrazo tras la nuca y cabeza al lado opuesto
+        // ---------------------------------------------------------------------
         } else if (mode === 'peinada') {
           const beat4 = Math.floor(halfStep / 2) % 4;
 
           if (beat4 === 0 || beat4 === 1) {
-            euler.set(1.6 * amp, 0.3, -1.4 * amp);
+            // Brazo DERECHO peina: codo por encima de la cabeza y antebrazo tras la nuca
+            euler.set(0.2 * amp, 0, -0.3 * amp);
+            qDelta.clavicle_r.setFromEuler(euler);
+            euler.set(0.2 * amp, 0, -2.4 * amp);
             qDelta.upperarm_r.setFromEuler(euler);
-
-            euler.set(-1.8 * amp, -0.6 * amp, 0);
+            euler.set(0, 0, 2.2 * amp);
             qDelta.lowerarm_r.setFromEuler(euler);
+            euler.set(0.3 * amp, 0, 0.4 * amp);
+            qDelta.hand_r.setFromEuler(euler);
 
-            euler.set(0.2, 0, 0.6);
+            // Brazo IZQUIERDO en guardia horizontal al pecho a 90 grados
+            euler.set(0.7 * amp, 0, 0.45 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
-            euler.set(1.3 * amp, 0, -0.8 * amp);
+            euler.set(0, 0, -1.55 * amp);
             qDelta.lowerarm_l.setFromEuler(euler);
 
-            euler.set(0.1, 0, -0.35 * amp);
+            // Cabeza y cuello inclinados hacia el lado OPUESTO (izquierda)
+            euler.set(0, -0.2 * amp, -0.4 * amp);
             qDelta.head.setFromEuler(euler);
+            euler.set(0, 0, -0.2 * amp);
+            qDelta.neck.setFromEuler(euler);
             euler.set(0, 0, -0.15 * amp);
             qDelta.chest.setFromEuler(euler);
 
           } else {
-            euler.set(1.6 * amp, -0.3, 1.4 * amp);
+            // Brazo IZQUIERDO peina: codo por encima de la cabeza y antebrazo tras la nuca
+            euler.set(0.2 * amp, 0, 0.3 * amp);
+            qDelta.clavicle_l.setFromEuler(euler);
+            euler.set(0.2 * amp, 0, 2.4 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
-
-            euler.set(-1.8 * amp, 0.6 * amp, 0);
+            euler.set(0, 0, -2.2 * amp);
             qDelta.lowerarm_l.setFromEuler(euler);
+            euler.set(0.3 * amp, 0, -0.4 * amp);
+            qDelta.hand_l.setFromEuler(euler);
 
-            euler.set(0.2, 0, -0.6);
+            // Brazo DERECHO en guardia horizontal al pecho a 90 grados
+            euler.set(0.7 * amp, 0, -0.45 * amp);
             qDelta.upperarm_r.setFromEuler(euler);
-            euler.set(1.3 * amp, 0, 0.8 * amp);
+            euler.set(0, 0, 1.55 * amp);
             qDelta.lowerarm_r.setFromEuler(euler);
 
-            euler.set(0.1, 0, 0.35 * amp);
+            // Cabeza y cuello inclinados hacia el lado OPUESTO (derecha)
+            euler.set(0, 0.2 * amp, 0.4 * amp);
             qDelta.head.setFromEuler(euler);
+            euler.set(0, 0, 0.2 * amp);
+            qDelta.neck.setFromEuler(euler);
             euler.set(0, 0, 0.15 * amp);
             qDelta.chest.setFromEuler(euler);
           }
 
+        // ---------------------------------------------------------------------
+        // 3. "GEOMETRÍA NEÓN (L-SHAPES)"
+        // Poses a 90 grados alternando vertical al cielo y horizontal frente al pecho
+        // ---------------------------------------------------------------------
         } else if (mode === 'l_shapes') {
           const stepPose = halfStep % 4;
 
           if (stepPose === 0) {
-            euler.set(0, 0, 1.55 * amp);
+            // Brazo Izq Vertical (L al cielo), Brazo Der Horizontal en pecho
+            euler.set(0.6 * amp, 0, 0.8 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
-            euler.set(0, 0, -1.55 * amp);
+            euler.set(0, 0, 1.57 * amp);
             qDelta.lowerarm_l.setFromEuler(euler);
 
-            euler.set(0.8 * amp, 0, -0.4 * amp);
+            euler.set(0.7 * amp, 0, -0.45 * amp);
             qDelta.upperarm_r.setFromEuler(euler);
-            euler.set(0, 1.5 * amp, 0.8 * amp);
+            euler.set(1.57 * amp, 0, 0);
             qDelta.lowerarm_r.setFromEuler(euler);
 
           } else if (stepPose === 1) {
-            euler.set(0, 0, -1.55 * amp);
+            // Inverso: Brazo Der Vertical al cielo, Brazo Izq Horizontal en pecho
+            euler.set(0.6 * amp, 0, -0.8 * amp);
             qDelta.upperarm_r.setFromEuler(euler);
-            euler.set(0, 0, 1.55 * amp);
+            euler.set(0, 0, -1.57 * amp);
             qDelta.lowerarm_r.setFromEuler(euler);
 
-            euler.set(0.8 * amp, 0, 0.4 * amp);
+            euler.set(0.7 * amp, 0, 0.45 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
-            euler.set(0, -1.5 * amp, -0.8 * amp);
+            euler.set(1.57 * amp, 0, 0);
             qDelta.lowerarm_l.setFromEuler(euler);
 
           } else if (stepPose === 2) {
-            euler.set(0.2, 0, 1.45 * amp);
+            // Dual Box Lock (Marco cuadrado a 90° frente a la cara)
+            euler.set(0.3 * amp, 0, 1.45 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
-            euler.set(1.55 * amp, 0, 0);
+            euler.set(1.57 * amp, 0, 0);
             qDelta.lowerarm_l.setFromEuler(euler);
 
-            euler.set(0.2, 0, -1.45 * amp);
+            euler.set(0.3 * amp, 0, -1.45 * amp);
             qDelta.upperarm_r.setFromEuler(euler);
-            euler.set(1.55 * amp, 0, 0);
+            euler.set(1.57 * amp, 0, 0);
             qDelta.lowerarm_r.setFromEuler(euler);
 
           } else {
-            euler.set(1.2 * amp, 0, 0.8 * amp);
+            // Diagonal L-Slash (Corte electro cruzado)
+            euler.set(1.15 * amp, 0, 1.0 * amp);
             qDelta.upperarm_l.setFromEuler(euler);
-            euler.set(0, 1.4 * amp, -1.2 * amp);
+            euler.set(0, 0, -1.4 * amp);
             qDelta.lowerarm_l.setFromEuler(euler);
 
-            euler.set(-0.6 * amp, 0, -1.1 * amp);
+            euler.set(-0.6 * amp, 0, -1.15 * amp);
             qDelta.upperarm_r.setFromEuler(euler);
-            euler.set(1.4 * amp, 0, 0.5 * amp);
+            euler.set(1.35 * amp, 0, 0.55 * amp);
             qDelta.lowerarm_r.setFromEuler(euler);
           }
 
+        // ---------------------------------------------------------------------
+        // 4. "FRENESÍ ELECTRO"
+        // Rebote enérgico de cadera/rodillas, balanceo de torso y ráfaga de giros a doble velocidad
+        // ---------------------------------------------------------------------
         } else if (mode === 'frenesi') {
-          const bounce = Math.abs(Math.sin(phase * 2)) * 0.12 * amp;
-          if (this.bones.pelvis) {
-            this.bones.pelvis.position.y = -bounce;
+          const extraBounce = Math.abs(Math.sin(phase * 2)) * 0.08 * amp;
+          if (this.bones.pelvis && this.initPositions.pelvis) {
+            this.bones.pelvis.position.y = this.initPositions.pelvis.y - extraBounce;
           }
 
-          const sway = Math.sin(phase) * 0.25 * amp;
+          const sway = Math.sin(phase) * 0.35 * amp;
           euler.set(0, 0, sway);
           qDelta.spine.setFromEuler(euler);
           euler.set(0, 0, -sway * 0.5);
           qDelta.chest.setFromEuler(euler);
+          euler.set(0, 0, -sway * 0.3);
+          qDelta.head.setFromEuler(euler);
 
           const frenesiPhase = phase * 2;
-          const leftSwing = this.sharpWave(frenesiPhase, 0.3) * 1.3 * amp;
-          const rightSwing = this.sharpWave(frenesiPhase + Math.PI, 0.3) * 1.3 * amp;
-
-          euler.set(0.4 * amp, leftSwing * 0.6, 1.1 * amp);
+          euler.set(0.5 * amp, 0.3 * amp, 0.9 * amp);
           qDelta.upperarm_l.setFromEuler(euler);
-          euler.set(1.4 * amp, 0, -leftSwing);
+          euler.set(Math.cos(frenesiPhase) * 1.3 * amp, 0, Math.sin(frenesiPhase) * 1.3 * amp);
           qDelta.lowerarm_l.setFromEuler(euler);
 
-          euler.set(0.4 * amp, -rightSwing * 0.6, -1.1 * amp);
+          euler.set(0.5 * amp, -0.3 * amp, -0.9 * amp);
           qDelta.upperarm_r.setFromEuler(euler);
-          euler.set(1.4 * amp, 0, rightSwing);
+          euler.set(Math.cos(frenesiPhase + Math.PI) * 1.3 * amp, 0, -Math.sin(frenesiPhase + Math.PI) * 1.3 * amp);
           qDelta.lowerarm_r.setFromEuler(euler);
 
-          euler.set(Math.sin(frenesiPhase * 2) * 0.8 * amp, 0, 0);
+          euler.set(Math.sin(frenesiPhase * 2) * 0.9 * amp, 0, Math.cos(frenesiPhase * 2) * 0.9 * amp);
           qDelta.hand_l.setFromEuler(euler);
+          euler.set(Math.sin(frenesiPhase * 2 + Math.PI) * 0.9 * amp, 0, -Math.cos(frenesiPhase * 2 + Math.PI) * 0.9 * amp);
           qDelta.hand_r.setFromEuler(euler);
         }
 

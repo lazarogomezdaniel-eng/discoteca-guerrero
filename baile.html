@@ -637,35 +637,23 @@
 
     <!-- Live Action Figure Pads (Bilateral Tecktonik Moves) -->
     <div class="pads-container">
-      <button class="pad-btn" id="pad-1" onclick="triggerMoveNow('tecktonik_windmills')">
-        <span>🌀 Molinetes</span> <kbd>1</kbd>
+      <button class="pad-btn" id="pad-1" onclick="window.triggerMoveNow('molino')">
+        <span>🌀 1. El Molino</span> <kbd>1</kbd>
       </button>
-      <button class="pad-btn" id="pad-2" onclick="triggerMoveNow('tecktonik_headpass')">
-        <span>👑 Cabeza</span> <kbd>2</kbd>
+      <button class="pad-btn" id="pad-2" onclick="window.triggerMoveNow('peinada')">
+        <span>👑 2. La Peinada</span> <kbd>2</kbd>
       </button>
-      <button class="pad-btn" id="pad-3" onclick="triggerMoveNow('tecktonik_chestcross')">
-        <span>⚡ Cruce Pecho</span> <kbd>3</kbd>
+      <button class="pad-btn" id="pad-3" onclick="window.triggerMoveNow('l_shapes')">
+        <span>📐 3. Geometría Neón</span> <kbd>3</kbd>
       </button>
-      <button class="pad-btn" id="pad-4" onclick="triggerMoveNow('tecktonik_block')">
-        <span>🛡️ Doble Bloqueo</span> <kbd>4</kbd>
+      <button class="pad-btn" id="pad-4" onclick="window.triggerMoveNow('frenesi')">
+        <span>⚡ 4. Frenesí Electro</span> <kbd>4</kbd>
       </button>
-      <button class="pad-btn" id="pad-5" onclick="triggerMoveNow('tecktonik_highguard')">
-        <span>🥊 Guardia Alta</span> <kbd>5</kbd>
+      <button class="pad-btn" id="pad-5" onclick="window.triggerMoveNow('freeze')">
+        <span>❄️ 5. Freeze Lock</span> <kbd>5</kbd>
       </button>
-      <button class="pad-btn" id="pad-6" onclick="triggerMoveNow('tecktonik_punch_combo')">
-        <span>💥 Ráfaga Puños</span> <kbd>6</kbd>
-      </button>
-      <button class="pad-btn" id="pad-7" onclick="triggerMoveNow('tecktonik_harvest')">
-        <span>🌾 Rasgar Cultivo</span> <kbd>7</kbd>
-      </button>
-      <button class="pad-btn" id="pad-8" onclick="triggerMoveNow('tecktonik_scratch')">
-        <span>🐾 Rasgado Doble</span> <kbd>8</kbd>
-      </button>
-      <button class="pad-btn" id="pad-9" onclick="triggerMoveNow('tecktonik_freeze')">
-        <span>❄️ Freeze Lock</span> <kbd>9</kbd>
-      </button>
-      <button class="pad-btn" id="pad-0" onclick="triggerMoveNow('tecktonik_victory')">
-        <span>🎉 Swagger Victoria</span> <kbd>0</kbd>
+      <button class="pad-btn" id="pad-auto" onclick="window.triggerMoveNow('auto')">
+        <span>🔀 6. Auto-Show (Mix)</span> <kbd>6</kbd>
       </button>
     </div>
   </div>
@@ -751,144 +739,365 @@
     scene.add(shadowPlane);
 
     // =========================================================================
-    // 2. CORE DANCE ENGINE & BILATERAL TECKTONIK ROUTINES
+    // 2. GENUINE PROCEDURAL TECKTONIK CONTROLLER ENGINE
     // =========================================================================
     let currentModel = null;
-    let mixer = null;
-    let activeAction = null;
-    let clipsMap = new Map();
+    let tecktonikController = null;
     let isDancing = false;
-    let currentBPM = 128;
-    let choreoBeatTimer = 0;
-    let choreoIndex = 0;
-    let isLiveFigureLocked = false;
-    let liveFigureTimeout = null;
+    let currentBPM = 135;
 
-    // Repertorio de Figuras Tecktonik (Bilateral - Ambos Brazos Activos)
-    const TECKTONIK_MOVES = [
-      { id: 'tecktonik_windmills', name: '🌀 Molinetes Dobles de Brazos (Windmills)', icon: '🌀', beats: 8, fade: 0.3 },
-      { id: 'tecktonik_headpass', name: '👑 Pase Doble por Cabeza (Head Pass)', icon: '👑', beats: 4, fade: 0.3 },
-      { id: 'tecktonik_chestcross', name: '⚡ Cruces Geométricos (Chest Cross)', icon: '⚡', beats: 4, fade: 0.3 },
-      { id: 'tecktonik_highguard', name: '🥊 Guardia Alta Electro Activa', icon: '🥊', beats: 4, fade: 0.3 },
-      { id: 'tecktonik_block', name: '🛡️ Bloqueo Geométrico Doble', icon: '🛡️', beats: 4, fade: 0.3 },
-      { id: 'tecktonik_punch_combo', name: '💥 Ráfaga 4 Puñetazos Rítmicos', icon: '💥', beats: 4, fade: 0.3 },
-      { id: 'tecktonik_harvest', name: '🌾 Barrido Doble Rasgar Cultivos', icon: '🌾', beats: 8, fade: 0.3 },
-      { id: 'tecktonik_scratch', name: '🐾 Rasgado & Zarpazo Electro Doble', icon: '🐾', beats: 4, fade: 0.3 },
-      { id: 'tecktonik_freeze', name: '❄️ Freeze & Lock Electropop', icon: '❄️', beats: 4, fade: 0.25 },
-      { id: 'tecktonik_victory', name: '🎉 Swagger & Celebración Electro', icon: '🎉', beats: 8, fade: 0.3 }
-    ];
+    class TecktonikController {
+      constructor(modelOrSkeleton) {
+        this.bpm = 135;
+        this.amplitude = 1.0;
+        this.snappiness = 0.35;
+        this.currentMode = 'molino';
 
-    const TECKTONIK_ROUTINE = [];
+        this.time = 0;
+        this.totalBeats = 0;
+        this.lastHalfBeatStep = -1;
 
-    // Intercala aleatoriamente: GROOVE -> FIGURA -> GROOVE -> FIGURA...
-    function rebuildTecktonikRoutine() {
-      const shuffled = TECKTONIK_MOVES.slice();
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        // Auto-show mixer
+        this.autoSequenceIndex = 0;
+        this.autoSequenceList = ['molino', 'l_shapes', 'peinada', 'frenesi'];
+        this.autoSwitchBeats = 8;
+        this.autoBeatCounter = 0;
+
+        this.bones = {};
+        this.initQuats = {};
+        this.targetQuats = {};
+        this.currentQuats = {};
+        this.initPositions = {};
+        this.detectedBonesList = [];
+
+        this.initBones(modelOrSkeleton);
       }
-      TECKTONIK_ROUTINE.length = 0;
-      shuffled.forEach(move => {
-        const grooveBeats = Math.random() < 0.5 ? 4 : 8; // 1 o 2 compases de groove natural
-        TECKTONIK_ROUTINE.push({ id: 'dance_loop_fit', name: '🕺 Groove Natural Electro', icon: '🕺', beats: grooveBeats, fade: 0.35 });
-        TECKTONIK_ROUTINE.push(move);
-      });
-    }
-    rebuildTecktonikRoutine();
 
-    // =========================================================================
-    // 3. ANIMATION COMPOSITING (Creación de figuras bilaterales rítmicas)
-    // =========================================================================
-    function buildTecktonikComposites() {
-      const b1 = 60 / 128;       // 1 beat = 0.468s
-      const b2 = b1 * 2;         // 2 beats = 0.937s
-      const b4 = b1 * 4;         // 4 beats = 1.875s
+      initBones(root) {
+        if (!root) return;
 
-      function createComposite(newId, steps) {
-        if (typeof steps === 'string') {
-          const src = clipsMap.get(steps);
-          if (src) {
-            const clone = src.clone();
-            clone.name = newId;
-            clipsMap.set(newId, clone);
+        const aliases = {
+          pelvis: ['pelvis', 'hips', 'root_pelvis'],
+          spine: ['spine_02', 'spine_01', 'spine', 'spine1'],
+          chest: ['spine_03', 'chest', 'upperchest', 'spine2'],
+          neck: ['neck_01', 'neck'],
+          head: ['head', 'head_01'],
+
+          clavicle_l: ['clavicle_l', 'shoulder_l', 'shoulder.l', 'leftshoulder'],
+          upperarm_l: ['upperarm_l', 'arm_l', 'arm.l', 'leftarm'],
+          lowerarm_l: ['lowerarm_l', 'forearm_l', 'forearm.l', 'leftforearm'],
+          hand_l: ['hand_l', 'wrist_l', 'hand.l', 'lefthand'],
+
+          clavicle_r: ['clavicle_r', 'shoulder_r', 'shoulder.r', 'rightshoulder'],
+          upperarm_r: ['upperarm_r', 'arm_r', 'arm.r', 'rightarm'],
+          lowerarm_r: ['lowerarm_r', 'forearm_r', 'forearm.r', 'rightforearm'],
+          hand_r: ['hand_r', 'wrist_r', 'hand.r', 'righthand'],
+
+          thigh_l: ['thigh_l', 'upleg_l', 'upleg.l', 'leftupleg'],
+          calf_l: ['calf_l', 'leg_l', 'leg.l', 'leftleg'],
+          thigh_r: ['thigh_r', 'upleg_r', 'upleg.r', 'rightupleg'],
+          calf_r: ['calf_r', 'leg_r', 'leg.r', 'rightleg']
+        };
+
+        const foundBones = new Map();
+        root.traverse(node => {
+          if (node.isBone) {
+            foundBones.set(node.name.toLowerCase(), node);
           }
-          return;
+        });
+
+        for (const [key, searchNames] of Object.entries(aliases)) {
+          for (const s of searchNames) {
+            const match = foundBones.get(s.toLowerCase());
+            if (match) {
+              this.bones[key] = match;
+              this.initQuats[key] = match.quaternion.clone();
+              this.targetQuats[key] = match.quaternion.clone();
+              this.currentQuats[key] = match.quaternion.clone();
+              this.initPositions[key] = match.position.clone();
+              this.detectedBonesList.push(`${key} -> ${match.name}`);
+              break;
+            }
+          }
+        }
+      }
+
+      setMode(mode) {
+        this.currentMode = mode;
+        this.autoBeatCounter = 0;
+      }
+
+      setBPM(bpm) {
+        this.bpm = bpm;
+      }
+
+      setAmplitude(amp) {
+        this.amplitude = amp;
+      }
+
+      setSnappiness(snap) {
+        this.snappiness = snap;
+      }
+
+      sharpWave(val, power = 0.25) {
+        const s = Math.sin(val);
+        return Math.sign(s) * Math.pow(Math.abs(s), power);
+      }
+
+      update(delta) {
+        this.time += delta;
+
+        const beatDuration = 60 / this.bpm;
+        const halfBeatDuration = beatDuration / 2;
+        const currentHalfBeatStep = Math.floor(this.time / halfBeatDuration);
+
+        const isNewHalfBeat = (currentHalfBeatStep !== this.lastHalfBeatStep);
+        if (isNewHalfBeat) {
+          this.lastHalfBeatStep = currentHalfBeatStep;
+          this.totalBeats = Math.floor(this.time / beatDuration);
+
+          if (this.currentMode === 'auto') {
+            this.autoBeatCounter++;
+            if (this.autoBeatCounter >= this.autoSwitchBeats * 2) {
+              this.autoBeatCounter = 0;
+              this.autoSequenceIndex = (this.autoSequenceIndex + 1) % this.autoSequenceList.length;
+            }
+          }
         }
 
-        const trackMap = new Map();
-        let totalDuration = 0;
+        const effectiveMode = (this.currentMode === 'auto') 
+          ? this.autoSequenceList[this.autoSequenceIndex] 
+          : this.currentMode;
 
-        steps.forEach(st => {
-          const src = clipsMap.get(st.id);
-          if (!src) return;
-          const scale = st.dur / src.duration;
-          src.tracks.forEach(tr => {
-            if (!trackMap.has(tr.name)) {
-              trackMap.set(tr.name, {
-                type: (tr instanceof THREE.QuaternionKeyframeTrack) ? 'quat' : 'num',
-                times: [],
-                values: []
-              });
-            }
-            const bucket = trackMap.get(tr.name);
-            const valSize = tr.getValueSize();
-            for (let i = 0; i < tr.times.length; i++) {
-              bucket.times.push(totalDuration + (tr.times[i] * scale));
-              for (let k = 0; k < valSize; k++) {
-                bucket.values.push(tr.values[i * valSize + k]);
-              }
-            }
-          });
-          totalDuration += st.dur;
-        });
+        this.computeTargets(effectiveMode, this.time, currentHalfBeatStep, beatDuration, halfBeatDuration);
 
-        const newTracks = [];
-        trackMap.forEach((data, name) => {
-          if (data.type === 'quat') {
-            newTracks.push(new THREE.QuaternionKeyframeTrack(name, data.times, data.values));
-          } else {
-            newTracks.push(new THREE.VectorKeyframeTrack(name, data.times, data.values));
-          }
-        });
+        const slerpFactor = Math.min(1.0, delta * 30 * this.snappiness);
 
-        const compositeClip = new THREE.AnimationClip(newId, totalDuration, newTracks);
-        clipsMap.set(newId, compositeClip);
+        for (const [key, bone] of Object.entries(this.bones)) {
+          if (!bone || !this.targetQuats[key]) continue;
+          this.currentQuats[key].slerp(this.targetQuats[key], slerpFactor);
+          bone.quaternion.copy(this.currentQuats[key]);
+        }
       }
 
-      // Figuras compuestas Tecktonik
-      createComposite('tecktonik_block', [
-        { id: 'sword_block_fit', dur: b1 },
-        { id: 'idle_shield_loop_fit', dur: b1 },
-        { id: 'shield_dash_fit', dur: b2 }
-      ]);
+      computeTargets(mode, t, halfStep, beatDur, halfBeatDur) {
+        const amp = this.amplitude;
+        const phase = t * (Math.PI * 2 / beatDur);
 
-      createComposite('tecktonik_highguard', [
-        { id: 'idle_shield_loop_fit', dur: b2 },
-        { id: 'sword_block_fit', dur: b2 }
-      ]);
+        const qDelta = {
+          pelvis: new THREE.Quaternion(),
+          spine: new THREE.Quaternion(),
+          chest: new THREE.Quaternion(),
+          neck: new THREE.Quaternion(),
+          head: new THREE.Quaternion(),
+          clavicle_l: new THREE.Quaternion(),
+          upperarm_l: new THREE.Quaternion(),
+          lowerarm_l: new THREE.Quaternion(),
+          hand_l: new THREE.Quaternion(),
+          clavicle_r: new THREE.Quaternion(),
+          upperarm_r: new THREE.Quaternion(),
+          lowerarm_r: new THREE.Quaternion(),
+          hand_r: new THREE.Quaternion(),
+          thigh_l: new THREE.Quaternion(),
+          calf_l: new THREE.Quaternion(),
+          thigh_r: new THREE.Quaternion(),
+          calf_r: new THREE.Quaternion()
+        };
 
-      createComposite('tecktonik_punch_combo', [
-        { id: 'punch_jab_fit', dur: b1 },
-        { id: 'punch_cross_fit', dur: b1 },
-        { id: 'melee_hook_fit', dur: b1 },
-        { id: 'punch_cross_fit', dur: b1 }
-      ]);
+        const euler = new THREE.Euler();
 
-      createComposite('tecktonik_harvest', [
-        { id: 'farm_harvest_fit', dur: b4 },
-        { id: 'zombie_scratch_fit', dur: b4 }
-      ]);
+        // Rebote rítmico general de cadera y rodillas a 135 BPM
+        const bounce = Math.abs(Math.sin(phase)) * 0.05 * amp;
+        if (this.bones.pelvis && this.initPositions.pelvis) {
+          this.bones.pelvis.position.y = this.initPositions.pelvis.y - bounce;
+        }
+        euler.set(bounce * 1.5, 0, 0);
+        qDelta.thigh_l.setFromEuler(euler);
+        qDelta.thigh_r.setFromEuler(euler);
+        euler.set(-bounce * 2.2, 0, 0);
+        qDelta.calf_l.setFromEuler(euler);
+        qDelta.calf_r.setFromEuler(euler);
 
-      createComposite('tecktonik_scratch', [
-        { id: 'zombie_scratch_fit', dur: b2 },
-        { id: 'melee_hook_fit', dur: b2 }
-      ]);
+        // 1. "EL MOLINO" (Windmills)
+        // Hombros arriba, codos a 90° y antebrazos girando continuo 360° con desfase PI/2
+        if (mode === 'molino') {
+          euler.set(0.1, 0, 0.3 * amp);
+          qDelta.clavicle_l.setFromEuler(euler);
+          euler.set(0.1, 0, -0.3 * amp);
+          qDelta.clavicle_r.setFromEuler(euler);
 
-      createComposite('tecktonik_windmills', 'spell_simple_idle_loop_fit');
-      createComposite('tecktonik_headpass', 'spell_simple_enter_fit');
-      createComposite('tecktonik_chestcross', 'spell_simple_exit_fit');
-      createComposite('tecktonik_freeze', 'idle_foldarms_loop_fit');
-      createComposite('tecktonik_victory', 'yes_fit');
+          euler.set(0.8 * amp, 0, 0.6 * amp);
+          qDelta.upperarm_l.setFromEuler(euler);
+          euler.set(0.8 * amp, 0, -0.6 * amp);
+          qDelta.upperarm_r.setFromEuler(euler);
+
+          const rotSpeed = t * (Math.PI * 2 / beatDur) * 2;
+          const exL = Math.cos(rotSpeed) * 1.35 * amp;
+          const ezL = Math.sin(rotSpeed) * 1.35 * amp;
+          euler.set(exL, 0, ezL);
+          qDelta.lowerarm_l.setFromEuler(euler);
+
+          const exR = Math.cos(rotSpeed + Math.PI / 2) * 1.35 * amp;
+          const ezR = -Math.sin(rotSpeed + Math.PI / 2) * 1.35 * amp;
+          euler.set(exR, 0, ezR);
+          qDelta.lowerarm_r.setFromEuler(euler);
+
+          euler.set(Math.cos(rotSpeed) * 0.5 * amp, 0, Math.sin(rotSpeed) * 0.5 * amp);
+          qDelta.hand_l.setFromEuler(euler);
+          euler.set(Math.cos(rotSpeed + Math.PI / 2) * 0.5 * amp, 0, -Math.sin(rotSpeed + Math.PI / 2) * 0.5 * amp);
+          qDelta.hand_r.setFromEuler(euler);
+
+        // 2. "LA PEINADA" (Head-Pass / Comb)
+        // Codo por encima de la cabeza, antebrazo tras la nuca y cabeza inclinada al lado opuesto
+        } else if (mode === 'peinada') {
+          const beat4 = Math.floor(halfStep / 2) % 4;
+
+          if (beat4 === 0 || beat4 === 1) {
+            euler.set(0.2 * amp, 0, -0.3 * amp);
+            qDelta.clavicle_r.setFromEuler(euler);
+            euler.set(0.2 * amp, 0, -2.4 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(0, 0, 2.2 * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+            euler.set(0.3 * amp, 0, 0.4 * amp);
+            qDelta.hand_r.setFromEuler(euler);
+
+            euler.set(0.7 * amp, 0, 0.45 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(0, 0, -1.55 * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+
+            euler.set(0, -0.2 * amp, -0.4 * amp);
+            qDelta.head.setFromEuler(euler);
+            euler.set(0, 0, -0.2 * amp);
+            qDelta.neck.setFromEuler(euler);
+            euler.set(0, 0, -0.15 * amp);
+            qDelta.chest.setFromEuler(euler);
+
+          } else {
+            euler.set(0.2 * amp, 0, 0.3 * amp);
+            qDelta.clavicle_l.setFromEuler(euler);
+            euler.set(0.2 * amp, 0, 2.4 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(0, 0, -2.2 * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+            euler.set(0.3 * amp, 0, -0.4 * amp);
+            qDelta.hand_l.setFromEuler(euler);
+
+            euler.set(0.7 * amp, 0, -0.45 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(0, 0, 1.55 * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+
+            euler.set(0, 0.2 * amp, 0.4 * amp);
+            qDelta.head.setFromEuler(euler);
+            euler.set(0, 0, 0.2 * amp);
+            qDelta.neck.setFromEuler(euler);
+            euler.set(0, 0, 0.15 * amp);
+            qDelta.chest.setFromEuler(euler);
+          }
+
+        // 3. "GEOMETRÍA NEÓN (L-SHAPES)"
+        // Poses a 90 grados alternando vertical al cielo y horizontal frente al pecho
+        } else if (mode === 'l_shapes') {
+          const stepPose = halfStep % 4;
+
+          if (stepPose === 0) {
+            euler.set(0.6 * amp, 0, 0.8 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(0, 0, 1.57 * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+
+            euler.set(0.7 * amp, 0, -0.45 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(1.57 * amp, 0, 0);
+            qDelta.lowerarm_r.setFromEuler(euler);
+
+          } else if (stepPose === 1) {
+            euler.set(0.6 * amp, 0, -0.8 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(0, 0, -1.57 * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+
+            euler.set(0.7 * amp, 0, 0.45 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(1.57 * amp, 0, 0);
+            qDelta.lowerarm_l.setFromEuler(euler);
+
+          } else if (stepPose === 2) {
+            euler.set(0.3 * amp, 0, 1.45 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(1.57 * amp, 0, 0);
+            qDelta.lowerarm_l.setFromEuler(euler);
+
+            euler.set(0.3 * amp, 0, -1.45 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(1.57 * amp, 0, 0);
+            qDelta.lowerarm_r.setFromEuler(euler);
+
+          } else {
+            euler.set(1.15 * amp, 0, 1.0 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(0, 0, -1.4 * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+
+            euler.set(-0.6 * amp, 0, -1.15 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(1.35 * amp, 0, 0.55 * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+          }
+
+        // 4. "FRENESÍ ELECTRO"
+        // Rebote enérgico de cadera/rodillas, balanceo de torso y ráfaga de giros a doble velocidad
+        } else if (mode === 'frenesi') {
+          const extraBounce = Math.abs(Math.sin(phase * 2)) * 0.08 * amp;
+          if (this.bones.pelvis && this.initPositions.pelvis) {
+            this.bones.pelvis.position.y = this.initPositions.pelvis.y - extraBounce;
+          }
+
+          const sway = Math.sin(phase) * 0.35 * amp;
+          euler.set(0, 0, sway);
+          qDelta.spine.setFromEuler(euler);
+          euler.set(0, 0, -sway * 0.5);
+          qDelta.chest.setFromEuler(euler);
+          euler.set(0, 0, -sway * 0.3);
+          qDelta.head.setFromEuler(euler);
+
+          const frenesiPhase = phase * 2;
+          euler.set(0.5 * amp, 0.3 * amp, 0.9 * amp);
+          qDelta.upperarm_l.setFromEuler(euler);
+          euler.set(Math.cos(frenesiPhase) * 1.3 * amp, 0, Math.sin(frenesiPhase) * 1.3 * amp);
+          qDelta.lowerarm_l.setFromEuler(euler);
+
+          euler.set(0.5 * amp, -0.3 * amp, -0.9 * amp);
+          qDelta.upperarm_r.setFromEuler(euler);
+          euler.set(Math.cos(frenesiPhase + Math.PI) * 1.3 * amp, 0, -Math.sin(frenesiPhase + Math.PI) * 1.3 * amp);
+          qDelta.lowerarm_r.setFromEuler(euler);
+
+          euler.set(Math.sin(frenesiPhase * 2) * 0.9 * amp, 0, Math.cos(frenesiPhase * 2) * 0.9 * amp);
+          qDelta.hand_l.setFromEuler(euler);
+          euler.set(Math.sin(frenesiPhase * 2 + Math.PI) * 0.9 * amp, 0, -Math.cos(frenesiPhase * 2 + Math.PI) * 0.9 * amp);
+          qDelta.hand_r.setFromEuler(euler);
+
+        // 5. "FREEZE LOCK"
+        } else if (mode === 'freeze') {
+          euler.set(0.3 * amp, 0, 1.35 * amp);
+          qDelta.upperarm_l.setFromEuler(euler);
+          euler.set(1.45 * amp, 0, 0);
+          qDelta.lowerarm_l.setFromEuler(euler);
+
+          euler.set(0.3 * amp, 0, -1.35 * amp);
+          qDelta.upperarm_r.setFromEuler(euler);
+          euler.set(1.45 * amp, 0, 0);
+          qDelta.lowerarm_r.setFromEuler(euler);
+        }
+
+        for (const [key, deltaQ] of Object.entries(qDelta)) {
+          if (this.initQuats[key]) {
+            this.targetQuats[key] = this.initQuats[key].clone().multiply(deltaQ);
+          }
+        }
+      }
     }
 
     // =========================================================================
@@ -1069,89 +1278,36 @@
     // =========================================================================
     // 5. ANIMATION PLAYBACK & CHOREOGRAPHY MANAGER
     // =========================================================================
-    function playAnimation(clipId, fadeDuration = 0.25) {
-      if (!mixer) return;
-      const clip = clipsMap.get(clipId);
-      if (!clip) {
-        console.warn('Clip no encontrado:', clipId);
-        return;
-      }
-
-      const nextAction = mixer.clipAction(clip);
-      // Ajustar velocidad de reproducción directamente al tempo BPM
-      const effectiveSpeed = currentBPM / 128;
-      nextAction.setEffectiveTimeScale(effectiveSpeed);
-
-      if (activeAction !== nextAction) {
-        if (activeAction) {
-          activeAction.fadeOut(fadeDuration);
-        }
-        nextAction.reset();
-        nextAction.fadeIn(fadeDuration);
-        nextAction.play();
-        activeAction = nextAction;
-      }
-    }
+    const SEQ_DATA = {
+      molino: { name: '🌀 1. El Molino (Windmills)', icon: '🌀', desc: 'Hombros arriba, codos a 90° y antebrazos girando con desfase PI/2' },
+      peinada: { name: '👑 2. La Peinada (Head-Pass)', icon: '👑', desc: 'Codo alto tras nuca y cabeza inclinada al lado opuesto' },
+      l_shapes: { name: '📐 3. Geometría Neón (L-Shapes)', icon: '📐', desc: 'Poses angulares a 90° con lock instantáneo' },
+      frenesi: { name: '⚡ 4. Frenesí Electro', icon: '⚡', desc: 'Rebote de cadera, balanceo de torso y ráfaga rápida de antebrazos' },
+      freeze: { name: '❄️ 5. Freeze Lock Electropop', icon: '❄️', desc: 'Bloqueo y pose fija estilizada' },
+      auto: { name: '🔀 6. Auto-Show (Mix 8 Beats)', icon: '🔀', desc: 'Coreografía continua alternando las 4 secuencias' }
+    };
 
     function updateMoveDisplay(move) {
       document.getElementById('move-icon').innerText = move.icon || '🕺';
       document.getElementById('move-name').innerText = move.name;
-      document.getElementById('move-phase').innerText = `${move.beats} Beats al compás (${currentBPM} BPM)`;
-    }
-
-    function advanceChoreography(delta) {
-      if (!isDancing || isLiveFigureLocked) return;
-
-      const beatDuration = 60 / currentBPM;
-      choreoBeatTimer += delta / beatDuration;
-
-      const currentStep = TECKTONIK_ROUTINE[choreoIndex % TECKTONIK_ROUTINE.length];
-      if (choreoBeatTimer >= currentStep.beats) {
-        choreoBeatTimer = 0;
-        choreoIndex = (choreoIndex + 1) % TECKTONIK_ROUTINE.length;
-
-        // Cada ciclo completo barajamos de nuevo las figuras para no repetir la misma rutina
-        if (choreoIndex === 0) {
-          rebuildTecktonikRoutine();
-        }
-
-        const nextStep = TECKTONIK_ROUTINE[choreoIndex];
-        playAnimation(nextStep.id, nextStep.fade || 0.3);
-        updateMoveDisplay(nextStep);
-      }
+      document.getElementById('move-phase').innerText = `${currentBPM} BPM • ${move.desc || 'Ambos Brazos Activos'}`;
     }
 
     // Disparar figura en directo (Live Pad)
-    window.triggerMoveNow = function(clipId) {
-      if (!mixer) return;
+    window.triggerMoveNow = function(seqKey) {
+      if (!tecktonikController) return;
       initAudio();
 
-      const padBtn = Array.from(document.querySelectorAll('.pad-btn')).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(clipId));
+      const padBtn = Array.from(document.querySelectorAll('.pad-btn')).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(seqKey));
       if (padBtn) {
         padBtn.classList.add('firing');
         setTimeout(() => padBtn.classList.remove('firing'), 300);
       }
 
-      const moveObj = TECKTONIK_MOVES.find(m => m.id === clipId) || { name: clipId, icon: '⚡', beats: 4 };
-      updateMoveDisplay(moveObj);
-
-      isLiveFigureLocked = true;
-      if (liveFigureTimeout) clearTimeout(liveFigureTimeout);
-
-      playAnimation(clipId, 0.2);
+      tecktonikController.setMode(seqKey);
+      const meta = SEQ_DATA[seqKey] || { name: seqKey, icon: '⚡' };
+      updateMoveDisplay(meta);
       onBeatDrop(1.2);
-
-      const clip = clipsMap.get(clipId);
-      const effectiveSpeed = currentBPM / 128;
-      const durationSec = (clip ? clip.duration / effectiveSpeed : (60 / currentBPM) * 4);
-
-      liveFigureTimeout = setTimeout(() => {
-        isLiveFigureLocked = false;
-        choreoBeatTimer = 0;
-        // Volver inmediatamente al groove natural
-        playAnimation('dance_loop_fit', 0.3);
-        updateMoveDisplay({ name: '🕺 Groove Natural Electro', icon: '🕺', beats: 4 });
-      }, Math.max(durationSec * 1000 - 150, 800));
 
       if (!isDancing) {
         toggleDance(true);
@@ -1177,7 +1333,7 @@
         iconPlay.style.display = 'none';
         iconPause.style.display = 'block';
         playBtn.classList.remove('paused');
-        statusText.innerText = `Bailando al ritmo (${currentBPM} BPM)`;
+        statusText.innerText = `Bailando Tecktonik (${currentBPM} BPM)`;
         statusDot.innerText = '🟢';
 
         if (activeBeatTrack === 'sample') {
@@ -1186,46 +1342,42 @@
           startBeatClock();
         }
 
-        const step = TECKTONIK_ROUTINE[choreoIndex % TECKTONIK_ROUTINE.length];
-        playAnimation(step.id, 0.25);
-        updateMoveDisplay(step);
+        if (tecktonikController) {
+          tecktonikController.setMode('auto');
+          updateMoveDisplay(SEQ_DATA.auto);
+        }
       } else {
         iconPlay.style.display = 'block';
         iconPause.style.display = 'none';
         playBtn.classList.add('paused');
-        statusText.innerText = 'Pausa (Esperando beat)';
+        statusText.innerText = 'Pausa (Freeze Lock)';
         statusDot.innerText = '⏸️';
 
         stopBeatClock();
         html5Audio.pause();
 
-        // En pausa el personaje se detiene suavemente en pose estilizada
-        if (mixer) {
-          playAnimation('tecktonik_freeze', 0.25);
-          updateMoveDisplay({ name: '❄️ Freeze Lock (Pausa)', icon: '❄️', beats: 0 });
+        if (tecktonikController) {
+          tecktonikController.setMode('freeze');
+          updateMoveDisplay(SEQ_DATA.freeze);
         }
       }
     }
 
     document.getElementById('btn-play-toggle').addEventListener('click', () => toggleDance());
 
-    // Teclado rápido (Espacio = Play/Pause, 1-0 = Pads)
+    // Teclado rápido (Espacio = Play/Pause, 1-6 = Pads)
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space') {
         e.preventDefault();
         toggleDance();
-      } else if (e.key >= '0' && e.key <= '9') {
+      } else if (e.key >= '1' && e.key <= '6') {
         const keyMap = {
-          '1': 'tecktonik_windmills',
-          '2': 'tecktonik_headpass',
-          '3': 'tecktonik_chestcross',
-          '4': 'tecktonik_block',
-          '5': 'tecktonik_highguard',
-          '6': 'tecktonik_punch_combo',
-          '7': 'tecktonik_harvest',
-          '8': 'tecktonik_scratch',
-          '9': 'tecktonik_freeze',
-          '0': 'tecktonik_victory'
+          '1': 'molino',
+          '2': 'peinada',
+          '3': 'l_shapes',
+          '4': 'frenesi',
+          '5': 'freeze',
+          '6': 'auto'
         };
         if (keyMap[e.key]) {
           triggerMoveNow(keyMap[e.key]);
@@ -1255,8 +1407,8 @@
     window.changeBPM = function(delta) {
       currentBPM = Math.max(90, Math.min(170, currentBPM + delta));
       document.getElementById('bpm-val').innerText = `${currentBPM} BPM`;
-      if (activeAction) {
-        activeAction.setEffectiveTimeScale(currentBPM / 128);
+      if (tecktonikController) {
+        tecktonikController.setBPM(currentBPM);
       }
       if (isDancing && activeBeatTrack !== 'sample') {
         startBeatClock();
@@ -1290,7 +1442,7 @@
     // =========================================================================
     // 6. CÁMARAS & ILUMINACIÓN
     // =========================================================================
-    let cameraMode = 'dynamic'; // 'dynamic' | 'stage' | 'close' | 'orbit'
+    let cameraMode = 'dynamic';
     let orbitAngle = 0;
 
     window.setCameraMode = function(mode) {
@@ -1339,7 +1491,7 @@
     };
 
     // =========================================================================
-    // 7. CARGA DEL MODELO GLB MASTER (actionforge_85_clips_fit.glb)
+    // 7. CARGA DEL MODELO GLB (actionforge_85_clips_fit.glb)
     // =========================================================================
     const loader = new GLTFLoader();
     loader.load(
@@ -1355,28 +1507,21 @@
           }
         });
 
-        // Registrar todas las animaciones
-        mixer = new THREE.AnimationMixer(currentModel);
-        gltf.animations.forEach((clip) => {
-          clipsMap.set(clip.name, clip);
-        });
-
-        // Generar figuras compuestas de baile
-        buildTecktonikComposites();
+        // Inicializar controlador Tecktonik
+        tecktonikController = new TecktonikController(currentModel);
+        tecktonikController.setMode('molino');
 
         // Ocultar pantalla de carga
         const loaderScreen = document.getElementById('loader');
         loaderScreen.style.opacity = '0';
         setTimeout(() => loaderScreen.style.display = 'none', 400);
 
-        // Iniciar en pose de baile lista
-        playAnimation('dance_loop_fit', 0.1);
-        updateMoveDisplay({ name: '🕺 Groove Natural Electro', icon: '🕺', beats: 4 });
+        updateMoveDisplay(SEQ_DATA.molino);
       },
       (xhr) => {
         if (xhr.lengthComputable) {
           const pct = Math.round((xhr.loaded / xhr.total) * 100);
-          document.getElementById('loader-sub').innerText = `Descargando animaciones y rig: ${pct}%...`;
+          document.getElementById('loader-sub').innerText = `Descargando modelo y rig: ${pct}%...`;
         }
       },
       (error) => {
@@ -1416,11 +1561,9 @@
       requestAnimationFrame(animate);
       const delta = clock.getDelta();
 
-      if (mixer) {
-        mixer.update(delta);
+      if (tecktonikController && isDancing) {
+        tecktonikController.update(delta);
       }
-
-      advanceChoreography(delta);
 
       // Cámara Orbital Automática
       if (cameraMode === 'orbit') {
