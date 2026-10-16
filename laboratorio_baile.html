@@ -500,7 +500,7 @@
         <kbd>1</kbd>
       </button>
       <button class="seq-btn" id="btn-seq-estirados" onclick="window.setSequence('estirados')">
-        <span>💥 2. Brazos Estirados (Látigos)</span>
+        <span>💥 2. Extensión & Cruce Máximo</span>
         <kbd>2</kbd>
       </button>
       <button class="seq-btn" id="btn-seq-brazos_cruzados" onclick="window.setSequence('brazos_cruzados')">
@@ -794,6 +794,80 @@
         qDelta.head.setFromEuler(euler);
       }
 
+      applyDeepCross(euler, qDelta, amp = 1.0, isCrossed = true, rightOverLeft = true) {
+        if (!isCrossed) {
+          // Fase 1: Extensión horizontal máxima de ambos brazos (completamente estirados en cruz)
+          euler.set(0.0, 0.0, -0.05 * amp);
+          qDelta.clavicle_r.setFromEuler(euler);
+          euler.set(0.0, 0.0, 0.05 * amp);
+          qDelta.clavicle_l.setFromEuler(euler);
+
+          // Brazos 100% rectos extendidos en horizontal a los lados
+          this.applyStraightArmR(euler, qDelta, 0.15, 0.0, -0.12, amp);
+          this.applyStraightArmL(euler, qDelta, 0.15, 0.0, 0.12, amp);
+
+          // Manos afiladas en el eje
+          euler.set(0.0, 0.0, 0.0);
+          qDelta.hand_r.setFromEuler(euler);
+          qDelta.hand_l.setFromEuler(euler);
+
+          // Expansión torácica con actitud electro
+          euler.set(-0.08 * amp, 0.0, 0.0);
+          qDelta.spine.setFromEuler(euler);
+          euler.set(-0.05 * amp, 0.0, 0.0);
+          qDelta.head.setFromEuler(euler);
+        } else {
+          // Fase 2: Cruce por delante al máximo sobrepasando el codo contrario hasta donde llega
+          if (rightOverLeft) {
+            // Brazo DERECHO por ENCIMA: cruza profundo sobrepasando el codo izquierdo
+            euler.set(0.12 * amp, -0.2 * amp, 0.25 * amp);
+            qDelta.clavicle_r.setFromEuler(euler);
+            euler.set(1.35 * amp, 0.15 * amp, 0.8 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(0.35 * amp, 0.25 * amp, 1.05 * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+            euler.set(0.15 * amp, 0.0, 0.45 * amp);
+            qDelta.hand_r.setFromEuler(euler);
+
+            // Brazo IZQUIERDO por DEBAJO: cruza profundo sobrepasando el codo derecho
+            euler.set(0.12 * amp, 0.2 * amp, -0.25 * amp);
+            qDelta.clavicle_l.setFromEuler(euler);
+            euler.set(1.2 * amp, -0.15 * amp, -0.8 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(0.35 * amp, -0.25 * amp, -1.05 * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+            euler.set(0.15 * amp, 0.0, -0.45 * amp);
+            qDelta.hand_l.setFromEuler(euler);
+          } else {
+            // Brazo IZQUIERDO por ENCIMA: cruza profundo sobrepasando el codo derecho
+            euler.set(0.12 * amp, 0.2 * amp, -0.25 * amp);
+            qDelta.clavicle_l.setFromEuler(euler);
+            euler.set(1.35 * amp, -0.15 * amp, -0.8 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(0.35 * amp, -0.25 * amp, -1.05 * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+            euler.set(0.15 * amp, 0.0, -0.45 * amp);
+            qDelta.hand_l.setFromEuler(euler);
+
+            // Brazo DERECHO por DEBAJO: cruza profundo sobrepasando el codo izquierdo
+            euler.set(0.12 * amp, -0.2 * amp, 0.25 * amp);
+            qDelta.clavicle_r.setFromEuler(euler);
+            euler.set(1.2 * amp, 0.15 * amp, 0.8 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(0.35 * amp, 0.25 * amp, 1.05 * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+            euler.set(0.15 * amp, 0.0, 0.45 * amp);
+            qDelta.hand_r.setFromEuler(euler);
+          }
+
+          // Contracción y cabeceo contundente en el impacto del cruce
+          euler.set(0.22 * amp, 0.0, 0.0);
+          qDelta.spine.setFromEuler(euler);
+          euler.set(0.18 * amp, 0.0, 0.0);
+          qDelta.head.setFromEuler(euler);
+        }
+      }
+
       applyWeave(euler, qDelta, amp = 1.0, t = 0, beatDur = 0.44) {
         const weaveFreq = (Math.PI * 2 / beatDur);
         const phaseW = t * weaveFreq;
@@ -1043,36 +1117,27 @@
             this.applyWeave(euler, qDelta, amp, t, beatDur);
 
           } else if (beat16 === 2) {
-            // Frase 2: Látigo explosivo con BRAZO DERECHO COMPLETAMENTE ESTIRADO al frente
-            this.applyStraightArmR(euler, qDelta, 1.45, 0.1, 0.25, amp);
-            euler.set(0.8 * amp, 0, 0.5 * amp);
-            qDelta.upperarm_l.setFromEuler(euler);
-            euler.set(1.57 * amp, 0, 0);
-            qDelta.lowerarm_l.setFromEuler(euler);
+            // Frase 2: Extensión horizontal máxima de ambos brazos en cruz
+            this.applyDeepCross(euler, qDelta, amp, false, true);
 
           } else if (beat16 === 3) {
-            // Frase 3: Látigo explosivo con BRAZO IZQUIERDO COMPLETAMENTE ESTIRADO al frente
-            this.applyStraightArmL(euler, qDelta, 1.45, -0.1, -0.25, amp);
-            euler.set(0.8 * amp, 0, -0.5 * amp);
-            qDelta.upperarm_r.setFromEuler(euler);
-            euler.set(1.57 * amp, 0, 0);
-            qDelta.lowerarm_r.setFromEuler(euler);
+            // Frase 3: ¡Cruce frontal profundo al límite sobrepasando el codo contrario! (Derecho sobre Izquierdo)
+            this.applyDeepCross(euler, qDelta, amp, true, true);
 
           } else if (beat16 === 4) {
-            // Frase 4: ¡FREEZE LOCK DE BRAZOS CRUZADOS AL PECHO! (El clásico)
-            this.applyFoldedArms(euler, qDelta, amp, phase);
+            // Frase 4: Apertura explosiva a extensión horizontal máxima
+            this.applyDeepCross(euler, qDelta, amp, false, false);
 
           } else if (beat16 === 5) {
-            // Frase 5: Ruptura y apertura violenta con AMBOS BRAZOS ESTIRADOS a los lados en V
-            this.applyStraightArmL(euler, qDelta, 0.3, 0, 0.85, amp);
-            this.applyStraightArmR(euler, qDelta, 0.3, 0, -0.85, amp);
+            // Frase 5: ¡Cruce frontal profundo al límite sobrepasando el codo contrario! (Izquierdo sobre Derecho)
+            this.applyDeepCross(euler, qDelta, amp, true, false);
 
           } else if (beat16 === 6) {
-            // Frase 6: La Peinada Derecha tras la nuca con brazo izquierdo estirado
+            // Frase 6: Cuadro Tutting sobre la cabeza derecho
             this.applyPeinada(euler, qDelta, amp, true);
 
           } else if (beat16 === 7) {
-            // Frase 7: La Peinada Izquierda tras la nuca con brazo derecho estirado
+            // Frase 7: Cuadro Tutting sobre la cabeza izquierdo
             this.applyPeinada(euler, qDelta, amp, false);
 
           } else if (beat16 === 8) {
@@ -1111,33 +1176,13 @@
           }
 
         // ---------------------------------------------------------------------
-        // 2. "LÁTIGOS & BRAZOS ESTIRADOS" (Extensiones completas)
+        // 2. "EXTENSIÓN & CRUCE MÁXIMO" (Horizontal y cruce sobrepasando codos)
         // ---------------------------------------------------------------------
         } else if (mode === 'estirados') {
-          const stepE = Math.floor(halfStep / 2) % 4;
-          if (stepE === 0) {
-            // Brazo derecho estirado al frente, izquierdo en guardia
-            this.applyStraightArmR(euler, qDelta, 1.45, 0.1, 0.25, amp);
-            euler.set(0.8 * amp, 0, 0.5 * amp);
-            qDelta.upperarm_l.setFromEuler(euler);
-            euler.set(1.57 * amp, 0, 0);
-            qDelta.lowerarm_l.setFromEuler(euler);
-          } else if (stepE === 1) {
-            // Brazo izquierdo estirado al frente, derecho en guardia
-            this.applyStraightArmL(euler, qDelta, 1.45, -0.1, -0.25, amp);
-            euler.set(0.8 * amp, 0, -0.5 * amp);
-            qDelta.upperarm_r.setFromEuler(euler);
-            euler.set(1.57 * amp, 0, 0);
-            qDelta.lowerarm_r.setFromEuler(euler);
-          } else if (stepE === 2) {
-            // Corte diagonal cruzado con brazos estirados
-            this.applyStraightArmR(euler, qDelta, 0.9, 0, 0.9, amp);
-            this.applyStraightArmL(euler, qDelta, -0.4, 0, -0.7, amp);
-          } else {
-            // Doble extensión horizontal estirada a 180°
-            this.applyStraightArmL(euler, qDelta, 0.3, 0, 0.85, amp);
-            this.applyStraightArmR(euler, qDelta, 0.3, 0, -0.85, amp);
-          }
+          const beat4 = Math.floor(t / beatDur) % 4;
+          const isCrossed = (beat4 % 2 === 1);
+          const rightOverLeft = (beat4 === 1);
+          this.applyDeepCross(euler, qDelta, amp, isCrossed, rightOverLeft);
 
         // ---------------------------------------------------------------------
         // 3. "BRAZOS CRUZADOS" (Freeze Lock / Folded Arms Stance)
@@ -1528,7 +1573,7 @@
     // =========================================================================
     const SEQ_META = {
       flujo: { name: 'Flujo Continuo Electro (Coreografía Real)', icon: '🔀', desc: 'Encadenado dinámico sin repetición: trenzados, brazos estirados, brazos cruzados y peinadas' },
-      estirados: { name: 'Látigos & Brazos Estirados (Full Extensions)', icon: '💥', desc: 'Látigos y proyecciones completas con brazos rectos al frente y en diagonal' },
+      estirados: { name: 'Extensión & Cruce Máximo', icon: '💥', desc: 'Brazos extendidos en horizontal y cruce frontal profundo sobrepasando los codos al límite' },
       brazos_cruzados: { name: 'Brazos Cruzados (Freeze Lock)', icon: '🛡️', desc: 'Pose clásica de brazos cruzados sobre el pecho con actitud y cabeceo electro' },
       trenzado: { name: 'El Trenzado (Arm Weave en 8)', icon: '🥨', desc: 'Antebrazos entrelazados describiendo un bucle continuo en 8 por delante del pecho' },
       enhebrado: { name: 'El Enhebrado (Threading / Ventana)', icon: '🪡', desc: 'Paso penetrante de un brazo por dentro del marco del otro' },
