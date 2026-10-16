@@ -2188,6 +2188,178 @@
 
         if (tecktonikController) {
           tecktonikController.setMode('combo_viral');
+          updateMoveDisplay(SEQ_DATA.combo_viral);
+        }
+      } else {
+        iconPlay.style.display = 'block';
+        iconPause.style.display = 'none';
+        playBtn.classList.add('paused');
+        statusText.innerText = 'Pausa (Freeze Lock)';
+        statusDot.innerText = '⏸️';
+
+        stopBeatClock();
+        html5Audio.pause();
+
+        if (tecktonikController) {
+          tecktonikController.setMode('freeze');
+          updateMoveDisplay(SEQ_DATA.freeze);
+        }
+      }
+    }
+
+    document.getElementById('btn-play-toggle').addEventListener('click', () => toggleDance());
+
+    // Teclado rápido (Espacio = Play/Pause, V = Combo Viral, 1-0 = Pads)
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        toggleDance();
+      } else {
+        const keyMap = {
+          'v': 'combo_viral',
+          'V': 'combo_viral',
+          '1': 'flujo',
+          '2': 'estirados',
+          '3': 'brazos_cruzados',
+          '4': 'trenzado',
+          '5': 'enhebrado',
+          '6': 'peinada',
+          '7': 'nudo',
+          '8': 'l_shapes',
+          '9': 'frenesi',
+          '0': 'molino'
+        };
+        if (keyMap[e.key]) {
+          triggerMoveNow(keyMap[e.key]);
+        }
+      }
+    });
+
+    // Control de Pista de Sonido
+    window.setBeatTrack = function(track) {
+      activeBeatTrack = track;
+      document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById(`trk-${track}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      if (track === 'sample') {
+        stopBeatClock();
+        html5Audio.src = 'beat_baile.wav';
+        html5Audio.loop = true;
+        if (isDancing) html5Audio.play();
+      } else {
+        html5Audio.pause();
+        if (isDancing) startBeatClock();
+      }
+    };
+
+    // Control de BPM
+    window.changeBPM = function(delta) {
+      currentBPM = Math.max(90, Math.min(170, currentBPM + delta));
+      document.getElementById('bpm-val').innerText = `${currentBPM} BPM`;
+      if (tecktonikController) {
+        tecktonikController.setBPM(currentBPM);
+      }
+      if (isDancing && activeBeatTrack !== 'sample') {
+        startBeatClock();
+      }
+    };
+
+    // Subir archivo MP3/WAV propio del usuario
+    window.loadUserAudioFile = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      initAudio();
+
+      const objectUrl = URL.createObjectURL(file);
+      html5Audio.src = objectUrl;
+      html5Audio.loop = true;
+
+      if (!customAudioSource && audioCtx) {
+        customAudioSource = audioCtx.createMediaElementSource(html5Audio);
+        customAudioSource.connect(masterGain);
+      }
+
+      stopBeatClock();
+      activeBeatTrack = 'custom';
+      document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
+
+      toggleDance(true);
+      html5Audio.play();
+      document.getElementById('status-text').innerText = `Reproduciendo: ${file.name.substring(0, 18)}...`;
+    };
+
+    // =========================================================================
+    // 6. CÁMARAS & ILUMINACIÓN
+    // =========================================================================
+    let cameraMode = 'dynamic';
+    let orbitAngle = 0;
+
+    window.setCameraMode = function(mode) {
+      cameraMode = mode;
+      document.querySelectorAll('.stage-tools .tool-btn').forEach(b => {
+        if (b.id && b.id.startsWith('cam-')) b.classList.remove('active');
+      });
+      const btn = document.getElementById(`cam-${mode}`);
+      if (btn) btn.classList.add('active');
+
+      if (mode === 'stage') {
+        camera.position.set(0, 1.4, 4.0);
+        controls.target.set(0, 0.95, 0);
+      } else if (mode === 'close') {
+        camera.position.set(0, 1.35, 1.8);
+        controls.target.set(0, 1.25, 0);
+      } else if (mode === 'dynamic') {
+        camera.position.set(0, 1.35, 3.2);
+        controls.target.set(0, 0.95, 0);
+      }
+    };
+
+    window.setLightingTheme = function(theme) {
+      document.querySelectorAll('.stage-tools .tool-btn').forEach(b => {
+        if (b.id && b.id.startsWith('light-')) b.classList.remove('active');
+      });
+      const btn = document.getElementById(`light-${theme}`);
+      if (btn) btn.classList.add('active');
+
+      if (theme === 'cyber') {
+        mainSpot.color.setHex(0x00f2fe);
+        leftStrobe.color.setHex(0xf72585);
+        rightStrobe.color.setHex(0x7209b7);
+        grid.material.color.setHex(0x00f2fe);
+      } else if (theme === 'laser') {
+        mainSpot.color.setHex(0xff0055);
+        leftStrobe.color.setHex(0x00ffcc);
+        rightStrobe.color.setHex(0xff0055);
+        grid.material.color.setHex(0xff0055);
+      } else if (theme === 'gold') {
+        mainSpot.color.setHex(0xffb703);
+        leftStrobe.color.setHex(0xfb8500);
+        rightStrobe.color.setHex(0x219ebc);
+        grid.material.color.setHex(0xffb703);
+      }
+    };
+
+    // =========================================================================
+    // 7. CARGA DEL MODELO GLB (actionforge_85_clips_fit.glb)
+    // =========================================================================
+    const loader = new GLTFLoader();
+    loader.load(
+      'actionforge_85_clips_fit.glb?v=' + Date.now(),
+      (gltf) => {
+        currentModel = gltf.scene;
+        scene.add(currentModel);
+
+        currentModel.traverse((node) => {
+          if (node.isMesh) {
+            node.castShadow = true;
+            node.receiveShadow = true;
+          }
+        });
+
+        // Inicializar controlador Tecktonik (Combo Viral 8-Beats por defecto)
+        tecktonikController = new TecktonikController(currentModel);
+        tecktonikController.setMode('combo_viral');
 
         // Ocultar pantalla de carga
         const loaderScreen = document.getElementById('loader');
