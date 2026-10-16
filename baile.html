@@ -511,12 +511,154 @@
       line-height: 1.5;
     }
 
+    /* Top Bar Actions Group */
+    .top-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    /* Immersive Mode Toggle Button (In Top Bar) */
+    .btn-immersive-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.22), rgba(157, 78, 221, 0.3));
+      border: 1px solid rgba(0, 242, 254, 0.5);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 16px rgba(0, 242, 254, 0.25);
+    }
+    .btn-immersive-toggle:hover {
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.4), rgba(157, 78, 221, 0.45));
+      border-color: #00f2fe;
+      box-shadow: 0 0 22px rgba(0, 242, 254, 0.6);
+      transform: translateY(-2px) scale(1.03);
+    }
+    .btn-immersive-toggle:active {
+      transform: scale(0.96);
+    }
+    .btn-immersive-toggle kbd {
+      background: rgba(255, 255, 255, 0.16);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #00f2fe;
+    }
+
+    /* Floating Restore Button when UI is hidden */
+    .btn-restore-ui {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(10, 15, 30, 0.82);
+      border: 1px solid rgba(0, 242, 254, 0.5);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65), 0 0 18px rgba(0, 242, 254, 0.4);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      transform: translateY(-12px) scale(0.92);
+    }
+    .btn-restore-ui:hover {
+      opacity: 1 !important;
+      transform: translateY(0) scale(1.05);
+      border-color: #00f2fe;
+      box-shadow: 0 10px 35px rgba(0, 242, 254, 0.6);
+    }
+    .btn-restore-ui .restore-icon {
+      font-size: 16px;
+      animation: pulseEye 2s infinite ease-in-out;
+    }
+    @keyframes pulseEye {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    /* Immersive Toast Notification */
+    .immersive-toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-24px);
+      z-index: 10000;
+      background: rgba(14, 20, 36, 0.94);
+      border: 1px solid rgba(0, 242, 254, 0.5);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 24px;
+      border-radius: 999px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.75), 0 0 25px rgba(0, 242, 254, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .immersive-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* UI Hidden State (Smooth disappear of all obstructive elements) */
+    body.ui-hidden .top-bar,
+    body.ui-hidden .current-move-card,
+    body.ui-hidden .stage-tools,
+    body.ui-hidden .dj-dock {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
+      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s !important;
+    }
+    body.ui-hidden .top-bar {
+      transform: translateY(-40px);
+    }
+    body.ui-hidden .current-move-card {
+      transform: translate(-50%, -40px);
+    }
+    body.ui-hidden .stage-tools {
+      transform: translate(40px, -50%);
+    }
+    body.ui-hidden .dj-dock {
+      transform: translate(-50%, 60px);
+    }
+    body.ui-hidden .btn-restore-ui {
+      opacity: 0.88;
+      pointer-events: auto;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+
     /* Mobile Responsive */
     @media (max-width: 768px) {
       .top-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
-      .current-move-card { top: 120px; padding: 8px 16px; }
+      .top-bar-actions { width: 100%; justify-content: space-between; }
+      .current-move-card { top: 130px; padding: 8px 16px; }
       .stage-tools { display: none; }
       .pads-container { max-height: 110px; overflow-y: auto; }
+      .btn-immersive-toggle span { font-size: 11px; }
     }
   </style>
 
@@ -542,21 +684,36 @@
   <!-- Stage Glow Ambient -->
   <div class="stage-glow" id="stage-glow"></div>
 
+  <!-- Floating Restore UI Button (Visible when UI is hidden) -->
+  <button class="btn-restore-ui" id="btn-restore-ui" onclick="window.toggleImmersiveMode()" title="Mostrar controles (Tecla H o doble tap)">
+    <span class="restore-icon">👁️</span>
+    <span class="restore-label">Mostrar Controles</span>
+  </button>
+
+  <!-- Floating Toast Notification -->
+  <div class="immersive-toast" id="immersive-toast">✨ Modo Inmersivo: Pantalla limpia • Toca 👁️ o pulsa H para ver controles</div>
+
   <!-- 3D Canvas -->
   <div id="canvas-container"></div>
 
   <!-- Top Bar -->
   <div class="top-bar">
     <div class="brand-logo">
-      <span class="badge-teck">TECKTONIK 135 BPM</span>
+      <span class="badge-teck">TECKTONIK 138 BPM</span>
       <span class="brand-text">Electro Warrior Dance</span>
       <div class="status-badge" id="dance-status">
-        <span id="status-dot">🟢</span> <span id="status-text">Bailando Tecktonik (135 BPM)</span>
+        <span id="status-dot">🟢</span> <span id="status-text">Bailando Tecktonik (138 BPM)</span>
       </div>
     </div>
-    <a href="index.html" class="btn-studio-link">
-      <span>🛠️ Ir a Estudio Completo (84 Clips)</span>
-    </a>
+    <div class="top-bar-actions">
+      <button class="btn-immersive-toggle" id="btn-toggle-ui" onclick="window.toggleImmersiveMode()" title="Ocultar interfaz / Pantalla limpia (Tecla H o doble tap)">
+        <span>👁️ Pantalla Limpia</span>
+        <kbd>H</kbd>
+      </button>
+      <a href="index.html" class="btn-studio-link">
+        <span>🛠️ Ir a Estudio</span>
+      </a>
+    </div>
   </div>
 
   <!-- Floating Current Move Card -->
@@ -2584,13 +2741,66 @@
       }
     }
 
+    // =========================================================================
+    // CONTROL DE MODO INMERSIVO (Pantalla limpia / Ocultar UI)
+    // =========================================================================
+    window.isUIVisible = true;
+    let toastTimeout = null;
+
+    function showImmersiveToast(msg) {
+      const toast = document.getElementById('immersive-toast');
+      if (!toast) return;
+      toast.innerText = msg;
+      toast.classList.add('show');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2400);
+    }
+
+    window.toggleImmersiveMode = function(forceState = null) {
+      if (forceState !== null) {
+        window.isUIVisible = forceState;
+      } else {
+        window.isUIVisible = !window.isUIVisible;
+      }
+      if (!window.isUIVisible) {
+        document.body.classList.add('ui-hidden');
+        showImmersiveToast('✨ Modo Inmersivo: Pantalla limpia • Toca 👁️ o pulsa H para ver controles');
+      } else {
+        document.body.classList.remove('ui-hidden');
+        showImmersiveToast('📋 Controles visibles');
+      }
+    };
+
+    // Doble click o doble tap en el escenario 3D para alternar modo inmersivo
+    let lastCanvasTouch = 0;
+    container.addEventListener('dblclick', () => {
+      window.toggleImmersiveMode();
+    });
+    container.addEventListener('touchend', (e) => {
+      if (e.target && e.target.closest && e.target.closest('button, a, input, select, label')) return;
+      const now = Date.now();
+      if (now - lastCanvasTouch < 380) {
+        window.toggleImmersiveMode();
+        e.preventDefault();
+      }
+      lastCanvasTouch = now;
+    });
+
     document.getElementById('btn-play-toggle').addEventListener('click', () => toggleDance());
 
-    // Teclado rápido (Espacio = Play/Pause, V = Combo Viral, 1-0 = Pads)
+    // Teclado rápido (Espacio = Play/Pause, H = Ocultar/Mostrar UI, V = Combo Viral, 1-0 = Pads, Q-R = Nuevas Figuras)
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space') {
         e.preventDefault();
         toggleDance();
+      } else if (e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        window.toggleImmersiveMode();
+      } else if (e.key === 'Escape' && !window.isUIVisible) {
+        e.preventDefault();
+        window.toggleImmersiveMode(true);
       } else {
         const keyMap = {
           'v': 'combo_viral',
