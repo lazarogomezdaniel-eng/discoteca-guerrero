@@ -661,8 +661,10 @@
 
           thigh_l: ['thigh_l', 'upleg_l', 'upleg.l', 'leftupleg'],
           calf_l: ['calf_l', 'leg_l', 'leg.l', 'leftleg'],
+          foot_l: ['foot_l', 'leftfoot', 'foot.l', 'ankle_l'],
           thigh_r: ['thigh_r', 'upleg_r', 'upleg.r', 'rightupleg'],
-          calf_r: ['calf_r', 'leg_r', 'leg.r', 'rightleg']
+          calf_r: ['calf_r', 'leg_r', 'leg.r', 'rightleg'],
+          foot_r: ['foot_r', 'rightfoot', 'foot.r', 'ankle_r']
         };
 
         const foundBones = new Map();
@@ -1085,23 +1087,15 @@
           hand_r: new THREE.Quaternion(),
           thigh_l: new THREE.Quaternion(),
           calf_l: new THREE.Quaternion(),
+          foot_l: new THREE.Quaternion(),
           thigh_r: new THREE.Quaternion(),
-          calf_r: new THREE.Quaternion()
+          calf_r: new THREE.Quaternion(),
+          foot_r: new THREE.Quaternion()
         };
 
         const euler = new THREE.Euler();
-
-        // Rebote continuo de cadera y rodillas en todos los modos a 135 BPM
-        const bounce = Math.abs(Math.sin(phase)) * 0.05 * amp;
-        if (this.bones.pelvis && this.initPositions.pelvis) {
-          this.bones.pelvis.position.y = this.initPositions.pelvis.y - bounce;
-        }
-        euler.set(bounce * 1.5, 0, 0);
-        qDelta.thigh_l.setFromEuler(euler);
-        qDelta.thigh_r.setFromEuler(euler);
-        euler.set(-bounce * 2.2, 0, 0);
-        qDelta.calf_l.setFromEuler(euler);
-        qDelta.calf_r.setFromEuler(euler);
+        let armBiasX = 0;
+        let armBiasZ = 0;
 
         // ---------------------------------------------------------------------
         // 1. "FLUJO CONTINUO ELECTRO" (Coreografía Real - Sin repeticiones)
@@ -1115,64 +1109,94 @@
           if (beat16 === 0 || beat16 === 1) {
             // Frase 1: El Trenzado (Arm Weave en 8 frontal continuo)
             this.applyWeave(euler, qDelta, amp, t, beatDur);
+            armBiasX = Math.sin(phase) * 0.45;
+            armBiasZ = 0.2;
 
           } else if (beat16 === 2) {
             // Frase 2: Extensión horizontal máxima de ambos brazos en cruz
             this.applyDeepCross(euler, qDelta, amp, false, true);
+            armBiasX = 0.0;
+            armBiasZ = -0.15;
 
           } else if (beat16 === 3) {
             // Frase 3: ¡Cruce frontal profundo al límite sobrepasando el codo contrario! (Derecho sobre Izquierdo)
             this.applyDeepCross(euler, qDelta, amp, true, true);
+            armBiasX = 0.55;
+            armBiasZ = 0.45;
 
           } else if (beat16 === 4) {
             // Frase 4: Apertura explosiva a extensión horizontal máxima
             this.applyDeepCross(euler, qDelta, amp, false, false);
+            armBiasX = 0.0;
+            armBiasZ = -0.15;
 
           } else if (beat16 === 5) {
             // Frase 5: ¡Cruce frontal profundo al límite sobrepasando el codo contrario! (Izquierdo sobre Derecho)
             this.applyDeepCross(euler, qDelta, amp, true, false);
+            armBiasX = -0.55;
+            armBiasZ = 0.45;
 
           } else if (beat16 === 6) {
             // Frase 6: Cuadro Tutting sobre la cabeza derecho
             this.applyPeinada(euler, qDelta, amp, true);
+            armBiasX = 0.5;
+            armBiasZ = 0.1;
 
           } else if (beat16 === 7) {
             // Frase 7: Cuadro Tutting sobre la cabeza izquierdo
             this.applyPeinada(euler, qDelta, amp, false);
+            armBiasX = -0.5;
+            armBiasZ = 0.1;
 
           } else if (beat16 === 8) {
             // Frase 8: El Enhebrado (marco y brazo derecho estirado penetrando)
             this.applyThreading(euler, qDelta, amp, true, snappy);
+            armBiasX = 0.45;
+            armBiasZ = 0.3;
 
           } else if (beat16 === 9) {
             // Frase 9: El Enhebrado Inverso (marco y brazo izquierdo estirado penetrando)
             this.applyThreading(euler, qDelta, amp, false, snappy);
+            armBiasX = -0.45;
+            armBiasZ = 0.3;
 
           } else if (beat16 === 10) {
             // Frase 10: Corte diagonal doble con BRAZOS ESTIRADOS (uno arriba, otro abajo)
             this.applyStraightArmR(euler, qDelta, 0.9, 0, 0.9, amp);
             this.applyStraightArmL(euler, qDelta, -0.4, 0, -0.7, amp);
+            armBiasX = 0.35;
+            armBiasZ = 0.15;
 
           } else if (beat16 === 11) {
             // Frase 11: Doble proyección frontal con BRAZOS ESTIRADOS paralelos rectos al frente
             this.applyStraightArmL(euler, qDelta, 1.4, 0, -0.15, amp);
             this.applyStraightArmR(euler, qDelta, 1.4, 0, 0.15, amp);
+            armBiasX = 0.0;
+            armBiasZ = 0.4;
 
           } else if (beat16 === 12) {
             // Frase 12: Nudo envolvente en espiral
             this.applyKnot(euler, qDelta, amp, 0);
+            armBiasX = 0.2;
+            armBiasZ = 0.25;
 
           } else if (beat16 === 13) {
             // Frase 13: ¡Segundo bloqueo imponente con BRAZOS CRUZADOS AL PECHO!
             this.applyFoldedArms(euler, qDelta, amp, phase);
+            armBiasX = 0.0;
+            armBiasZ = 0.1;
 
           } else if (beat16 === 14) {
             // Frase 14: Geometría Neón a 90° (Tutting angular)
             this.applyLShapes(euler, qDelta, amp, 0);
+            armBiasX = 0.3;
+            armBiasZ = 0.1;
 
           } else {
             // Frase 15: Molinete rápido que conecta de vuelta con el Trenzado
             this.applyMolino(euler, qDelta, amp, t, beatDur);
+            armBiasX = Math.sin(phase) * 0.35;
+            armBiasZ = 0.1;
           }
 
         // ---------------------------------------------------------------------
@@ -1183,18 +1207,24 @@
           const isCrossed = (beat4 % 2 === 1);
           const rightOverLeft = (beat4 === 1);
           this.applyDeepCross(euler, qDelta, amp, isCrossed, rightOverLeft);
+          armBiasX = isCrossed ? (rightOverLeft ? 0.6 : -0.6) : 0.0;
+          armBiasZ = isCrossed ? 0.45 : -0.2;
 
         // ---------------------------------------------------------------------
         // 3. "BRAZOS CRUZADOS" (Freeze Lock / Folded Arms Stance)
         // ---------------------------------------------------------------------
         } else if (mode === 'brazos_cruzados') {
           this.applyFoldedArms(euler, qDelta, amp, phase);
+          armBiasX = 0.0;
+          armBiasZ = 0.1;
 
         // ---------------------------------------------------------------------
         // 4. "EL TRENZADO" (Arm Weave en 8 frontal continuo)
         // ---------------------------------------------------------------------
         } else if (mode === 'trenzado') {
           this.applyWeave(euler, qDelta, amp, t, beatDur);
+          armBiasX = Math.sin(phase) * 0.45;
+          armBiasZ = 0.2;
 
         // ---------------------------------------------------------------------
         // 5. "EL ENHEBRADO" (Threading / Ventana)
@@ -1203,13 +1233,17 @@
           const stepThread = Math.floor(halfStep / 2) % 2;
           const snappy = this.sharpWave(t * (Math.PI * 2 / beatDur), 0.25);
           this.applyThreading(euler, qDelta, amp, stepThread === 0, snappy);
+          armBiasX = stepThread === 0 ? 0.45 : -0.45;
+          armBiasZ = 0.3;
 
         // ---------------------------------------------------------------------
-        // 6. "LA PEINADA" (Head-Pass Comb)
+        // 6. "CUADRO DE CABEZA" (Corona Tutting)
         // ---------------------------------------------------------------------
         } else if (mode === 'peinada') {
           const beat4 = Math.floor(halfStep / 2) % 2;
           this.applyPeinada(euler, qDelta, amp, beat4 === 0);
+          armBiasX = beat4 === 0 ? 0.55 : -0.55;
+          armBiasZ = 0.1;
 
         // ---------------------------------------------------------------------
         // 7. "NUDO TECKTONIK" (Wrap & Lock)
@@ -1217,24 +1251,90 @@
         } else if (mode === 'nudo') {
           const stepKnot = halfStep % 2;
           this.applyKnot(euler, qDelta, amp, stepKnot);
+          armBiasX = 0.2;
+          armBiasZ = 0.35;
 
         // ---------------------------------------------------------------------
         // 8. "GEOMETRÍA NEÓN (L-SHAPES)"
         // ---------------------------------------------------------------------
         } else if (mode === 'l_shapes') {
           this.applyLShapes(euler, qDelta, amp, halfStep);
+          armBiasX = (halfStep % 2 === 0) ? 0.35 : -0.35;
+          armBiasZ = 0.1;
 
         // ---------------------------------------------------------------------
         // 9. "FRENESÍ ELECTRO"
         // ---------------------------------------------------------------------
         } else if (mode === 'frenesi') {
           this.applyFrenesi(euler, qDelta, amp, phase);
+          armBiasX = Math.sin(t * 8) * 0.7;
+          armBiasZ = 0.2;
 
         // ---------------------------------------------------------------------
         // 0. "EL MOLINO" (Windmills 360°)
         // ---------------------------------------------------------------------
         } else if (mode === 'molino') {
           this.applyMolino(euler, qDelta, amp, t, beatDur);
+          armBiasX = Math.sin(phase) * 0.35;
+          armBiasZ = 0.1;
+        }
+
+        // =====================================================================
+        // POSTURA BASE NATURAL DE RODILLAS & DINÁMICA DE CADERA RÍTMICA
+        // Piernas separadas del centro, rodillas con flexión continua natural
+        // y cadera acompañando el compás y siguiendo la energía de los brazos
+        // =====================================================================
+        const baseKneeBend = 0.22 * amp;     // Flexión constante (~13°), nunca piernas rígidas
+        const baseHipBend = 0.14 * amp;      // Flexión de apoyo en cadera
+        const legSpread = 0.12 * amp;        // Separación lateral natural hacia afuera
+        const footTurnOut = 0.08 * amp;      // Punteras levemente orientadas hacia afuera
+
+        // Rebote continuo de rodillas al compás (135 BPM)
+        const bouncePulse = Math.pow(Math.abs(Math.sin(phase)), 1.3) * 0.04 * amp;
+        const totalHipDrop = 0.035 * amp + bouncePulse;
+
+        // Groove lateral y balanceo rítmico pélvico
+        const hipSway = Math.sin(phase * 0.5) * 0.06 * amp;
+
+        // Posición 3D de la Pelvis (rebote vertical + desplazamiento siguiendo a los brazos)
+        if (this.bones.pelvis && this.initPositions.pelvis) {
+          this.bones.pelvis.position.y = this.initPositions.pelvis.y - totalHipDrop;
+          this.bones.pelvis.position.x = this.initPositions.pelvis.x + (hipSway + armBiasX * 0.035) * amp;
+          this.bones.pelvis.position.z = this.initPositions.pelvis.z + (armBiasZ * 0.025) * amp;
+        }
+
+        // Rotación de la Pelvis (la cadera rota hacia el lado del brazo activo)
+        euler.set(
+          (-bouncePulse * 0.5 + armBiasZ * 0.08) * amp,
+          (-hipSway * 0.8 + armBiasX * 0.14) * amp,
+          (hipSway * 0.6 - armBiasX * 0.06) * amp
+        );
+        qDelta.pelvis.setFromEuler(euler);
+
+        // Pierna Izquierda (separada del centro + flexión rítmica)
+        const leftKneeFlex = baseKneeBend + bouncePulse * 1.5 - (armBiasX * 0.05);
+        const leftHipFlex = baseHipBend + bouncePulse * 0.8 + (armBiasZ * 0.06);
+        euler.set(leftHipFlex, footTurnOut, legSpread);
+        qDelta.thigh_l.setFromEuler(euler);
+        euler.set(-leftKneeFlex * 1.8, 0, 0);
+        qDelta.calf_l.setFromEuler(euler);
+
+        if (this.bones.foot_l) {
+          euler.set((leftKneeFlex * 0.9 - leftHipFlex * 0.5), 0, -legSpread * 0.6);
+          qDelta.foot_l.setFromEuler(euler);
+        }
+
+        // Pierna Derecha (separada del centro + flexión rítmica simétrica)
+        const rightKneeFlex = baseKneeBend + bouncePulse * 1.5 + (armBiasX * 0.05);
+        const rightHipFlex = baseHipBend + bouncePulse * 0.8 + (armBiasZ * 0.06);
+        euler.set(rightHipFlex, -footTurnOut, -legSpread);
+        qDelta.thigh_r.setFromEuler(euler);
+        euler.set(-rightKneeFlex * 1.8, 0, 0);
+        qDelta.calf_r.setFromEuler(euler);
+
+        if (this.bones.foot_r) {
+          euler.set((rightKneeFlex * 0.9 - rightHipFlex * 0.5), 0, legSpread * 0.6);
+          qDelta.foot_r.setFromEuler(euler);
         }
 
         for (const [key, deltaQ] of Object.entries(qDelta)) {
