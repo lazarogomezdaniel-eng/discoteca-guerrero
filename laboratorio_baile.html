@@ -495,8 +495,12 @@
       <span>135 BPM</span>
     </div>
     <div class="seq-grid">
-      <button class="seq-btn active" id="btn-seq-flujo" onclick="window.setSequence('flujo')">
-        <span>🔀 1. Flujo Continuo (Coreografía)</span>
+      <button class="seq-btn active" id="btn-seq-combo_viral" onclick="window.setSequence('combo_viral')">
+        <span>🔥 Combo Viral 8-Beats</span>
+        <kbd>V</kbd>
+      </button>
+      <button class="seq-btn" id="btn-seq-flujo" onclick="window.setSequence('flujo')">
+        <span>🔀 1. Flujo Continuo (16-Beats)</span>
         <kbd>1</kbd>
       </button>
       <button class="seq-btn" id="btn-seq-estirados" onclick="window.setSequence('estirados')">
@@ -508,7 +512,7 @@
         <kbd>3</kbd>
       </button>
       <button class="seq-btn" id="btn-seq-trenzado" onclick="window.setSequence('trenzado')">
-        <span>🥨 4. El Trenzado (Weave)</span>
+        <span>🥨 4. Entrelazado (Bicycle Wrap)</span>
         <kbd>4</kbd>
       </button>
       <button class="seq-btn" id="btn-seq-enhebrado" onclick="window.setSequence('enhebrado')">
@@ -516,7 +520,7 @@
         <kbd>5</kbd>
       </button>
       <button class="seq-btn" id="btn-seq-peinada" onclick="window.setSequence('peinada')">
-        <span>👑 6. Cuadro Cabeza (Tutting)</span>
+        <span>👑 6. La Peinada Real (360° Wrap)</span>
         <kbd>6</kbd>
       </button>
       <button class="seq-btn" id="btn-seq-nudo" onclick="window.setSequence('nudo')">
@@ -617,7 +621,7 @@
         this.bpm = 135;
         this.amplitude = 1.0;
         this.snappiness = 0.35;
-        this.currentMode = 'flujo';
+        this.currentMode = 'combo_viral';
 
         this.time = 0;
         this.totalBeats = 0;
@@ -625,7 +629,7 @@
 
         // Auto-show mixer
         this.autoSequenceIndex = 0;
-        this.autoSequenceList = ['flujo', 'estirados', 'brazos_cruzados', 'trenzado', 'enhebrado', 'peinada', 'nudo', 'l_shapes', 'frenesi', 'molino'];
+        this.autoSequenceList = ['combo_viral', 'flujo', 'estirados', 'brazos_cruzados', 'trenzado', 'enhebrado', 'peinada', 'nudo', 'l_shapes', 'frenesi', 'molino'];
         this.autoSwitchBeats = 8;
         this.autoBeatCounter = 0;
 
@@ -733,8 +737,9 @@
           }
         }
 
+        // Reemplaza el modo Auto-Show por el fraseo coreográfico conectado Combo Viral 8-Beats
         const effectiveMode = (this.currentMode === 'auto') 
-          ? this.autoSequenceList[this.autoSequenceIndex] 
+          ? 'combo_viral' 
           : this.currentMode;
 
         this.computeTargets(effectiveMode, this.time, currentHalfBeatStep, beatDuration, halfBeatDuration);
@@ -870,91 +875,512 @@
         }
       }
 
-      applyWeave(euler, qDelta, amp = 1.0, t = 0, beatDur = 0.44) {
-        const weaveFreq = (Math.PI * 2 / beatDur);
-        const phaseW = t * weaveFreq;
-        euler.set(0.2, 0.1 * amp, 0.15 * amp);
-        qDelta.clavicle_l.setFromEuler(euler);
-        euler.set(0.2, -0.1 * amp, -0.15 * amp);
-        qDelta.clavicle_r.setFromEuler(euler);
+      // =======================================================================
+      // MOVIMIENTO 1: LA PEINADA REAL (360° Head Wrap con Relevo)
+      // Órbita circular de 4 fases alrededor de la cabeza. Brazo izquierdo desfasado
+      // medio ciclo (t + Math.PI) respecto al derecho.
+      // Incluye esquiva activa de cuello/cabeza en Fase 2 para no atravesar el cráneo.
+      // =======================================================================
+      apply360HeadWrapSingleArm(isRight, phaseAngle, euler, qDelta, amp = 1.0) {
+        const TWO_PI = Math.PI * 2;
+        const p = ((phaseAngle % TWO_PI) + TWO_PI) % TWO_PI;
+        const normStep = (p / TWO_PI) * 4;
+        const k0 = Math.floor(normStep) % 4;
+        const k1 = (k0 + 1) % 4;
+        const u = normStep - Math.floor(normStep);
+        // Easing suave Hermite para trayectoria curva continua sin líneas rectas
+        const ease = u * u * (3 - 2 * u);
 
-        const wx = Math.sin(phaseW) * 0.45 * amp;
-        const wy = Math.sin(phaseW * 2) * 0.25 * amp;
-        const wz = Math.cos(phaseW) * 0.35 * amp;
+        // 4 Waypoints anatómicos por brazo:
+        // Waypoint 0 (Fase 1 - Frente/Visera): Hombro 90° frente, codo 100° hacia dentro
+        // Waypoint 1 (Fase 2 - Coronilla/Peinado): Hombro arriba/afuera, rotación externa, codo al techo
+        // Waypoint 2 (Fase 3 - Nuca): Codo alto, antebrazo pasando por detrás de la nuca
+        // Waypoint 3 (Fase 4 - Latigazo Lateral "L"): Apertura en seco a 90° lateral
+        const wps = isRight ? [
+          {
+            clav: [0.12, 0.0, -0.1],
+            upper: [1.55, 0.08, -0.35],
+            lower: [0.18, 0.05, 1.78],
+            hand: [0.1, 0.0, 0.2]
+          },
+          {
+            clav: [0.22, -0.1, -0.28],
+            upper: [0.82, -0.62, -2.05],
+            lower: [0.12, 0.28, 1.62],
+            hand: [0.0, 0.0, 0.35]
+          },
+          {
+            clav: [0.06, -0.14, -0.15],
+            upper: [0.18, -0.78, -1.82],
+            lower: [-0.1, 0.35, 1.95],
+            hand: [-0.1, 0.0, 0.18]
+          },
+          {
+            clav: [0.0, 0.0, -0.1],
+            upper: [0.18, 0.0, -1.57],
+            lower: [1.57, 0.0, 0.1],
+            hand: [0.1, 0.0, 0.0]
+          }
+        ] : [
+          {
+            clav: [0.12, 0.0, 0.1],
+            upper: [1.55, -0.08, 0.35],
+            lower: [0.18, -0.05, -1.78],
+            hand: [0.1, 0.0, -0.2]
+          },
+          {
+            clav: [0.22, 0.1, 0.28],
+            upper: [0.82, 0.62, 2.05],
+            lower: [0.12, -0.28, -1.62],
+            hand: [0.0, 0.0, -0.35]
+          },
+          {
+            clav: [0.06, 0.14, 0.15],
+            upper: [0.18, 0.78, 1.82],
+            lower: [-0.1, -0.35, -1.95],
+            hand: [-0.1, 0.0, -0.18]
+          },
+          {
+            clav: [0.0, 0.0, 0.1],
+            upper: [0.18, 0.0, 1.57],
+            lower: [1.57, 0.0, -0.1],
+            hand: [0.1, 0.0, 0.0]
+          }
+        ];
 
-        euler.set((1.25 + wy * 0.4) * amp, 0.0, (-1.15 + wx * 0.5) * amp);
-        qDelta.upperarm_l.setFromEuler(euler);
-        euler.set((1.25 - wy * 0.4) * amp, 0.0, (1.15 - wx * 0.5) * amp);
-        qDelta.upperarm_r.setFromEuler(euler);
+        const wpA = wps[k0];
+        const wpB = wps[k1];
 
-        euler.set((0.6 + wy * 0.4) * amp, -wz * 0.8 * amp, (-0.2 - wx * 0.6) * amp);
-        qDelta.lowerarm_l.setFromEuler(euler);
-        euler.set((0.6 - wy * 0.4) * amp, wz * 0.8 * amp, (0.2 + wx * 0.6) * amp);
-        qDelta.lowerarm_r.setFromEuler(euler);
+        const lerpArr = (a, b) => [
+          (a[0] + (b[0] - a[0]) * ease) * amp,
+          (a[1] + (b[1] - a[1]) * ease) * amp,
+          (a[2] + (b[2] - a[2]) * ease) * amp
+        ];
 
-        euler.set(Math.sin(phaseW * 2) * 0.6 * amp, 0, Math.cos(phaseW) * 0.5 * amp);
-        qDelta.hand_l.setFromEuler(euler);
-        euler.set(-Math.sin(phaseW * 2) * 0.6 * amp, 0, -Math.cos(phaseW) * 0.5 * amp);
-        qDelta.hand_r.setFromEuler(euler);
+        const cL = lerpArr(wpA.clav, wpB.clav);
+        const uL = lerpArr(wpA.upper, wpB.upper);
+        const lL = lerpArr(wpA.lower, wpB.lower);
+        const hL = lerpArr(wpA.hand, wpB.hand);
+
+        if (isRight) {
+          euler.set(cL[0], cL[1], cL[2]);
+          qDelta.clavicle_r.setFromEuler(euler);
+          euler.set(uL[0], uL[1], uL[2]);
+          qDelta.upperarm_r.setFromEuler(euler);
+          euler.set(lL[0], lL[1], lL[2]);
+          qDelta.lowerarm_r.setFromEuler(euler);
+          euler.set(hL[0], hL[1], hL[2]);
+          qDelta.hand_r.setFromEuler(euler);
+        } else {
+          euler.set(cL[0], cL[1], cL[2]);
+          qDelta.clavicle_l.setFromEuler(euler);
+          euler.set(uL[0], uL[1], uL[2]);
+          qDelta.upperarm_l.setFromEuler(euler);
+          euler.set(lL[0], lL[1], lL[2]);
+          qDelta.lowerarm_l.setFromEuler(euler);
+          euler.set(hL[0], hL[1], hL[2]);
+          qDelta.hand_l.setFromEuler(euler);
+        }
       }
 
-      applyPeinada(euler, qDelta, amp = 1.0, isRight = true) {
-        if (isRight) {
-          // Clavícula neutra/frontal (evita que el hombro tire hacia atrás)
-          euler.set(0.1 * amp, 0, -0.15 * amp);
-          qDelta.clavicle_r.setFromEuler(euler);
+      apply360HeadWrap(euler, qDelta, amp = 1.0, t = 0, beatDur = 0.44) {
+        // Órbita continua de 4 fases alrededor del cráneo (1 ciclo cada 2 beats = 0.88s a 135 BPM)
+        const TWO_PI = Math.PI * 2;
+        const cycleSpeed = TWO_PI / (beatDur * 2);
+        const thetaR = (t * cycleSpeed) % TWO_PI;
+        // Brazo izquierdo desfasado exactamente medio ciclo (Math.PI)
+        const thetaL = (thetaR + Math.PI) % TWO_PI;
 
-          // Brazo derecho arriba y hacia el FRENTE (Z negativo eleva, X positivo adelanta)
-          euler.set(0.75 * amp, 0, -1.8 * amp);
-          qDelta.upperarm_r.setFromEuler(euler);
+        this.apply360HeadWrapSingleArm(true, thetaR, euler, qDelta, amp);
+        this.apply360HeadWrapSingleArm(false, thetaL, euler, qDelta, amp);
 
-          // Antebrazo derecho formando el techo horizontal del cuadrado sobre la coronilla
-          euler.set(0.1 * amp, 0, 1.57 * amp);
-          qDelta.lowerarm_r.setFromEuler(euler);
+        // Esquiva dinámica de cuello/cabeza: se inclina al lado opuesto y hacia adelante
+        // exactamente cuando la mano pasa por la coronilla (normStep ≈ 1.0)
+        const normStepR = (thetaR / TWO_PI) * 4;
+        const normStepL = (thetaL / TWO_PI) * 4;
+        const distCrownR = Math.abs(normStepR - 1.0);
+        const distCrownL = Math.abs(normStepL - 1.0);
+        const wR = Math.max(0, 1.0 - distCrownR * 1.6);
+        const wL = Math.max(0, 1.0 - distCrownL * 1.6);
 
-          // Muñeca derecha flexionada a 90° hacia abajo (lateral del cuadrado)
-          euler.set(0, 0, 1.5 * amp);
-          qDelta.hand_r.setFromEuler(euler);
+        // Inclinación hacia el lado opuesto y cabeceo frontal para esquivar el brazo
+        const headTiltZ = (wR * 0.26 - wL * 0.26) * amp;
+        const headNodX = ((wR + wL) * 0.15) * amp;
+        const headTurnY = (-wR * 0.18 + wL * 0.18) * amp;
 
-          // Brazo izquierdo: marco tutting complementario a la altura del pecho/mentón
-          euler.set(0.8 * amp, 0, 0.5 * amp);
-          qDelta.upperarm_l.setFromEuler(euler);
-          euler.set(0, 0, -1.57 * amp);
-          qDelta.lowerarm_l.setFromEuler(euler);
-          euler.set(0, 0, -1.4 * amp);
-          qDelta.hand_l.setFromEuler(euler);
+        const neckTiltZ = (wR * 0.14 - wL * 0.14) * amp;
+        const neckNodX = ((wR + wL) * 0.09) * amp;
 
-          // Cabeza con actitud electro mirando a través del marco
-          euler.set(0.08 * amp, -0.15 * amp, -0.12 * amp);
+        euler.set(headNodX, headTurnY, headTiltZ);
+        qDelta.head.setFromEuler(euler);
+        euler.set(neckNodX, 0, neckTiltZ);
+        qDelta.neck.setFromEuler(euler);
+
+        // Actitud de columna
+        const spineSway = Math.sin(t * cycleSpeed) * 0.14 * amp;
+        euler.set(0.05 * amp, 0, spineSway);
+        qDelta.spine.setFromEuler(euler);
+
+        return {
+          x: Math.sin(thetaR) * 0.5,
+          z: 0.15
+        };
+      }
+
+      // =======================================================================
+      // MOVIMIENTO 2: ENTRELAZADO DE BRAZOS (Arm Wrap / Pot de Colle)
+      // Órbita 3D "pedales de bicicleta" frente al esternón para rodar sin intersectar.
+      // Desfase de altura con sin(t*2) y profundidad con cos(t*2) en oposición de fase.
+      // Cada 2 giros rápidos, Lock de 1 beat en "+" y apertura brusca lateral.
+      // =======================================================================
+      applyBicycleArmWrap(euler, qDelta, amp = 1.0, t = 0, beatDur = 0.44, includeLock = true) {
+        const cycleDur = beatDur * 4;
+        const beatInCycle = ((t % cycleDur) / beatDur);
+        const cycleIndex = Math.floor(t / cycleDur);
+
+        if (includeLock && beatInCycle >= 2.0 && beatInCycle < 3.0) {
+          // LOCK: Frenazo de 1 beat formando una cruz "+" delante de la cara
+          const isRightVertical = (cycleIndex % 2 === 0);
+
+          if (isRightVertical) {
+            // Brazo derecho vertical (90° hacia arriba)
+            euler.set(0.12 * amp, 0, -0.05 * amp);
+            qDelta.clavicle_r.setFromEuler(euler);
+            euler.set(1.35 * amp, 0, 0.12 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(1.57 * amp, 0, 0.05 * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+            euler.set(0.25 * amp, 0, 0);
+            qDelta.hand_r.setFromEuler(euler);
+
+            // Brazo izquierdo horizontal (cruzando pecho/mentón)
+            euler.set(0.12 * amp, 0, 0.05 * amp);
+            qDelta.clavicle_l.setFromEuler(euler);
+            euler.set(1.22 * amp, 0, -0.22 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(0.1 * amp, 0, -1.65 * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+            euler.set(0, 0, -0.35 * amp);
+            qDelta.hand_l.setFromEuler(euler);
+          } else {
+            // Brazo izquierdo vertical (90° hacia arriba)
+            euler.set(0.12 * amp, 0, 0.05 * amp);
+            qDelta.clavicle_l.setFromEuler(euler);
+            euler.set(1.35 * amp, 0, -0.12 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(1.57 * amp, 0, -0.05 * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+            euler.set(0.25 * amp, 0, 0);
+            qDelta.hand_l.setFromEuler(euler);
+
+            // Brazo derecho horizontal (cruzando pecho/mentón)
+            euler.set(0.12 * amp, 0, -0.05 * amp);
+            qDelta.clavicle_r.setFromEuler(euler);
+            euler.set(1.22 * amp, 0, 0.22 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(0.1 * amp, 0, 1.65 * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+            euler.set(0, 0, 0.35 * amp);
+            qDelta.hand_r.setFromEuler(euler);
+          }
+
+          euler.set(0.12 * amp, 0, 0);
+          qDelta.spine.setFromEuler(euler);
+          euler.set(0.15 * amp, (isRightVertical ? -0.1 : 0.1) * amp, 0);
           qDelta.head.setFromEuler(euler);
+
+          return { x: isRightVertical ? 0.3 : -0.3, z: 0.35 };
+
+        } else if (includeLock && beatInCycle >= 3.0) {
+          // APERTURA BRUSCA HACIA LOS LADOS Y RETORNO RÁPIDO AL CENTRO
+          const uOpen = beatInCycle - 3.0; // 0.0 a 1.0
+
+          if (uOpen < 0.55) {
+            const pPop = Math.min(1.0, uOpen / 0.25);
+            euler.set(0.0, 0, -0.15 * amp);
+            qDelta.clavicle_r.setFromEuler(euler);
+            euler.set((1.35 - pPop * 0.95) * amp, 0, (-0.2 - pPop * 1.3) * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set((0.2 + pPop * 0.4) * amp, -pPop * 0.7 * amp, (1.65 - pPop * 0.8) * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+            euler.set(0, 0, 0);
+            qDelta.hand_r.setFromEuler(euler);
+
+            euler.set(0.0, 0, 0.15 * amp);
+            qDelta.clavicle_l.setFromEuler(euler);
+            euler.set((1.35 - pPop * 0.95) * amp, 0, (0.2 + pPop * 1.3) * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set((0.2 + pPop * 0.4) * amp, pPop * 0.7 * amp, (-1.65 + pPop * 0.8) * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+            euler.set(0, 0, 0);
+            qDelta.hand_l.setFromEuler(euler);
+
+            euler.set(-0.12 * amp, 0, 0);
+            qDelta.chest.setFromEuler(euler);
+            euler.set(-0.06 * amp, 0, 0);
+            qDelta.head.setFromEuler(euler);
+
+            return { x: 0.0, z: -0.15 };
+          } else {
+            const pRet = (uOpen - 0.55) / 0.45;
+            euler.set((0.4 + pRet * 0.85) * amp, 0, (-1.5 + pRet * 1.85) * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(0.15 * amp, 0, (0.85 + pRet * 0.8) * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+
+            euler.set((0.4 + pRet * 0.85) * amp, 0, (1.5 - pRet * 1.85) * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(0.15 * amp, 0, (-0.85 - pRet * 0.8) * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+
+            return { x: 0.0, z: 0.25 };
+          }
+
         } else {
-          // Lado izquierdo simétrico
-          euler.set(0.1 * amp, 0, 0.15 * amp);
+          // ÓRBITA CONTINUA DE PEDALES DE BICICLETA (2 giros rápidos por compás)
+          const wrapFreq = (Math.PI * 2 / beatDur) * 1.5;
+          const omega = includeLock ? (beatInCycle * Math.PI * 2) : (t * wrapFreq);
+
+          const DeltaY_R = Math.sin(omega);
+          const DeltaZ_R = Math.cos(omega);
+          const DeltaY_L = -DeltaY_R;
+          const DeltaZ_L = -DeltaZ_R;
+
+          // Hombros suben ~75° al frente (1.28 rad), codos doblados ~95° (1.65 rad)
+          const basePitch = 1.25;
+
+          // Clavículas estables hacia adelante
+          euler.set(0.12 * amp, 0.06 * amp, -0.12 * amp);
+          qDelta.clavicle_r.setFromEuler(euler);
+          euler.set(0.12 * amp, -0.06 * amp, 0.12 * amp);
           qDelta.clavicle_l.setFromEuler(euler);
 
-          // Brazo izquierdo arriba y hacia el FRENTE
-          euler.set(0.75 * amp, 0, 1.8 * amp);
-          qDelta.upperarm_l.setFromEuler(euler);
-
-          // Antebrazo izquierdo horizontal sobre la coronilla
-          euler.set(0.1 * amp, 0, -1.57 * amp);
-          qDelta.lowerarm_l.setFromEuler(euler);
-
-          // Muñeca izquierda flexionada a 90° hacia abajo
-          euler.set(0, 0, -1.5 * amp);
-          qDelta.hand_l.setFromEuler(euler);
-
-          // Brazo derecho complementario al pecho
-          euler.set(0.8 * amp, 0, -0.5 * amp);
+          // Brazo DERECHO
+          euler.set(
+            (basePitch + DeltaZ_R * 0.26) * amp,
+            (DeltaY_R * 0.22) * amp,
+            (0.35 + DeltaY_R * 0.24) * amp
+          );
           qDelta.upperarm_r.setFromEuler(euler);
-          euler.set(0, 0, 1.57 * amp);
+
+          euler.set(
+            (DeltaZ_R * 0.26) * amp,
+            (DeltaY_R * 0.32) * amp,
+            (1.65 + DeltaY_R * 0.18) * amp
+          );
           qDelta.lowerarm_r.setFromEuler(euler);
-          euler.set(0, 0, 1.4 * amp);
+
+          euler.set((DeltaZ_R * 0.4) * amp, 0, (DeltaY_R * 0.32) * amp);
           qDelta.hand_r.setFromEuler(euler);
 
-          // Cabeza con actitud electro
-          euler.set(0.08 * amp, 0.15 * amp, 0.12 * amp);
+          // Brazo IZQUIERDO (Oposición de fase: nunca se intersectan)
+          euler.set(
+            (basePitch + DeltaZ_L * 0.26) * amp,
+            (DeltaY_L * 0.22) * amp,
+            (-0.35 + DeltaY_L * 0.24) * amp
+          );
+          qDelta.upperarm_l.setFromEuler(euler);
+
+          euler.set(
+            (DeltaZ_L * 0.26) * amp,
+            (DeltaY_L * 0.32) * amp,
+            (-1.65 + DeltaY_L * 0.18) * amp
+          );
+          qDelta.lowerarm_l.setFromEuler(euler);
+
+          euler.set((DeltaZ_L * 0.4) * amp, 0, (DeltaY_L * 0.32) * amp);
+          qDelta.hand_l.setFromEuler(euler);
+
+          // Cabeceo rítmico y respiración de pecho
+          euler.set(Math.sin(omega) * 0.06 * amp, 0, Math.cos(omega) * 0.05 * amp);
+          qDelta.spine.setFromEuler(euler);
+          euler.set(0.09 * amp, 0, 0);
           qDelta.head.setFromEuler(euler);
+
+          return {
+            x: Math.sin(omega) * 0.35,
+            z: 0.35
+          };
+        }
+      }
+
+      // =======================================================================
+      // MOVIMIENTO 3: COMBO VIRAL 8-BEATS (Coreografía Conectada Real)
+      // Beats 1-2: Entrelazado (Arm Wrap) frente al pecho acumulando energía.
+      // Beats 3-4: Transición fluida arriba conectando con La Peinada 360° (relevo R -> L).
+      // Beats 5-6: Locks de Geometría Neón asimétricos a 90° con rebote.
+      // Beats 7-8: Groove & Reset (inclinación lateral columna/cadera, rodillas y muñecas al pecho).
+      // =======================================================================
+      applyComboViral8Beats(euler, qDelta, amp = 1.0, t = 0, beatDur = 0.44, snappy = 0) {
+        const beat8 = ((t / beatDur) % 8);
+
+        if (beat8 < 2.0) {
+          // -------------------------------------------------------------------
+          // BEATS 1-2: Entrelazado (Arm Wrap) frente al pecho (Bicicleta fluida)
+          // -------------------------------------------------------------------
+          this.applyBicycleArmWrap(euler, qDelta, amp, t, beatDur, false);
+          return {
+            x: Math.sin(t * 12) * 0.25,
+            z: 0.35
+          };
+
+        } else if (beat8 < 4.0) {
+          // -------------------------------------------------------------------
+          // BEATS 3-4: Transición fluida hacia arriba conectando con La Peinada
+          // -------------------------------------------------------------------
+          if (beat8 < 3.0) {
+            // Beat 3: Brazo DERECHO rodea la cabeza 360° mientras el IZQUIERDO espera a 90° en el pecho
+            const uR = beat8 - 2.0; // 0.0 a 1.0
+            const thetaR = uR * Math.PI * 2;
+            this.apply360HeadWrapSingleArm(true, thetaR, euler, qDelta, amp);
+
+            // Brazo izquierdo esperando en ángulo de 90° en el pecho (guardia)
+            euler.set(0.12 * amp, 0.0, 0.12 * amp);
+            qDelta.clavicle_l.setFromEuler(euler);
+            euler.set(1.15 * amp, 0.0, -0.38 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(0.1 * amp, 0.0, -1.57 * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+            euler.set(0.0, 0.0, -0.3 * amp);
+            qDelta.hand_l.setFromEuler(euler);
+
+            // Esquiva de cabeza hacia la izquierda
+            const dodgeWeight = Math.sin(uR * Math.PI);
+            euler.set(0.14 * amp * dodgeWeight, -0.16 * amp * dodgeWeight, 0.24 * amp * dodgeWeight);
+            qDelta.head.setFromEuler(euler);
+            euler.set(0.08 * amp * dodgeWeight, 0, 0.12 * amp * dodgeWeight);
+            qDelta.neck.setFromEuler(euler);
+
+            return { x: 0.45, z: 0.2 };
+          } else {
+            // Beat 4: Brazo IZQUIERDO rodea la cabeza 360° mientras el DERECHO espera a 90° en el pecho
+            const uL = beat8 - 3.0; // 0.0 a 1.0
+            const thetaL = uL * Math.PI * 2;
+            this.apply360HeadWrapSingleArm(false, thetaL, euler, qDelta, amp);
+
+            // Brazo derecho esperando en ángulo de 90° en el pecho (guardia)
+            euler.set(0.12 * amp, 0.0, -0.12 * amp);
+            qDelta.clavicle_r.setFromEuler(euler);
+            euler.set(1.15 * amp, 0.0, 0.38 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(0.1 * amp, 0.0, 1.57 * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+            euler.set(0.0, 0.0, 0.3 * amp);
+            qDelta.hand_r.setFromEuler(euler);
+
+            // Esquiva de cabeza hacia la derecha
+            const dodgeWeight = Math.sin(uL * Math.PI);
+            euler.set(0.14 * amp * dodgeWeight, 0.16 * amp * dodgeWeight, -0.24 * amp * dodgeWeight);
+            qDelta.head.setFromEuler(euler);
+            euler.set(0.08 * amp * dodgeWeight, 0, -0.12 * amp * dodgeWeight);
+            qDelta.neck.setFromEuler(euler);
+
+            return { x: -0.45, z: 0.2 };
+          }
+
+        } else if (beat8 < 6.0) {
+          // -------------------------------------------------------------------
+          // BEATS 5-6: Al salir de la nuca, Locks de Geometría Neón asimétricos a 90°
+          // -------------------------------------------------------------------
+          if (beat8 < 5.0) {
+            // Beat 5: Pose Asimétrica A (L alta lateral derecha + Tutting horizontal izquierdo)
+            euler.set(0.0, 0.0, -0.15 * amp);
+            qDelta.clavicle_r.setFromEuler(euler);
+            euler.set(0.2 * amp, 0.0, -1.57 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(1.57 * amp, 0.0, 0.0);
+            qDelta.lowerarm_r.setFromEuler(euler);
+            euler.set(0.15 * amp, 0.0, 0.0);
+            qDelta.hand_r.setFromEuler(euler);
+
+            euler.set(0.12 * amp, 0.0, 0.15 * amp);
+            qDelta.clavicle_l.setFromEuler(euler);
+            euler.set(1.25 * amp, 0.0, 0.35 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(0.0, 0.0, -1.57 * amp);
+            qDelta.lowerarm_l.setFromEuler(euler);
+            euler.set(0.0, 0.0, -1.4 * amp);
+            qDelta.hand_l.setFromEuler(euler);
+
+            // Rebote seco electro
+            const hitBounce = Math.max(0, 1.0 - (beat8 - 4.0) * 4) * 0.09 * amp;
+            euler.set(hitBounce, 0.0, -0.15 * amp);
+            qDelta.spine.setFromEuler(euler);
+            euler.set(0.12 * amp, 0.22 * amp, -0.12 * amp);
+            qDelta.head.setFromEuler(euler);
+
+            return { x: 0.55, z: 0.15 };
+          } else {
+            // Beat 6: Pose Asimétrica B (L alta lateral izquierda + Tutting horizontal derecho)
+            euler.set(0.0, 0.0, 0.15 * amp);
+            qDelta.clavicle_l.setFromEuler(euler);
+            euler.set(0.2 * amp, 0.0, 1.57 * amp);
+            qDelta.upperarm_l.setFromEuler(euler);
+            euler.set(1.57 * amp, 0.0, 0.0);
+            qDelta.lowerarm_l.setFromEuler(euler);
+            euler.set(0.15 * amp, 0.0, 0.0);
+            qDelta.hand_l.setFromEuler(euler);
+
+            euler.set(0.12 * amp, 0.0, -0.15 * amp);
+            qDelta.clavicle_r.setFromEuler(euler);
+            euler.set(1.25 * amp, 0.0, -0.35 * amp);
+            qDelta.upperarm_r.setFromEuler(euler);
+            euler.set(0.0, 0.0, 1.57 * amp);
+            qDelta.lowerarm_r.setFromEuler(euler);
+            euler.set(0.0, 0.0, 1.4 * amp);
+            qDelta.hand_r.setFromEuler(euler);
+
+            const hitBounce = Math.max(0, 1.0 - (beat8 - 5.0) * 4) * 0.09 * amp;
+            euler.set(hitBounce, 0.0, 0.15 * amp);
+            qDelta.spine.setFromEuler(euler);
+            euler.set(0.12 * amp, -0.22 * amp, 0.12 * amp);
+            qDelta.head.setFromEuler(euler);
+
+            return { x: -0.55, z: 0.15 };
+          }
+
+        } else {
+          // -------------------------------------------------------------------
+          // BEATS 7-8: Groove & Reset (inclinación lateral columna/cadera y muñecas al pecho)
+          // -------------------------------------------------------------------
+          const u78 = (beat8 - 6.0) / 2.0; // 0.0 a 1.0
+          const swayCycle = Math.sin(u78 * Math.PI * 2);
+
+          // Inclinación lateral marcada de columna
+          euler.set(0.06 * amp, 0.0, swayCycle * 0.3 * amp);
+          qDelta.spine.setFromEuler(euler);
+          euler.set(0.0, 0.0, -swayCycle * 0.18 * amp);
+          qDelta.chest.setFromEuler(euler);
+          euler.set(0.08 * amp, 0.0, swayCycle * 0.16 * amp);
+          qDelta.head.setFromEuler(euler);
+
+          // Transición desde los laterales hacia el centro del pecho
+          const reachCenter = u78;
+          const upperPitch = (0.35 + reachCenter * 0.9) * amp;
+          const upperAbductR = (-1.55 + reachCenter * 1.9) * amp;
+          const upperAbductL = (1.55 - reachCenter * 1.9) * amp;
+          const lowerBendR = (1.1 + reachCenter * 0.55) * amp;
+          const lowerBendL = (-1.1 - reachCenter * 0.55) * amp;
+          const wristSpin = t * 18; // giro rápido de muñecas
+
+          euler.set(upperPitch, 0.0, upperAbductR);
+          qDelta.upperarm_r.setFromEuler(euler);
+          euler.set(0.15 * amp, Math.sin(wristSpin) * 0.45 * amp, lowerBendR);
+          qDelta.lowerarm_r.setFromEuler(euler);
+          euler.set(Math.cos(wristSpin) * 0.8 * amp, 0.0, Math.sin(wristSpin) * 0.8 * amp);
+          qDelta.hand_r.setFromEuler(euler);
+
+          euler.set(upperPitch, 0.0, upperAbductL);
+          qDelta.upperarm_l.setFromEuler(euler);
+          euler.set(0.15 * amp, -Math.sin(wristSpin) * 0.45 * amp, lowerBendL);
+          qDelta.lowerarm_l.setFromEuler(euler);
+          euler.set(Math.cos(wristSpin) * 0.8 * amp, 0.0, -Math.sin(wristSpin) * 0.8 * amp);
+          qDelta.hand_l.setFromEuler(euler);
+
+          return {
+            x: swayCycle * 0.65,
+            z: 0.1 + reachCenter * 0.25
+          };
         }
       }
 
@@ -1098,19 +1524,29 @@
         let armBiasZ = 0;
 
         // ---------------------------------------------------------------------
+        // 0. "COMBO VIRAL 8-BEATS" (Coreografía Conectada Real Tecktonik)
+        // Fraseo conectado a 135 BPM: Entrelazado -> Peinada 360° -> Locks Neón -> Groove Reset
+        // ---------------------------------------------------------------------
+        if (mode === 'combo_viral' || mode === 'auto') {
+          const snappy = this.sharpWave(phase, 0.25);
+          const bias = this.applyComboViral8Beats(euler, qDelta, amp, t, beatDur, snappy);
+          armBiasX = bias.x;
+          armBiasZ = bias.z;
+
+        // ---------------------------------------------------------------------
         // 1. "FLUJO CONTINUO ELECTRO" (Coreografía Real - Sin repeticiones)
         // Encadena frases dinámicas de 1 a 2 compases en un ciclo continuo de 16 beats:
-        // Entrelazado -> Brazos Estirados -> Brazos Cruzados -> Peinada -> Ventanas...
+        // Entrelazado -> Brazos Estirados -> Cruces Máximos -> Peinada 360° -> Ventanas...
         // ---------------------------------------------------------------------
-        if (mode === 'flujo') {
+        } else if (mode === 'flujo') {
           const beat16 = Math.floor(t / beatDur) % 16;
           const snappy = this.sharpWave(phase, 0.2);
 
           if (beat16 === 0 || beat16 === 1) {
-            // Frase 1: El Trenzado (Arm Weave en 8 frontal continuo)
-            this.applyWeave(euler, qDelta, amp, t, beatDur);
-            armBiasX = Math.sin(phase) * 0.45;
-            armBiasZ = 0.2;
+            // Frase 1: Entrelazado de Brazos (Bicycle Arm Wrap frontal continuo)
+            const bias = this.applyBicycleArmWrap(euler, qDelta, amp, t, beatDur, false);
+            armBiasX = bias.x;
+            armBiasZ = bias.z;
 
           } else if (beat16 === 2) {
             // Frase 2: Extensión horizontal máxima de ambos brazos en cruz
@@ -1137,16 +1573,16 @@
             armBiasZ = 0.45;
 
           } else if (beat16 === 6) {
-            // Frase 6: Cuadro Tutting sobre la cabeza derecho
-            this.applyPeinada(euler, qDelta, amp, true);
-            armBiasX = 0.5;
-            armBiasZ = 0.1;
+            // Frase 6: La Peinada Real 360° (brazo derecho iniciando órbita con esquiva de cráneo)
+            const bias = this.apply360HeadWrap(euler, qDelta, amp, t, beatDur);
+            armBiasX = bias.x;
+            armBiasZ = bias.z;
 
           } else if (beat16 === 7) {
-            // Frase 7: Cuadro Tutting sobre la cabeza izquierdo
-            this.applyPeinada(euler, qDelta, amp, false);
-            armBiasX = -0.5;
-            armBiasZ = 0.1;
+            // Frase 7: La Peinada Real 360° (brazo izquierdo en relevo fluido)
+            const bias = this.apply360HeadWrap(euler, qDelta, amp, t + beatDur, beatDur);
+            armBiasX = bias.x;
+            armBiasZ = bias.z;
 
           } else if (beat16 === 8) {
             // Frase 8: El Enhebrado (marco y brazo derecho estirado penetrando)
@@ -1219,12 +1655,12 @@
           armBiasZ = 0.1;
 
         // ---------------------------------------------------------------------
-        // 4. "EL TRENZADO" (Arm Weave en 8 frontal continuo)
+        // 4. "EL TRENZADO / ARM WRAP" (Órbita Pedales de Bicicleta con Lock en Cruz)
         // ---------------------------------------------------------------------
         } else if (mode === 'trenzado') {
-          this.applyWeave(euler, qDelta, amp, t, beatDur);
-          armBiasX = Math.sin(phase) * 0.45;
-          armBiasZ = 0.2;
+          const bias = this.applyBicycleArmWrap(euler, qDelta, amp, t, beatDur, true);
+          armBiasX = bias.x;
+          armBiasZ = bias.z;
 
         // ---------------------------------------------------------------------
         // 5. "EL ENHEBRADO" (Threading / Ventana)
@@ -1237,13 +1673,12 @@
           armBiasZ = 0.3;
 
         // ---------------------------------------------------------------------
-        // 6. "CUADRO DE CABEZA" (Corona Tutting)
+        // 6. "LA PEINADA REAL" (360° Head Wrap con Relevo y Esquiva de Cabeza)
         // ---------------------------------------------------------------------
         } else if (mode === 'peinada') {
-          const beat4 = Math.floor(halfStep / 2) % 2;
-          this.applyPeinada(euler, qDelta, amp, beat4 === 0);
-          armBiasX = beat4 === 0 ? 0.55 : -0.55;
-          armBiasZ = 0.1;
+          const bias = this.apply360HeadWrap(euler, qDelta, amp, t, beatDur);
+          armBiasX = bias.x;
+          armBiasZ = bias.z;
 
         // ---------------------------------------------------------------------
         // 7. "NUDO TECKTONIK" (Wrap & Lock)
@@ -1289,9 +1724,13 @@
         const legSpread = 0.12 * amp;        // Separación lateral natural hacia afuera
         const footTurnOut = 0.08 * amp;      // Punteras levemente orientadas hacia afuera
 
+        // Flexión extra y dip de rodillas durante Groove & Reset (Beats 7-8 de Combo Viral)
+        const isGrooveReset = (mode === 'combo_viral' || mode === 'auto') && (((t / beatDur) % 8) >= 6.0);
+        const grooveKneeDip = isGrooveReset ? (0.10 * amp) : 0.0;
+
         // Rebote continuo de rodillas al compás (135 BPM)
         const bouncePulse = Math.pow(Math.abs(Math.sin(phase)), 1.3) * 0.04 * amp;
-        const totalHipDrop = 0.035 * amp + bouncePulse;
+        const totalHipDrop = 0.035 * amp + bouncePulse + grooveKneeDip * 0.4;
 
         // Groove lateral y balanceo rítmico pélvico
         const hipSway = Math.sin(phase * 0.5) * 0.06 * amp;
@@ -1312,8 +1751,8 @@
         qDelta.pelvis.setFromEuler(euler);
 
         // Pierna Izquierda (separada del centro + flexión rítmica)
-        const leftKneeFlex = baseKneeBend + bouncePulse * 1.5 - (armBiasX * 0.05);
-        const leftHipFlex = baseHipBend + bouncePulse * 0.8 + (armBiasZ * 0.06);
+        const leftKneeFlex = baseKneeBend + grooveKneeDip + bouncePulse * 1.5 - (armBiasX * 0.05);
+        const leftHipFlex = baseHipBend + grooveKneeDip * 0.5 + bouncePulse * 0.8 + (armBiasZ * 0.06);
         euler.set(leftHipFlex, footTurnOut, legSpread);
         qDelta.thigh_l.setFromEuler(euler);
         euler.set(-leftKneeFlex * 1.8, 0, 0);
@@ -1325,8 +1764,8 @@
         }
 
         // Pierna Derecha (separada del centro + flexión rítmica simétrica)
-        const rightKneeFlex = baseKneeBend + bouncePulse * 1.5 + (armBiasX * 0.05);
-        const rightHipFlex = baseHipBend + bouncePulse * 0.8 + (armBiasZ * 0.06);
+        const rightKneeFlex = baseKneeBend + grooveKneeDip + bouncePulse * 1.5 + (armBiasX * 0.05);
+        const rightHipFlex = baseHipBend + grooveKneeDip * 0.5 + bouncePulse * 0.8 + (armBiasZ * 0.06);
         euler.set(rightHipFlex, -footTurnOut, -legSpread);
         qDelta.thigh_r.setFromEuler(euler);
         euler.set(-rightKneeFlex * 1.8, 0, 0);
@@ -1558,7 +1997,7 @@
         meshBadge.style.color = 'var(--green)';
 
         tecktonikController = new TecktonikController(currentModel);
-        window.setSequence('flujo');
+        window.setSequence('combo_viral');
         const detected = tecktonikController.detectedBonesList;
 
         boneDot.innerText = '🟢';
@@ -1672,12 +2111,13 @@
     // CONTROLES DE LA INTERFAZ
     // =========================================================================
     const SEQ_META = {
-      flujo: { name: 'Flujo Continuo Electro (Coreografía Real)', icon: '🔀', desc: 'Encadenado dinámico sin repetición: trenzados, brazos estirados, brazos cruzados y peinadas' },
+      combo_viral: { name: 'Combo Viral 8-Beats (Coreografía Real)', icon: '🔥', desc: 'Fraseo de 8 beats a 135 BPM: Entrelazado al pecho -> Peinada 360° -> Locks Neón 90° -> Groove & Reset' },
+      flujo: { name: 'Flujo Continuo Electro (Coreografía 16-Beats)', icon: '🔀', desc: 'Encadenado dinámico sin repetición: trenzados bicicleta, brazos estirados, peinada 360° y locks' },
       estirados: { name: 'Extensión & Cruce Máximo', icon: '💥', desc: 'Brazos extendidos en horizontal y cruce frontal profundo sobrepasando los codos al límite' },
       brazos_cruzados: { name: 'Brazos Cruzados (Freeze Lock)', icon: '🛡️', desc: 'Pose clásica de brazos cruzados sobre el pecho con actitud y cabeceo electro' },
-      trenzado: { name: 'El Trenzado (Arm Weave en 8)', icon: '🥨', desc: 'Antebrazos entrelazados describiendo un bucle continuo en 8 por delante del pecho' },
+      trenzado: { name: 'Entrelazado de Brazos (Bicycle Wrap)', icon: '🥨', desc: 'Órbita 3D cilíndrica tipo pedales de bicicleta frente al esternón con Lock en cruz y apertura brusca' },
       enhebrado: { name: 'El Enhebrado (Threading / Ventana)', icon: '🪡', desc: 'Paso penetrante de un brazo por dentro del marco del otro' },
-      peinada: { name: 'Corona Tutting (Cuadro de Cabeza)', icon: '👑', desc: 'Brazo sobre la cabeza y muñeca a 90° formando un cuadrado tutting real' },
+      peinada: { name: 'La Peinada Real (360° Head Wrap)', icon: '👑', desc: 'Órbita continua de 4 fases alrededor del cráneo con relevo desfasado medio ciclo y esquiva de cabeza' },
       nudo: { name: 'Nudo Tecktonik (Wrap & Lock)', icon: '🪢', desc: 'Cruce en X, enganche envolvente de codos y apertura explosiva' },
       l_shapes: { name: 'Geometría Neón (L-Shapes)', icon: '📐', desc: 'Poses angulares rígidas a 90° con lock instantáneo' },
       frenesi: { name: 'Frenesí Electro', icon: '⚡', desc: 'Rebote de cadera, balanceo de torso y ráfaga rápida de antebrazos' },
@@ -1737,6 +2177,8 @@
 
     window.addEventListener('keydown', (e) => {
       const map = {
+        'v': 'combo_viral',
+        'V': 'combo_viral',
         '1': 'flujo',
         '2': 'estirados',
         '3': 'brazos_cruzados',
