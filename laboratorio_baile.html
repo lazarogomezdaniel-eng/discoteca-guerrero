@@ -516,7 +516,7 @@
         <kbd>5</kbd>
       </button>
       <button class="seq-btn" id="btn-seq-peinada" onclick="window.setSequence('peinada')">
-        <span>👑 6. La Peinada (Head-Pass)</span>
+        <span>👑 6. Cuadro Cabeza (Tutting)</span>
         <kbd>6</kbd>
       </button>
       <button class="seq-btn" id="btn-seq-nudo" onclick="window.setSequence('nudo')">
@@ -824,32 +824,60 @@
 
       applyPeinada(euler, qDelta, amp = 1.0, isRight = true) {
         if (isRight) {
-          euler.set(0.2 * amp, 0, -0.3 * amp);
+          // Clavícula neutra/frontal (evita que el hombro tire hacia atrás)
+          euler.set(0.1 * amp, 0, -0.15 * amp);
           qDelta.clavicle_r.setFromEuler(euler);
-          euler.set(0.2 * amp, 0, -2.4 * amp);
+
+          // Brazo derecho arriba y hacia el FRENTE (Z negativo eleva, X positivo adelanta)
+          euler.set(0.75 * amp, 0, -1.8 * amp);
           qDelta.upperarm_r.setFromEuler(euler);
-          euler.set(0, 0, 2.2 * amp);
+
+          // Antebrazo derecho formando el techo horizontal del cuadrado sobre la coronilla
+          euler.set(0.1 * amp, 0, 1.57 * amp);
           qDelta.lowerarm_r.setFromEuler(euler);
-          euler.set(0.3 * amp, 0, 0.4 * amp);
+
+          // Muñeca derecha flexionada a 90° hacia abajo (lateral del cuadrado)
+          euler.set(0, 0, 1.5 * amp);
           qDelta.hand_r.setFromEuler(euler);
 
-          this.applyStraightArmL(euler, qDelta, -0.2, 0, -0.6, amp);
-
-          euler.set(0, -0.2 * amp, -0.4 * amp);
-          qDelta.head.setFromEuler(euler);
-        } else {
-          euler.set(0.2 * amp, 0, 0.3 * amp);
-          qDelta.clavicle_l.setFromEuler(euler);
-          euler.set(0.2 * amp, 0, 2.4 * amp);
+          // Brazo izquierdo: marco tutting complementario a la altura del pecho/mentón
+          euler.set(0.8 * amp, 0, 0.5 * amp);
           qDelta.upperarm_l.setFromEuler(euler);
-          euler.set(0, 0, -2.2 * amp);
+          euler.set(0, 0, -1.57 * amp);
           qDelta.lowerarm_l.setFromEuler(euler);
-          euler.set(0.3 * amp, 0, -0.4 * amp);
+          euler.set(0, 0, -1.4 * amp);
           qDelta.hand_l.setFromEuler(euler);
 
-          this.applyStraightArmR(euler, qDelta, -0.2, 0, 0.6, amp);
+          // Cabeza con actitud electro mirando a través del marco
+          euler.set(0.08 * amp, -0.15 * amp, -0.12 * amp);
+          qDelta.head.setFromEuler(euler);
+        } else {
+          // Lado izquierdo simétrico
+          euler.set(0.1 * amp, 0, 0.15 * amp);
+          qDelta.clavicle_l.setFromEuler(euler);
 
-          euler.set(0, 0.2 * amp, 0.4 * amp);
+          // Brazo izquierdo arriba y hacia el FRENTE
+          euler.set(0.75 * amp, 0, 1.8 * amp);
+          qDelta.upperarm_l.setFromEuler(euler);
+
+          // Antebrazo izquierdo horizontal sobre la coronilla
+          euler.set(0.1 * amp, 0, -1.57 * amp);
+          qDelta.lowerarm_l.setFromEuler(euler);
+
+          // Muñeca izquierda flexionada a 90° hacia abajo
+          euler.set(0, 0, -1.5 * amp);
+          qDelta.hand_l.setFromEuler(euler);
+
+          // Brazo derecho complementario al pecho
+          euler.set(0.8 * amp, 0, -0.5 * amp);
+          qDelta.upperarm_r.setFromEuler(euler);
+          euler.set(0, 0, 1.57 * amp);
+          qDelta.lowerarm_r.setFromEuler(euler);
+          euler.set(0, 0, 1.4 * amp);
+          qDelta.hand_r.setFromEuler(euler);
+
+          // Cabeza con actitud electro
+          euler.set(0.08 * amp, 0.15 * amp, 0.12 * amp);
           qDelta.head.setFromEuler(euler);
         }
       }
@@ -1504,7 +1532,7 @@
       brazos_cruzados: { name: 'Brazos Cruzados (Freeze Lock)', icon: '🛡️', desc: 'Pose clásica de brazos cruzados sobre el pecho con actitud y cabeceo electro' },
       trenzado: { name: 'El Trenzado (Arm Weave en 8)', icon: '🥨', desc: 'Antebrazos entrelazados describiendo un bucle continuo en 8 por delante del pecho' },
       enhebrado: { name: 'El Enhebrado (Threading / Ventana)', icon: '🪡', desc: 'Paso penetrante de un brazo por dentro del marco del otro' },
-      peinada: { name: 'La Peinada (Head-Pass)', icon: '👑', desc: 'Alternancia de brazos tras la nuca e inclinación lateral de cabeza' },
+      peinada: { name: 'Corona Tutting (Cuadro de Cabeza)', icon: '👑', desc: 'Brazo sobre la cabeza y muñeca a 90° formando un cuadrado tutting real' },
       nudo: { name: 'Nudo Tecktonik (Wrap & Lock)', icon: '🪢', desc: 'Cruce en X, enganche envolvente de codos y apertura explosiva' },
       l_shapes: { name: 'Geometría Neón (L-Shapes)', icon: '📐', desc: 'Poses angulares rígidas a 90° con lock instantáneo' },
       frenesi: { name: 'Frenesí Electro', icon: '⚡', desc: 'Rebote de cadera, balanceo de torso y ráfaga rápida de antebrazos' },
