@@ -1047,47 +1047,38 @@
       <button class="pad-btn" id="pad-viral" onclick="window.triggerMoveNow('combo_viral')">
         <span>🔥 Baile Viral 360°</span> <kbd>V</kbd>
       </button>
-      <button class="pad-btn" id="pad-1" onclick="window.triggerMoveNow('flujo')">
-        <span>🔀 1. Flujo Continuo</span> <kbd>1</kbd>
+      <button class="pad-btn" id="pad-1" onclick="window.triggerMoveNow('estirados')">
+        <span>💥 1. Extensión & Cruce</span> <kbd>1</kbd>
       </button>
-      <button class="pad-btn" id="pad-2" onclick="window.triggerMoveNow('estirados')">
-        <span>💥 2. Cruce Máximo</span> <kbd>2</kbd>
+      <button class="pad-btn" id="pad-2" onclick="window.triggerMoveNow('trenzado')">
+        <span>🥨 2. Arm Wrap (Bici)</span> <kbd>2</kbd>
       </button>
-      <button class="pad-btn" id="pad-3" onclick="window.triggerMoveNow('brazos_cruzados')">
-        <span>🛡️ 3. Brazos Cruzados</span> <kbd>3</kbd>
+      <button class="pad-btn" id="pad-3" onclick="window.triggerMoveNow('peinada')">
+        <span>👑 3. Peinada Real 360°</span> <kbd>3</kbd>
       </button>
-      <button class="pad-btn" id="pad-4" onclick="window.triggerMoveNow('trenzado')">
-        <span>🥨 4. Arm Wrap (Bicicleta)</span> <kbd>4</kbd>
+      <button class="pad-btn" id="pad-4" onclick="window.triggerMoveNow('enhebrado')">
+        <span>🪡 4. El Enhebrado</span> <kbd>4</kbd>
       </button>
-      <button class="pad-btn" id="pad-5" onclick="window.triggerMoveNow('enhebrado')">
-        <span>🪡 5. El Enhebrado</span> <kbd>5</kbd>
+      <button class="pad-btn" id="pad-5" onclick="window.triggerMoveNow('l_shapes')">
+        <span>📐 5. Geometría Neón</span> <kbd>5</kbd>
       </button>
-      <button class="pad-btn" id="pad-6" onclick="window.triggerMoveNow('peinada')">
-        <span>👑 6. Peinada Real 360°</span> <kbd>6</kbd>
+      <button class="pad-btn" id="pad-6" onclick="window.triggerMoveNow('molino')">
+        <span>🌀 6. El Molino 360°</span> <kbd>6</kbd>
       </button>
-      <button class="pad-btn" id="pad-7" onclick="window.triggerMoveNow('nudo')">
-        <span>🪢 7. Nudo Wrap</span> <kbd>7</kbd>
+      <button class="pad-btn" id="pad-7" onclick="window.triggerMoveNow('cielo')">
+        <span>☝️ 7. Señalar al Cielo</span> <kbd>7</kbd>
       </button>
-      <button class="pad-btn" id="pad-8" onclick="window.triggerMoveNow('l_shapes')">
-        <span>📐 8. Geometría Neón</span> <kbd>8</kbd>
+      <button class="pad-btn" id="pad-8" onclick="window.triggerMoveNow('cuadrado_reloj')">
+        <span>🔲 8. Cuadrado Cabeza</span> <kbd>8</kbd>
       </button>
-      <button class="pad-btn" id="pad-9" onclick="window.triggerMoveNow('frenesi')">
-        <span>⚡ 9. Frenesí Electro</span> <kbd>9</kbd>
+      <button class="pad-btn" id="pad-9" onclick="window.triggerMoveNow('arco_vertigo')">
+        <span>🌈 9. Arco & Slash</span> <kbd>9</kbd>
       </button>
-      <button class="pad-btn" id="pad-0" onclick="window.triggerMoveNow('molino')">
-        <span>🌀 0. El Molino</span> <kbd>0</kbd>
+      <button class="pad-btn" id="pad-0" onclick="window.triggerMoveNow('laser_front')">
+        <span>🎯 10. Láser & Drop</span> <kbd>0</kbd>
       </button>
-      <button class="pad-btn" id="pad-cielo" onclick="window.triggerMoveNow('cielo')">
-        <span>☝️ 10. Señalar Arriba</span> <kbd>Q</kbd>
-      </button>
-      <button class="pad-btn" id="pad-cuadrado" onclick="window.triggerMoveNow('cuadrado_reloj')">
-        <span>🔲 11. Cuadrado Cabeza</span> <kbd>W</kbd>
-      </button>
-      <button class="pad-btn" id="pad-vertigo" onclick="window.triggerMoveNow('arco_vertigo')">
-        <span>🌈 12. Arco & Slash</span> <kbd>E</kbd>
-      </button>
-      <button class="pad-btn" id="pad-laser" onclick="window.triggerMoveNow('laser_front')">
-        <span>🎯 13. Láser & Drop</span> <kbd>R</kbd>
+      <button class="pad-btn" id="pad-freeze" onclick="window.triggerMoveNow('brazos_cruzados')">
+        <span>🛡️ Brazos Cruzados</span> <kbd>P</kbd>
       </button>
     </div>
   </div>
@@ -1406,14 +1397,16 @@
           }
         }
 
-        // Micro-asistencia natural de clavícula cuando la mano sube o cruza el centro
-        const reachUp = Math.max(-0.08, Math.min(0.22, (targetW.y - 1.42) * 0.32));
+        // Clavícula anatómica reactiva (Flow Tecktonik): elevación al subir brazos, proyección frontal en cruces y retracción en extensiones
+        const reachUp = Math.max(-0.10, Math.min(0.32, (targetW.y - 1.40) * 0.38));
         const reachCross = isRight
-          ? Math.max(-0.08, Math.min(0.18, (targetW.x + 0.20) * 0.28))
-          : Math.max(-0.08, Math.min(0.18, (0.20 - targetW.x) * 0.28));
+          ? Math.max(-0.12, Math.min(0.24, (targetW.x + 0.18) * 0.34))
+          : Math.max(-0.12, Math.min(0.24, (0.18 - targetW.x) * 0.34));
+        const reachForward = Math.max(-0.08, Math.min(0.18, (targetW.z - 0.20) * 0.28));
+
         this.setWorldDelta(
           clavKey,
-          0.0,
+          isRight ? -reachForward * 0.5 : reachForward * 0.5,
           isRight ? reachCross : -reachCross,
           isRight ? -reachUp : reachUp,
           qDelta
@@ -2625,96 +2618,83 @@
         let armBiasZ = 0;
         let extraKneeDip = 0;
 
-        // 0 & 1. BAILE VIRAL CONTINUO / FLUJO ELECTRO (48 pasos unificados con los 14 movimientos)
-        if (mode === 'combo_viral' || mode === 'auto' || mode === 'flujo') {
-          const offset = (mode === 'flujo') ? 0.50 : 0.0;
-          const bias = this.applyViralContinuousDance(qDelta, amp, t, beatDur, offset);
+        // 0. BAILE VIRAL CONTINUO (Coreografía continua que enlaza las 10 figuras)
+        if (mode === 'combo_viral' || mode === 'auto') {
+          const bias = this.applyViralContinuousDance(qDelta, amp, t, beatDur, 0.0);
           armBiasX = bias.x;
           armBiasZ = bias.z;
           extraKneeDip = bias.dip || 0.0;
 
-        // 2. EXTENSIÓN HORIZONTAL 100% ESTIRADA & CRUCE MÁXIMO
+        // 1. EXTENSIÓN HORIZONTAL 100% ESTIRADA & CRUCE MÁXIMO
         } else if (mode === 'estirados') {
           const bias = this.applyDeepCross(qDelta, amp, t, beatDur);
           armBiasX = bias.x;
           armBiasZ = bias.z;
           extraKneeDip = bias.dip || 0.0;
 
-        // 3. BRAZOS CRUZADOS (Freeze Lock)
-        } else if (mode === 'brazos_cruzados') {
-          this.applyFoldedArms(qDelta, amp, phase);
-          armBiasX = Math.sin(phase * 0.5) * 0.18;
-          armBiasZ = 0.14;
-
-        // 4. ENTRELAZADO RÁPIDO (Pot de Colle / Bicycle Wrap)
+        // 2. ENTRELAZADO RÁPIDO (Pot de Colle / Bicycle Wrap)
         } else if (mode === 'trenzado') {
           const bias = this.applyBicycleArmWrap(qDelta, amp, t, beatDur);
           armBiasX = bias.x;
           armBiasZ = bias.z;
 
-        // 5. EL ENHEBRADO (Window Threading)
-        } else if (mode === 'enhebrado') {
-          this.applyThreading(qDelta, amp, t, beatDur);
-          armBiasX = Math.sin(phase * 0.5) * 0.35;
-          armBiasZ = 0.25;
-
-        // 6. LA PEINADA REAL (360° Head Wrap con Relevo y Esquiva)
+        // 3. LA PEINADA REAL (360° Head Wrap con Relevo y Esquiva)
         } else if (mode === 'peinada') {
           const bias = this.apply360HeadWrap(qDelta, amp, t, beatDur);
           armBiasX = bias.x;
           armBiasZ = bias.z;
 
-        // 7. NUDO TECKTONIK (Wrap & Lock)
-        } else if (mode === 'nudo') {
-          this.applyKnot(qDelta, amp, t, beatDur);
-          armBiasX = Math.sin(phase * 0.5) * 0.25;
+        // 4. EL ENHEBRADO (Window Threading)
+        } else if (mode === 'enhebrado') {
+          this.applyThreading(qDelta, amp, t, beatDur);
+          armBiasX = Math.sin(phase * 0.5) * 0.35;
           armBiasZ = 0.25;
 
-        // 8. GEOMETRÍA NEÓN (L-Shapes / Tutting)
+        // 5. GEOMETRÍA NEÓN (L-Shapes / Tutting)
         } else if (mode === 'l_shapes') {
           this.applyLShapes(qDelta, amp, t, beatDur);
           armBiasX = Math.cos(phase * 0.5) * 0.38;
           armBiasZ = 0.15;
 
-        // 9. FRENESÍ ELECTRO
-        } else if (mode === 'frenesi') {
-          this.applyFrenesi(qDelta, amp, phase);
-          armBiasX = Math.sin(phase * 0.5) * 0.50;
-          armBiasZ = 0.20;
-
-        // 0. EL MOLINO (Windmills 360°)
+        // 6. EL MOLINO (Windmills 360° Figura-8)
         } else if (mode === 'molino') {
           this.applyMolino(qDelta, amp, t, beatDur);
           armBiasX = Math.sin(phase * 0.5) * 0.38;
           armBiasZ = 0.15;
 
-        // 10. SEÑALAR ARRIBA AL CIELO (Sky Point con los dos brazos extendidos)
+        // 7. SEÑALAR ARRIBA AL CIELO (Sky Point con los dos brazos extendidos)
         } else if (mode === 'cielo') {
           const bias = this.applySkyPoint(qDelta, amp, t, beatDur);
           armBiasX = bias.x;
           armBiasZ = bias.z;
           extraKneeDip = bias.dip || 0.0;
 
-        // 11. CUADRADO EN CABEZA (Muñeca a 90°) & AGUJAS DE RELOJ
+        // 8. CUADRADO EN CABEZA (Muñeca a 90°) & AGUJAS DE RELOJ
         } else if (mode === 'cuadrado_reloj') {
           const bias = this.applyCrownSquareClock(qDelta, amp, t, beatDur);
           armBiasX = bias.x;
           armBiasZ = bias.z;
 
-        // 12. ARCO AÉREO VÉRTIGO & SLASH DIAGONAL
+        // 9. ARCO AÉREO VÉRTIGO & SLASH DIAGONAL
         } else if (mode === 'arco_vertigo') {
           const bias = this.applyVertigoRainbow(qDelta, amp, t, beatDur);
           armBiasX = bias.x;
           armBiasZ = bias.z;
 
-        // 13. DISPARO FRONTAL LÁSER & ELECTRO DROP
+        // 10. DISPARO FRONTAL LÁSER & ELECTRO DROP
         } else if (mode === 'laser_front') {
           const bias = this.applyLaserFrontDrop(qDelta, amp, t, beatDur);
           armBiasX = bias.x;
           armBiasZ = bias.z;
           extraKneeDip = bias.dip || 0.0;
 
-        // 14. CAPTURA REAL DEEPMOTION (Video Original 15s)
+        // 11. BRAZOS CRUZADOS (Freeze Attitude Lock con rebote al beat)
+        } else if (mode === 'brazos_cruzados') {
+          this.applyFoldedArms(qDelta, amp, phase);
+          armBiasX = Math.sin(phase * 0.5) * 0.18;
+          armBiasZ = 0.14;
+
+        // CAPTURA REAL DEEPMOTION (Video Original 15s - 100% Intacta)
         } else if (mode === 'deepmotion') {
           const bias = this.applyDeepMotion(qDelta, amp, t);
           armBiasX = bias.x;
@@ -2723,25 +2703,30 @@
         }
 
         // =====================================================================
-        // POSTURA ANATÓMICA DE PIERNAS, RODILLAS Y GROOVE RÁPIDO AL BEAT
+        // FLOW ANATÓMICO TECKTONIK: ELECTRO-STEPPING, RESORTE DE RODILLA Y PESO
         // =====================================================================
-        const effLegAmp = Math.max(0.5, Math.min(1.2, amp));
-        const baseHipFlex = 0.21 * effLegAmp;
-        const baseKneeFlex = 0.42 * effLegAmp;
+        const effLegAmp = Math.max(0.5, Math.min(1.25, amp));
+        const baseHipFlex = 0.20 * effLegAmp;
+        const baseKneeFlex = 0.38 * effLegAmp;
         const legSpread = 0.085 * effLegAmp;
-        const footTurnOut = 0.08 * effLegAmp;
+        const footTurnOut = 0.09 * effLegAmp;
 
         const grooveDip = extraKneeDip * effLegAmp;
 
-        // Rebote rítmico energético en cada beat + micro-pulso de medio beat (138 BPM)
-        const bounceBeat = Math.pow(Math.sin(phase * 0.5), 2.0) + 0.25 * Math.pow(Math.sin(phase), 2.0);
-        const bounceKnee = Math.max(-0.08, bounceBeat * 0.095 * effLegAmp + grooveDip);
-        const bounceHip = Math.max(-0.04, bounceBeat * 0.048 * effLegAmp + grooveDip * 0.5);
+        // Rebote elástico percusivo en cada beat (138 BPM electro kick)
+        const bounceBeat = Math.pow(Math.sin(phase * 0.5), 2.2);
+        const bounceKnee = Math.max(-0.08, bounceBeat * 0.11 * effLegAmp + grooveDip);
+        const bounceHip = Math.max(-0.04, bounceBeat * 0.055 * effLegAmp + grooveDip * 0.5);
 
-        // Balanceo lateral de cadera acompañando con energía a los brazos
-        const hipSwayX = (Math.sin(phase * 0.5) * 0.025 + armBiasX * 0.035) * effLegAmp;
-        const hipDropY = -(0.032 * effLegAmp + bounceBeat * 0.024 * effLegAmp + grooveDip * 0.38);
-        const hipShiftZ = (armBiasZ * 0.020) * effLegAmp;
+        // Electro-Step: Paso y transferencia rítmica de peso alternante izquierda/derecha
+        const stepCycle = Math.sin(phase * 0.5);
+        const stepWeightL = Math.max(0.0, stepCycle);   // Apoyo pie izquierdo
+        const stepWeightR = Math.max(0.0, -stepCycle);  // Apoyo pie derecho
+
+        // Desplazamiento orgánico de pelvis en mundo (acompaña torso y brazos con flow real)
+        const hipSwayX = (stepCycle * 0.045 + armBiasX * 0.040) * effLegAmp;
+        const hipDropY = -(0.028 * effLegAmp + bounceBeat * 0.032 * effLegAmp + grooveDip * 0.42);
+        const hipShiftZ = (armBiasZ * 0.024) * effLegAmp;
 
         if (this.bones.pelvis && this.initPositions.pelvis) {
           const worldPelvisDelta = new THREE.Vector3(hipSwayX, hipDropY, hipShiftZ);
@@ -2749,25 +2734,35 @@
           this.bones.pelvis.position.copy(this.initPositions.pelvis).add(worldPelvisDelta);
         }
 
+        // Torsión pélvica dinámica (Pelvic Yaw) con contratorque de columna
+        const pelvisYaw = (stepCycle * 0.14 + armBiasX * 0.08) * effLegAmp;
+        const pelvisRoll = (hipSwayX * 1.1) * effLegAmp;
+        const pelvisPitch = (0.025 * effLegAmp + grooveDip * 0.6);
+
         this.setWorldDelta(
           'pelvis',
-          0.03 * effLegAmp,
-          (-hipSwayX * 1.5 + armBiasX * 0.09) * effLegAmp,
-          (hipSwayX * 1.2) * effLegAmp,
+          pelvisPitch,
+          -pelvisYaw,
+          pelvisRoll,
           qDelta
         );
 
-        const lHip = baseHipFlex + bounceHip - armBiasX * 0.028;
-        const lKnee = baseKneeFlex + bounceKnee - armBiasX * 0.055;
-        this.setWorldDelta('thigh_l', -lHip, footTurnOut, legSpread, qDelta);
-        this.setWorldDelta('calf_l', lKnee, 0.0, 0.0, qDelta);
-        this.setWorldDelta('foot_l', -(lKnee - lHip), 0.0, -legSpread * 0.85, qDelta);
+        // Flexión y paso en piernas: la pierna de apoyo clava el golpe con rebote de rodilla,
+        // mientras la pierna libre levanta sutilmente el talón sobre la punta del pie (flow real de electro dance)
+        const lHeelLift = stepWeightR * 0.22 * effLegAmp;
+        const rHeelLift = stepWeightL * 0.22 * effLegAmp;
 
-        const rHip = baseHipFlex + bounceHip + armBiasX * 0.028;
-        const rKnee = baseKneeFlex + bounceKnee + armBiasX * 0.055;
-        this.setWorldDelta('thigh_r', -rHip, -footTurnOut, -legSpread, qDelta);
+        const lHip = baseHipFlex + bounceHip + stepWeightL * 0.06 - lHeelLift * 0.04;
+        const lKnee = baseKneeFlex + bounceKnee + stepWeightL * 0.08 + lHeelLift * 0.12;
+        this.setWorldDelta('thigh_l', -lHip, footTurnOut + stepWeightL * 0.05, legSpread, qDelta);
+        this.setWorldDelta('calf_l', lKnee, 0.0, 0.0, qDelta);
+        this.setWorldDelta('foot_l', -(lKnee - lHip) + lHeelLift, 0.0, -legSpread * 0.85, qDelta);
+
+        const rHip = baseHipFlex + bounceHip + stepWeightR * 0.06 - rHeelLift * 0.04;
+        const rKnee = baseKneeFlex + bounceKnee + stepWeightR * 0.08 + rHeelLift * 0.12;
+        this.setWorldDelta('thigh_r', -rHip, -footTurnOut - stepWeightR * 0.05, -legSpread, qDelta);
         this.setWorldDelta('calf_r', rKnee, 0.0, 0.0, qDelta);
-        this.setWorldDelta('foot_r', -(rKnee - rHip), 0.0, legSpread * 0.85, qDelta);
+        this.setWorldDelta('foot_r', -(rKnee - rHip) + rHeelLift, 0.0, legSpread * 0.85, qDelta);
 
         for (const [key, deltaQ] of Object.entries(qDelta)) {
           if (this.initQuats[key]) {
@@ -2957,23 +2952,20 @@
     // =========================================================================
     const SEQ_DATA = {
       deepmotion: { name: '🎬 Captura Real DeepMotion (Video Original 15s)', icon: '🎬', desc: 'Secuencia real fotograma a fotograma de DeepMotion: brazos, cabeza, torso y piernas del video' },
-      combo_viral: { name: '🔥 Baile Viral Continuo (48 Pasos / 14 Movimientos)', icon: '🔥', desc: 'Coreografía completa a velocidad real: incluye Extensión Horizontal, Señalar al Cielo, Peinada 360°, Cuadrado en Cabeza, Vértigo y más' },
-      flujo: { name: '🔀 1. Flujo Electro Continuo (Fase Alterna)', icon: '🔀', desc: 'Segunda mitad del fraseo continuo entrelazando todos los movimientos sin cortes' },
-      estirados: { name: '💥 2. Extensión Horizontal Total & Cruce Máximo', icon: '💥', desc: 'Brazos 100% estirados en horizontal y latigazo al cruce frontal profundo sobrepasando codos' },
-      brazos_cruzados: { name: '🛡️ 3. Brazos Cruzados (Freeze Lock)', icon: '🛡️', desc: 'Pose clásica de brazos cruzados sobre el pecho con actitud y rebote electro al beat' },
-      trenzado: { name: '🥨 4. Entrelazado Rápido (Pot de Colle / Bicicleta)', icon: '🥨', desc: 'Rodillo eléctrico rápido frente al esternón con Lock en cruz (+) y apertura lateral' },
-      enhebrado: { name: '🪡 5. El Enhebrado (Threading / Ventana)', icon: '🪡', desc: 'Paso penetrante de un brazo por dentro del marco geométrico del otro' },
-      peinada: { name: '👑 6. La Peinada Real (360° Head Wrap)', icon: '👑', desc: 'Órbita rápida de 4 fases alrededor del cráneo con relevo desfasado medio ciclo y esquiva de cabeza' },
-      nudo: { name: '🪢 7. Nudo Tecktonik (Wrap & Lock)', icon: '🪢', desc: 'Cruce envolvente alto de codos y desenlace explosivo hacia abajo y los lados' },
-      l_shapes: { name: '📐 8. Geometría Neón (L-Shapes / Tutting)', icon: '📐', desc: 'Escuadras angulares de 90° con latigazo y bloqueo instantáneo al beat' },
-      frenesi: { name: '⚡ 9. Frenesí Electro (Double-Time Pump)', icon: '⚡', desc: 'Bombeo alterno ultrarrápido de brazos arriba y abajo con balanceo de torso' },
-      molino: { name: '🌀 0. El Molino (Windmills 360°)', icon: '🌀', desc: 'Rotación circular continua en figura-8 frente al torso con onda lateral de columna' },
-      cielo: { name: '☝️ 10. Señalar Arriba al Cielo (Sky Point)', icon: '☝️', desc: 'Dos brazos totalmente extendidos apuntando al cielo, cruce aéreo en X y punteros alternos' },
-      cuadrado_reloj: { name: '🔲 11. Cuadrado en Cabeza & Agujas de Reloj', icon: '🔲', desc: 'Un brazo por encima de la cabeza formando un cuadrado al flexionar la muñeca a 90° + reloj en pecho' },
-      arco_vertigo: { name: '🌈 12. Arco Aéreo Vértigo & Slash Diagonal', icon: '🌈', desc: 'Barrido de 180° por encima de la cabeza con brazos estirados y cortes diagonales en espada a 45°' },
-      laser_front: { name: '🎯 13. Disparo Frontal Láser & Electro Drop', icon: '🎯', desc: 'Brazos extendidos apuntando al frente, flexión profunda de rodillas (Drop) y explosión vertical' },
+      combo_viral: { name: '🔥 Baile Viral Continuo (Coreografía 360°)', icon: '🔥', desc: 'Coreografía completa a 138 BPM: enlaza las 10 figuras de electro dance con flow orgánico' },
+      estirados: { name: '💥 1. Extensión Horizontal & Cruce Máximo', icon: '💥', desc: 'Brazos 100% estirados en horizontal y latigazo al cruce frontal profundo sobrepasando codos' },
+      trenzado: { name: '🥨 2. Arm Wrap Bicicleta (Pot de Colle)', icon: '🥨', desc: 'Rodillo eléctrico continuo frente al esternón con Lock en cruz (+) y apertura lateral' },
+      peinada: { name: '👑 3. La Peinada Real (360° Head Wrap)', icon: '👑', desc: 'Órbita rápida de 4 fases alrededor del cráneo con relevo desfasado medio ciclo y esquiva de cabeza' },
+      enhebrado: { name: '🪡 4. El Enhebrado (Threading / Ventana)', icon: '🪡', desc: 'Paso penetrante de un brazo por dentro del marco geométrico del otro' },
+      l_shapes: { name: '📐 5. Geometría Neón (L-Shapes / Tutting)', icon: '📐', desc: 'Escuadras angulares de 90° con latigazo y bloqueo instantáneo al beat' },
+      molino: { name: '🌀 6. El Molino (Windmills 360° Figura-8)', icon: '🌀', desc: 'Rotación circular continua en figura-8 frente al torso con onda lateral de columna' },
+      cielo: { name: '☝️ 7. Señalar Arriba al Cielo (Sky Point)', icon: '☝️', desc: 'Dos brazos totalmente extendidos apuntando al cielo, cruce aéreo en X y punteros alternos' },
+      cuadrado_reloj: { name: '🔲 8. Cuadrado en Cabeza & Agujas de Reloj', icon: '🔲', desc: 'Un brazo por encima de la cabeza formando un cuadrado al flexionar la muñeca a 90° + reloj en pecho' },
+      arco_vertigo: { name: '🌈 9. Arco Aéreo Vértigo & Slash Diagonal', icon: '🌈', desc: 'Barrido de 180° por encima de la cabeza con brazos estirados y cortes diagonales en espada a 45°' },
+      laser_front: { name: '🎯 10. Disparo Frontal Láser & Electro Drop', icon: '🎯', desc: 'Brazos extendidos apuntando al frente, flexión profunda de rodillas (Drop) y explosión vertical' },
+      brazos_cruzados: { name: '🛡️ Freeze Brazos Cruzados (Attitude Lock)', icon: '🛡️', desc: 'Pose clásica de brazos cruzados sobre el pecho con actitud y rebote electro al beat' },
       freeze: { name: '❄️ Freeze Lock Electropop', icon: '❄️', desc: 'Bloqueo y pose fija estilizada' },
-      auto: { name: '🔥 Baile Viral Continuo (Auto-Show)', icon: '🔥', desc: 'Coreografía continua 3D de 48 pasos a 138 BPM' }
+      auto: { name: '🔥 Baile Viral Continuo (Auto-Show)', icon: '🔥', desc: 'Coreografía continua 3D a 138 BPM' }
     };
 
     function updateMoveDisplay(move) {
@@ -3141,16 +3133,19 @@
           'D': 'deepmotion',
           'v': 'combo_viral',
           'V': 'combo_viral',
-          '1': 'flujo',
-          '2': 'estirados',
-          '3': 'brazos_cruzados',
-          '4': 'trenzado',
-          '5': 'enhebrado',
-          '6': 'peinada',
-          '7': 'nudo',
-          '8': 'l_shapes',
-          '9': 'frenesi',
-          '0': 'molino',
+          '1': 'estirados',
+          '2': 'trenzado',
+          '3': 'peinada',
+          '4': 'enhebrado',
+          '5': 'l_shapes',
+          '6': 'molino',
+          '7': 'cielo',
+          '8': 'cuadrado_reloj',
+          '9': 'arco_vertigo',
+          '0': 'laser_front',
+          'p': 'brazos_cruzados',
+          'P': 'brazos_cruzados',
+          // Mapeos rápidos secundarios
           'q': 'cielo',
           'Q': 'cielo',
           'w': 'cuadrado_reloj',
