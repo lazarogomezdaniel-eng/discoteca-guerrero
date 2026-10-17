@@ -2995,6 +2995,7 @@
         setTimeout(() => padBtn.classList.remove('firing'), 300);
       }
 
+      tecktonikController.lastActiveMode = seqKey;
       tecktonikController.setMode(seqKey);
       const meta = SEQ_DATA[seqKey] || { name: seqKey, icon: '⚡' };
       updateMoveDisplay(meta);
@@ -3034,8 +3035,9 @@
         }
 
         if (tecktonikController) {
-          tecktonikController.setMode('combo_viral');
-          updateMoveDisplay(SEQ_DATA.combo_viral);
+          const resumeMode = tecktonikController.lastActiveMode || 'deepmotion';
+          tecktonikController.setMode(resumeMode);
+          updateMoveDisplay(SEQ_DATA[resumeMode] || SEQ_DATA.deepmotion);
         }
       } else {
         iconPlay.style.display = 'block';
@@ -3048,6 +3050,9 @@
         html5Audio.pause();
 
         if (tecktonikController) {
+          if (tecktonikController.currentMode !== 'freeze') {
+            tecktonikController.lastActiveMode = tecktonikController.currentMode;
+          }
           tecktonikController.setMode('freeze');
           updateMoveDisplay(SEQ_DATA.freeze);
         }
@@ -3294,18 +3299,19 @@
         }
       });
 
+      // Inicializar controlador Tecktonik ANTES de reproducir el clip para capturar la pose base limpia
+      tecktonikController = new TecktonikController(currentModel);
+      tecktonikController.lastActiveMode = 'deepmotion';
+      tecktonikController.setMode('deepmotion');
+
       // Configurar AnimationMixer con la captura nativa (piernas, cruces y cuerpo completo)
       mixer = new THREE.AnimationMixer(currentModel);
       if (gltf.animations && gltf.animations.length > 0) {
         danceAction = mixer.clipAction(gltf.animations[0]);
         danceAction.setLoop(THREE.LoopRepeat);
         danceAction.play();
-        console.log('Animación real activa en el Guerrero:', gltf.animations[0].name);
+        console.log('Animación real activa en el Guerrero:', gltf.animations[0].name, 'Duración:', gltf.animations[0].duration.toFixed(2) + 's');
       }
-
-      // Inicializar controlador Tecktonik (Secuencia DeepMotion Original por defecto)
-      tecktonikController = new TecktonikController(currentModel);
-      tecktonikController.setMode('deepmotion');
 
       // Ocultar pantalla de carga
       const loaderScreen = document.getElementById('loader');
