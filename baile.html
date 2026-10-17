@@ -1334,6 +1334,16 @@
       setMode(mode) {
         this.currentMode = mode;
         this.autoBeatCounter = 0;
+        if (mode !== 'deepmotion' && mode !== 'singleladies') {
+          for (const [key, bone] of Object.entries(this.bones)) {
+            if (bone && this.currentQuats[key]) {
+              this.currentQuats[key].copy(bone.quaternion);
+            }
+          }
+          if (this.bones.pelvis && this.initPositions.pelvis) {
+            this.bones.pelvis.position.copy(this.initPositions.pelvis);
+          }
+        }
       }
 
       setBPM(bpm) {
@@ -3007,6 +3017,25 @@
       document.getElementById('move-phase').innerText = `${currentBPM} BPM • ${move.desc || 'Ambos Brazos Activos'}`;
     }
 
+    // Control de clips exclusivo para evitar mezclas o pérdida de rango
+    function playClipExclusively(targetAction) {
+      const allActions = [danceAction, singleLadiesAction].filter(Boolean);
+      allActions.forEach(act => {
+        if (act !== targetAction) {
+          act.stop();
+          act.setEffectiveWeight(0);
+          act.enabled = false;
+        }
+      });
+      if (targetAction) {
+        targetAction.reset();
+        targetAction.enabled = true;
+        targetAction.setEffectiveWeight(1.0);
+        targetAction.paused = false;
+        targetAction.play();
+      }
+    }
+
     // Disparar figura en directo (Live Pad)
     window.triggerMoveNow = function(seqKey) {
       if (!tecktonikController) return;
@@ -3024,20 +3053,11 @@
       tecktonikController.setMode(seqKey);
 
       if (seqKey === 'deepmotion') {
-        if (singleLadiesAction) singleLadiesAction.paused = true;
-        if (danceAction) {
-          danceAction.paused = false;
-          danceAction.play();
-        }
+        playClipExclusively(danceAction);
       } else if (seqKey === 'singleladies') {
-        if (danceAction) danceAction.paused = true;
-        if (singleLadiesAction) {
-          singleLadiesAction.paused = false;
-          singleLadiesAction.play();
-        }
+        playClipExclusively(singleLadiesAction);
       } else {
-        if (danceAction) danceAction.paused = true;
-        if (singleLadiesAction) singleLadiesAction.paused = true;
+        playClipExclusively(null);
       }
 
       const meta = SEQ_DATA[seqKey] || { name: seqKey, icon: '⚡' };
@@ -3080,10 +3100,12 @@
         if (tecktonikController) {
           const resumeMode = tecktonikController.lastActiveMode || 'deepmotion';
           tecktonikController.setMode(resumeMode);
-          if (resumeMode === 'deepmotion' && danceAction) {
-            danceAction.paused = false;
-          } else if (resumeMode === 'singleladies' && singleLadiesAction) {
-            singleLadiesAction.paused = false;
+          if (resumeMode === 'deepmotion') {
+            playClipExclusively(danceAction);
+          } else if (resumeMode === 'singleladies') {
+            playClipExclusively(singleLadiesAction);
+          } else {
+            playClipExclusively(null);
           }
           updateMoveDisplay(SEQ_DATA[resumeMode] || SEQ_DATA.deepmotion);
         }
@@ -3097,8 +3119,8 @@
         stopBeatClock();
         html5Audio.pause();
 
-        if (danceAction) danceAction.paused = true;
-        if (singleLadiesAction) singleLadiesAction.paused = true;
+        if (danceAction && danceAction.isRunning()) danceAction.paused = true;
+        if (singleLadiesAction && singleLadiesAction.isRunning()) singleLadiesAction.paused = true;
 
         if (tecktonikController) {
           if (tecktonikController.currentMode !== 'freeze') {
@@ -3387,7 +3409,7 @@
         }
 
         if (danceAction) {
-          danceAction.play();
+          playClipExclusively(danceAction);
           console.log('Tecktonik real activo en el Guerrero:', danceAction.getClip().duration.toFixed(2) + 's');
         }
         if (singleLadiesAction) {
@@ -3463,21 +3485,12 @@
 
       if (isDancing) {
         if (tecktonikController && tecktonikController.currentMode === 'deepmotion' && mixer && danceAction) {
-          if (singleLadiesAction && !singleLadiesAction.paused) singleLadiesAction.paused = true;
-          if (danceAction.paused) danceAction.paused = false;
           mixer.update(delta);
         } else if (tecktonikController && tecktonikController.currentMode === 'singleladies' && mixer && singleLadiesAction) {
-          if (danceAction && !danceAction.paused) danceAction.paused = true;
-          if (singleLadiesAction.paused) singleLadiesAction.paused = false;
           mixer.update(delta);
         } else if (tecktonikController) {
-          if (danceAction && !danceAction.paused) danceAction.paused = true;
-          if (singleLadiesAction && !singleLadiesAction.paused) singleLadiesAction.paused = true;
           tecktonikController.update(delta);
         }
-      } else {
-        if (danceAction && !danceAction.paused) danceAction.paused = true;
-        if (singleLadiesAction && !singleLadiesAction.paused) singleLadiesAction.paused = true;
       }
 
       // Cámara Orbital Automática
