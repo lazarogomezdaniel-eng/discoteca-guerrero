@@ -1456,11 +1456,17 @@
         const yAxis = u1.clone();
         const zDir = u2.clone().addScaledVector(u1, -u2.dot(u1));
         const zAxis = zDir.lengthSq() > 1e-5 ? zDir.normalize() : pHat.clone().negate();
+        if (zAxis.lengthSq() < 1e-5) zAxis.set(0, 0, 1);
         const xAxis = new THREE.Vector3().crossVectors(yAxis, zAxis).normalize();
+        if (xAxis.lengthSq() < 1e-5) xAxis.set(isRight ? -1 : 1, 0, 0);
         zAxis.crossVectors(xAxis, yAxis).normalize();
+        if (zAxis.lengthSq() < 1e-5) zAxis.set(0, 0, 1);
 
         const rotMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
         const qUpperTargetWorld = new THREE.Quaternion().setFromRotationMatrix(rotMat);
+        if (isNaN(qUpperTargetWorld.x) || isNaN(qUpperTargetWorld.y) || isNaN(qUpperTargetWorld.z) || isNaN(qUpperTargetWorld.w)) {
+          qUpperTargetWorld.set(0, 0, 0, 1);
+        }
 
         // Compensar la orientación base de upperarm (incluyendo el pequeño ajuste de clavícula)
         if (this.initWorldQuats[clavKey] && this.initQuats[upperKey]) {
@@ -1993,7 +1999,9 @@
 
         for (const [key, bone] of Object.entries(this.bones)) {
           if (!bone || !this.targetQuats[key]) continue;
-          this.currentQuats[key].slerp(this.targetQuats[key], slerpFactor);
+          const tq = this.targetQuats[key];
+          if (isNaN(tq.x) || isNaN(tq.y) || isNaN(tq.z) || isNaN(tq.w)) continue;
+          this.currentQuats[key].slerp(tq, slerpFactor);
           bone.quaternion.copy(this.currentQuats[key]);
         }
       }
@@ -2716,7 +2724,7 @@
         const grooveDip = extraKneeDip * effLegAmp;
 
         // Rebote elástico percusivo en cada beat (138 BPM electro kick)
-        const bounceBeat = Math.pow(Math.sin(phase * 0.5), 2.2);
+        const bounceBeat = Math.pow(Math.abs(Math.sin(phase)), 2.2);
         const bounceKnee = Math.max(-0.08, bounceBeat * 0.10 * effLegAmp + grooveDip);
         const bounceHip = Math.max(-0.04, bounceBeat * 0.050 * effLegAmp + grooveDip * 0.5);
 
@@ -2731,6 +2739,9 @@
 
         if (this.bones.pelvis && this.initPositions.pelvis) {
           const worldPelvisDelta = new THREE.Vector3(hipSwayX, hipDropY, hipShiftZ);
+          if (isNaN(worldPelvisDelta.x) || isNaN(worldPelvisDelta.y) || isNaN(worldPelvisDelta.z)) {
+            worldPelvisDelta.set(0, 0, 0);
+          }
           worldPelvisDelta.applyQuaternion(this.pelvisParentInvQuat);
           this.bones.pelvis.position.copy(this.initPositions.pelvis).add(worldPelvisDelta);
         }
