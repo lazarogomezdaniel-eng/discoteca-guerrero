@@ -1503,12 +1503,12 @@
         const i3 = (i1 + 2) % n;
 
         const snap = Math.max(0.0, Math.min(0.85, snapAccent));
-        const holdStart = 1.0 - snap * 0.52;
+        const holdStart = Math.max(0.20, 1.0 - snap * 0.52);
         let t;
         if (rawU < holdStart) {
-          const s = rawU / Math.max(0.15, holdStart);
+          const s = Math.max(0.0, Math.min(1.0, rawU / holdStart));
           const smoothS = s * s * (3.0 - 2.0 * s);
-          const whipS = 1.0 - Math.pow(1.0 - s, 2.3);
+          const whipS = 1.0 - Math.pow(Math.max(0.0, 1.0 - s), 2.3);
           t = smoothS * (1.0 - snap * 0.55) + whipS * (snap * 0.55);
         } else {
           t = 1.0;
@@ -1553,12 +1553,12 @@
 
         // Curva Whip-and-Lock: latigazo rápido en la primera mitad del sub-beat y lectura clara en el beat
         const snap = Math.max(0.05, Math.min(0.85, kf2.snap || 0.25));
-        const holdStart = 1.0 - snap * 0.54;
+        const holdStart = Math.max(0.20, 1.0 - snap * 0.54);
         let t;
         if (rawU < holdStart) {
-          const s = rawU / Math.max(0.15, holdStart);
+          const s = Math.max(0.0, Math.min(1.0, rawU / holdStart));
           const smoothS = s * s * (3.0 - 2.0 * s);
-          const whipS = 1.0 - Math.pow(1.0 - s, 2.4);
+          const whipS = 1.0 - Math.pow(Math.max(0.0, 1.0 - s), 2.4);
           t = smoothS * (1.0 - snap * 0.6) + whipS * (snap * 0.6);
         } else {
           t = 1.0;
@@ -2702,31 +2702,32 @@
           extraKneeDip = bias.dip || 0.0;
         }
 
+
+
         // =====================================================================
-        // FLOW ANATÓMICO TECKTONIK: ELECTRO-STEPPING, RESORTE DE RODILLA Y PESO
+        // FLOW DINÁMICO TECKTONIK: MOVIMIENTOS DE CADERA Y PATADAS AL BEAT
         // =====================================================================
         const effLegAmp = Math.max(0.5, Math.min(1.25, amp));
-        const baseHipFlex = 0.20 * effLegAmp;
-        const baseKneeFlex = 0.38 * effLegAmp;
-        const legSpread = 0.085 * effLegAmp;
-        const footTurnOut = 0.09 * effLegAmp;
+        const baseHipFlex = 0.22 * effLegAmp;
+        const baseKneeFlex = 0.36 * effLegAmp;
+        const legSpread = 0.088 * effLegAmp;
+        const footTurnOut = 0.10 * effLegAmp;
 
         const grooveDip = extraKneeDip * effLegAmp;
 
         // Rebote elástico percusivo en cada beat (138 BPM electro kick)
         const bounceBeat = Math.pow(Math.sin(phase * 0.5), 2.2);
-        const bounceKnee = Math.max(-0.08, bounceBeat * 0.11 * effLegAmp + grooveDip);
-        const bounceHip = Math.max(-0.04, bounceBeat * 0.055 * effLegAmp + grooveDip * 0.5);
+        const bounceKnee = Math.max(-0.08, bounceBeat * 0.10 * effLegAmp + grooveDip);
+        const bounceHip = Math.max(-0.04, bounceBeat * 0.050 * effLegAmp + grooveDip * 0.5);
 
-        // Electro-Step: Paso y transferencia rítmica de peso alternante izquierda/derecha
+        // Ciclo alternante de paso y patadas (138 BPM)
         const stepCycle = Math.sin(phase * 0.5);
-        const stepWeightL = Math.max(0.0, stepCycle);   // Apoyo pie izquierdo
-        const stepWeightR = Math.max(0.0, -stepCycle);  // Apoyo pie derecho
+        const cosCycle = Math.cos(phase * 0.5);
 
-        // Desplazamiento orgánico de pelvis en mundo (acompaña torso y brazos con flow real)
-        const hipSwayX = (stepCycle * 0.045 + armBiasX * 0.040) * effLegAmp;
-        const hipDropY = -(0.028 * effLegAmp + bounceBeat * 0.032 * effLegAmp + grooveDip * 0.42);
-        const hipShiftZ = (armBiasZ * 0.024) * effLegAmp;
+        // Movimiento de cadera (Hip Swivel & Pelvic Sway con actitud electro)
+        const hipSwayX = (stepCycle * 0.065 + armBiasX * 0.045) * effLegAmp;
+        const hipDropY = -(0.030 * effLegAmp + bounceBeat * 0.034 * effLegAmp + grooveDip * 0.44);
+        const hipShiftZ = (cosCycle * 0.032 + armBiasZ * 0.026) * effLegAmp;
 
         if (this.bones.pelvis && this.initPositions.pelvis) {
           const worldPelvisDelta = new THREE.Vector3(hipSwayX, hipDropY, hipShiftZ);
@@ -2734,10 +2735,10 @@
           this.bones.pelvis.position.copy(this.initPositions.pelvis).add(worldPelvisDelta);
         }
 
-        // Torsión pélvica dinámica (Pelvic Yaw) con contratorque de columna
-        const pelvisYaw = (stepCycle * 0.14 + armBiasX * 0.08) * effLegAmp;
-        const pelvisRoll = (hipSwayX * 1.1) * effLegAmp;
-        const pelvisPitch = (0.025 * effLegAmp + grooveDip * 0.6);
+        // Torsión y rotación de cadera (Pelvic Yaw & Roll en figura de 8)
+        const pelvisYaw = (stepCycle * 0.22 + armBiasX * 0.12) * effLegAmp;
+        const pelvisRoll = (cosCycle * 0.09 + hipSwayX * 1.2) * effLegAmp;
+        const pelvisPitch = (0.03 * effLegAmp + bounceBeat * 0.04 + grooveDip * 0.55);
 
         this.setWorldDelta(
           'pelvis',
@@ -2747,22 +2748,35 @@
           qDelta
         );
 
-        // Flexión y paso en piernas: la pierna de apoyo clava el golpe con rebote de rodilla,
-        // mientras la pierna libre levanta sutilmente el talón sobre la punta del pie (flow real de electro dance)
-        const lHeelLift = stepWeightR * 0.22 * effLegAmp;
-        const rHeelLift = stepWeightL * 0.22 * effLegAmp;
+        // Patadas Electro (Electro Kick / Tap Kick rítmico bajo y diagonal):
+        // En los tiempos fuertes, la pierna activa lanza una patada baja estirando la rodilla hacia delante,
+        // mientras la pierna de apoyo flexiona para absorber el impacto con actitud
+        const kickPulseL = Math.pow(Math.max(0.0, stepCycle), 2.8) * effLegAmp;
+        const kickPulseR = Math.pow(Math.max(0.0, -stepCycle), 2.8) * effLegAmp;
 
-        const lHip = baseHipFlex + bounceHip + stepWeightL * 0.06 - lHeelLift * 0.04;
-        const lKnee = baseKneeFlex + bounceKnee + stepWeightL * 0.08 + lHeelLift * 0.12;
-        this.setWorldDelta('thigh_l', -lHip, footTurnOut + stepWeightL * 0.05, legSpread, qDelta);
+        const kickThighL = kickPulseL * 0.35;
+        const kickKneeL = -kickPulseL * 0.44; // Extiende la rodilla hacia delante para el latigazo de la patada
+        const kickFootL = kickPulseL * 0.28;
+
+        const kickThighR = kickPulseR * 0.35;
+        const kickKneeR = -kickPulseR * 0.44; // Extiende la rodilla hacia delante para el latigazo de la patada
+        const kickFootR = kickPulseR * 0.28;
+
+        // Pierna izquierda: combina flexión base, apoyo elástico y patada activa
+        const lSupport = Math.max(0.0, -stepCycle);
+        const lHip = baseHipFlex + bounceHip + lSupport * 0.08 + kickThighL;
+        const lKnee = Math.max(0.04, baseKneeFlex + bounceKnee + lSupport * 0.10 + kickKneeL);
+        this.setWorldDelta('thigh_l', -lHip, footTurnOut + kickPulseL * 0.06, legSpread + kickPulseL * 0.04, qDelta);
         this.setWorldDelta('calf_l', lKnee, 0.0, 0.0, qDelta);
-        this.setWorldDelta('foot_l', -(lKnee - lHip) + lHeelLift, 0.0, -legSpread * 0.85, qDelta);
+        this.setWorldDelta('foot_l', -(lKnee - lHip) + kickFootL, 0.0, -legSpread * 0.85, qDelta);
 
-        const rHip = baseHipFlex + bounceHip + stepWeightR * 0.06 - rHeelLift * 0.04;
-        const rKnee = baseKneeFlex + bounceKnee + stepWeightR * 0.08 + rHeelLift * 0.12;
-        this.setWorldDelta('thigh_r', -rHip, -footTurnOut - stepWeightR * 0.05, -legSpread, qDelta);
+        // Pierna derecha: combina flexión base, apoyo elástico y patada activa
+        const rSupport = Math.max(0.0, stepCycle);
+        const rHip = baseHipFlex + bounceHip + rSupport * 0.08 + kickThighR;
+        const rKnee = Math.max(0.04, baseKneeFlex + bounceKnee + rSupport * 0.10 + kickKneeR);
+        this.setWorldDelta('thigh_r', -rHip, -footTurnOut - kickPulseR * 0.06, -legSpread - kickPulseR * 0.04, qDelta);
         this.setWorldDelta('calf_r', rKnee, 0.0, 0.0, qDelta);
-        this.setWorldDelta('foot_r', -(rKnee - rHip) + rHeelLift, 0.0, legSpread * 0.85, qDelta);
+        this.setWorldDelta('foot_r', -(rKnee - rHip) + kickFootR, 0.0, legSpread * 0.85, qDelta);
 
         for (const [key, deltaQ] of Object.entries(qDelta)) {
           if (this.initQuats[key]) {
@@ -3291,6 +3305,7 @@
         if (node.isMesh) {
           node.castShadow = true;
           node.receiveShadow = true;
+          node.frustumCulled = false; // Evita que Three.js oculte la malla al bailar, desplazarse o agacharse
         }
       });
 
