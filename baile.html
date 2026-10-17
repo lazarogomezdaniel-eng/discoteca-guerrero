@@ -1051,6 +1051,9 @@
       <button class="pad-btn active" id="pad-deepmotion" onclick="window.triggerMoveNow('deepmotion')" style="border-color: rgba(247, 37, 133, 0.7); background: linear-gradient(135deg, rgba(247, 37, 133, 0.35), rgba(0, 242, 254, 0.25)); box-shadow: 0 0 12px rgba(247, 37, 133, 0.35);">
         <span>🎬 DeepMotion Real</span> <kbd>D</kbd>
       </button>
+      <button class="pad-btn" id="pad-singleladies" onclick="window.triggerMoveNow('singleladies')" style="border-color: rgba(255, 110, 199, 0.7); background: linear-gradient(135deg, rgba(255, 110, 199, 0.3), rgba(123, 44, 191, 0.25)); box-shadow: 0 0 12px rgba(255, 110, 199, 0.3);">
+        <span>💃 Single Ladies Real</span> <kbd>S</kbd>
+      </button>
       <button class="pad-btn" id="pad-viral" onclick="window.triggerMoveNow('combo_viral')">
         <span>🔥 Baile Viral 360°</span> <kbd>V</kbd>
       </button>
@@ -2980,6 +2983,7 @@
     // =========================================================================
     const SEQ_DATA = {
       deepmotion: { name: '🎬 Captura Real DeepMotion (Video Original 15s)', icon: '🎬', desc: 'Secuencia real fotograma a fotograma de DeepMotion: brazos, cabeza, torso y piernas del video' },
+      singleladies: { name: '💃 Single Ladies Real (Coreografía Beyoncé 12.5s)', icon: '💃', desc: 'Coreografía Single Ladies fotograma a fotograma: cadera icónica, giros de muñeca y pasos reales' },
       combo_viral: { name: '🔥 Baile Viral Continuo (Coreografía 360°)', icon: '🔥', desc: 'Coreografía completa a 138 BPM: enlaza las 10 figuras de electro dance con flow orgánico' },
       estirados: { name: '💥 1. Extensión Horizontal & Cruce Máximo', icon: '💥', desc: 'Brazos 100% estirados en horizontal y latigazo al cruce frontal profundo sobrepasando codos' },
       trenzado: { name: '🥨 2. Arm Wrap Bicicleta (Pot de Colle)', icon: '🥨', desc: 'Rodillo eléctrico continuo frente al esternón con Lock en cruz (+) y apertura lateral' },
@@ -3017,6 +3021,24 @@
 
       tecktonikController.lastActiveMode = seqKey;
       tecktonikController.setMode(seqKey);
+
+      if (seqKey === 'deepmotion') {
+        if (singleLadiesAction) singleLadiesAction.paused = true;
+        if (danceAction) {
+          danceAction.paused = false;
+          danceAction.play();
+        }
+      } else if (seqKey === 'singleladies') {
+        if (danceAction) danceAction.paused = true;
+        if (singleLadiesAction) {
+          singleLadiesAction.paused = false;
+          singleLadiesAction.play();
+        }
+      } else {
+        if (danceAction) danceAction.paused = true;
+        if (singleLadiesAction) singleLadiesAction.paused = true;
+      }
+
       const meta = SEQ_DATA[seqKey] || { name: seqKey, icon: '⚡' };
       updateMoveDisplay(meta);
       onBeatDrop(1.2);
@@ -3057,6 +3079,11 @@
         if (tecktonikController) {
           const resumeMode = tecktonikController.lastActiveMode || 'deepmotion';
           tecktonikController.setMode(resumeMode);
+          if (resumeMode === 'deepmotion' && danceAction) {
+            danceAction.paused = false;
+          } else if (resumeMode === 'singleladies' && singleLadiesAction) {
+            singleLadiesAction.paused = false;
+          }
           updateMoveDisplay(SEQ_DATA[resumeMode] || SEQ_DATA.deepmotion);
         }
       } else {
@@ -3068,6 +3095,9 @@
 
         stopBeatClock();
         html5Audio.pause();
+
+        if (danceAction) danceAction.paused = true;
+        if (singleLadiesAction) singleLadiesAction.paused = true;
 
         if (tecktonikController) {
           if (tecktonikController.currentMode !== 'freeze') {
@@ -3159,6 +3189,8 @@
         const keyMap = {
           'd': 'deepmotion',
           'D': 'deepmotion',
+          's': 'singleladies',
+          'S': 'singleladies',
           'v': 'combo_viral',
           'V': 'combo_viral',
           '1': 'estirados',
@@ -3309,6 +3341,7 @@
     // =========================================================================
     let mixer = null;
     let danceAction = null;
+    let singleLadiesAction = null;
     const loader = new GLTFLoader();
 
     function initWarriorModel(gltf) {
@@ -3328,13 +3361,34 @@
       tecktonikController.lastActiveMode = 'deepmotion';
       tecktonikController.setMode('deepmotion');
 
-      // Configurar AnimationMixer con la captura nativa (piernas, cruces y cuerpo completo)
+      // Configurar AnimationMixer con ambas capturas nativas
       mixer = new THREE.AnimationMixer(currentModel);
       if (gltf.animations && gltf.animations.length > 0) {
-        danceAction = mixer.clipAction(gltf.animations[0]);
-        danceAction.setLoop(THREE.LoopRepeat);
-        danceAction.play();
-        console.log('Animación real activa en el Guerrero:', gltf.animations[0].name, 'Duración:', gltf.animations[0].duration.toFixed(2) + 's');
+        gltf.animations.forEach((clip) => {
+          if (clip.name === 'single_ladies_dance_real') {
+            singleLadiesAction = mixer.clipAction(clip);
+            singleLadiesAction.setLoop(THREE.LoopRepeat);
+          } else if (clip.name === 'tecktonik_dance_real' || clip.name.includes('tecktonik') || clip.name.includes('Armature')) {
+            danceAction = mixer.clipAction(clip);
+            danceAction.setLoop(THREE.LoopRepeat);
+          }
+        });
+        if (!danceAction && gltf.animations[0]) {
+          danceAction = mixer.clipAction(gltf.animations[0]);
+          danceAction.setLoop(THREE.LoopRepeat);
+        }
+        if (!singleLadiesAction && gltf.animations[1]) {
+          singleLadiesAction = mixer.clipAction(gltf.animations[1]);
+          singleLadiesAction.setLoop(THREE.LoopRepeat);
+        }
+
+        if (danceAction) {
+          danceAction.play();
+          console.log('Tecktonik real activo en el Guerrero:', danceAction.getClip().duration.toFixed(2) + 's');
+        }
+        if (singleLadiesAction) {
+          console.log('Single Ladies real listo en el Guerrero:', singleLadiesAction.getClip().duration.toFixed(2) + 's');
+        }
       }
 
       // Ocultar pantalla de carga
@@ -3405,14 +3459,21 @@
 
       if (isDancing) {
         if (tecktonikController && tecktonikController.currentMode === 'deepmotion' && mixer && danceAction) {
+          if (singleLadiesAction && !singleLadiesAction.paused) singleLadiesAction.paused = true;
           if (danceAction.paused) danceAction.paused = false;
+          mixer.update(delta);
+        } else if (tecktonikController && tecktonikController.currentMode === 'singleladies' && mixer && singleLadiesAction) {
+          if (danceAction && !danceAction.paused) danceAction.paused = true;
+          if (singleLadiesAction.paused) singleLadiesAction.paused = false;
           mixer.update(delta);
         } else if (tecktonikController) {
           if (danceAction && !danceAction.paused) danceAction.paused = true;
+          if (singleLadiesAction && !singleLadiesAction.paused) singleLadiesAction.paused = true;
           tecktonikController.update(delta);
         }
-      } else if (danceAction && !danceAction.paused) {
-        danceAction.paused = true;
+      } else {
+        if (danceAction && !danceAction.paused) danceAction.paused = true;
+        if (singleLadiesAction && !singleLadiesAction.paused) singleLadiesAction.paused = true;
       }
 
       // Cámara Orbital Automática
