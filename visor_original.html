@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Visor Oficial — Baile Original DeepMotion (100% Fiel al Vídeo)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --panel-bg: rgba(13, 17, 27, 0.88);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --accent-cyan: #00f2fe;
+      --accent-blue: #4facfe;
+      --accent-purple: #9d4edd;
+      --accent-pink: #f72585;
+      --accent-green: #06d6a0;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Ambient Glow */
+    .stage-glow {
+      position: absolute;
+      bottom: -15vh;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80vw;
+      height: 40vh;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 242, 254, 0.12) 0%, rgba(157, 78, 221, 0.08) 40%, transparent 75%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* UI Overlay */
+    .ui-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .ui-layer.hidden-ui {
+      opacity: 0;
+      pointer-events: none !important;
+      transform: scale(0.98);
+    }
+
+    .interactive {
+      pointer-events: auto;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .title-pill {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 10px 18px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .badge-live {
+      background: linear-gradient(135deg, #f72585, #7209b7);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      animation: pulseBadge 2s infinite;
+    }
+
+    @keyframes pulseBadge {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.04); }
+    }
+
+    .title-text h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      background: linear-gradient(90deg, #ffffff, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .title-text p {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn-action {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-action:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--accent-cyan);
+      transform: translateY(-1px);
+    }
+
+    .btn-action.active {
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(79, 172, 254, 0.25));
+      border-color: var(--accent-cyan);
+      color: #fff;
+      box-shadow: 0 0 16px rgba(0, 242, 254, 0.3);
+    }
+
+    /* Floating Cinema Toggle */
+    #btn-toggle-ui {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 100;
+      background: rgba(13, 17, 27, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    #btn-toggle-ui:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Center Overlay Information */
+    .center-overlay {
+      align-self: center;
+      text-align: center;
+      background: rgba(10, 14, 24, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 10px 24px;
+      border-radius: 999px;
+      backdrop-filter: blur(12px);
+      margin-top: 20px;
+      display: none;
+    }
+
+    /* Bottom Control Deck */
+    .bottom-deck {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .timeline-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: 14px 20px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .timeline-scrubber-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .time-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      min-width: 110px;
+      letter-spacing: 0.5px;
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-pink));
+      border-radius: 999px;
+      pointer-events: none;
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.5);
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .playback-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-play {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      color: #030712;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(0, 242, 254, 0.4);
+    }
+
+    .btn-play:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 22px rgba(0, 242, 254, 0.6);
+    }
+
+    .btn-step {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--panel-border);
+      color: var(--text-main);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-step:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .speed-selector {
+      display: flex;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 999px;
+      padding: 3px;
+      border: 1px solid var(--panel-border);
+    }
+
+    .speed-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 9px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .speed-btn.active {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    .view-toggles {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill-opt {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--panel-border);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pill-opt:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .pill-opt.active {
+      background: linear-gradient(135deg, rgba(247, 37, 133, 0.3), rgba(157, 78, 221, 0.3));
+      border-color: var(--accent-pink);
+      color: #fff;
+    }
+
+    /* Loading Screen */
+    #loader-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-dark);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      transition: opacity 0.4s ease;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(0, 242, 254, 0.2);
+      border-top-color: var(--accent-cyan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loader-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-main);
+      letter-spacing: 0.5px;
+    }
+
+    .loader-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+      .ui-layer {
+        padding: 12px;
+      }
+      .title-text h1 {
+        font-size: 13px;
+      }
+      .title-text p {
+        display: none;
+      }
+      .timeline-card {
+        padding: 12px 14px;
+      }
+      .time-badge {
+        font-size: 11px;
+        min-width: 85px;
+      }
+      .controls-row {
+        gap: 6px;
+      }
+      .pill-opt {
+        padding: 5px 8px;
+        font-size: 11px;
+      }
+    }
+  </style>
+
+  <!-- Import maps polyfill -->
+  <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <!-- 3D Canvas -->
+  <div id="canvas-container"></div>
+  <div class="stage-glow"></div>
+
+  <!-- Cinema Toggle Button (Always visible) -->
+  <button id="btn-toggle-ui" class="interactive">
+    <span id="eye-icon">👁️</span> <span id="toggle-text">Ocultar UI</span>
+  </button>
+
+  <!-- Loading Splash -->
+  <div id="loader-screen">
+    <div class="spinner"></div>
+    <div class="loader-text">Cargando Captura Real DeepMotion...</div>
+    <div class="loader-sub">videoplayback_default.glb (15.00s • 451 frames • 53 huesos)</div>
+  </div>
+
+  <!-- UI Overlay -->
+  <div class="ui-layer" id="ui-layer">
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="title-pill interactive">
+        <span class="badge-live">100% Original</span>
+        <div class="title-text">
+          <h1>Baile Original DeepMotion</h1>
+          <p>videoplayback_default.glb • Animación Nativa Sin Procedural</p>
+        </div>
+      </div>
+
+      <div class="top-actions interactive">
+        <button class="btn-action active" id="btn-posture" title="Alternar corrección de cuello y cabeza (evita que encoja el cuello y baje la cabeza)">🛡️ Postura: ✨ Natural</button>
+        <button class="btn-action" id="btn-lighting">💡 Luz: Club Neón</button>
+        <button class="btn-action" id="btn-camera-view">🎥 Vista: Frontal</button>
+        <a href="baile.html" class="btn-action">🎛️ Ir a Discoteca</a>
+      </div>
+    </div>
+
+    <!-- Center helper / beat flash -->
+    <div class="center-overlay" id="center-info">
+      <span id="info-text">Frame 0 / 451</span>
+    </div>
+
+    <!-- Bottom Control Deck -->
+    <div class="bottom-deck">
+      <div class="timeline-card interactive">
+
+        <!-- Scrubber -->
+        <div class="timeline-scrubber-row">
+          <div class="time-badge" id="time-display">00:00.0 / 15.0s</div>
+          <div class="progress-track" id="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div class="time-badge" style="text-align: right; min-width: 60px;" id="frame-display">F: 0</div>
+        </div>
+
+        <!-- Controls Row -->
+        <div class="controls-row">
+          <div class="playback-buttons">
+            <button class="btn-step" id="btn-prev-frame" title="Paso atrás (1 frame)">⏮️</button>
+            <button class="btn-play" id="btn-play" title="Play / Pausa (Espacio)">⏸️</button>
+            <button class="btn-step" id="btn-next-frame" title="Paso adelante (1 frame)">⏭️</button>
+          </div>
+
+          <!-- Speed -->
+          <div class="speed-selector">
+            <button class="speed-btn" data-speed="0.25">0.25x</button>
+            <button class="speed-btn" data-speed="0.5">0.5x</button>
+            <button class="speed-btn" data-speed="0.75">0.75x</button>
+            <button class="speed-btn active" data-speed="1.0">1.0x</button>
+            <button class="speed-btn" data-speed="1.25">1.25x</button>
+            <button class="speed-btn" data-speed="1.5">1.5x</button>
+          </div>
+
+          <!-- Visual toggles -->
+          <div class="view-toggles">
+            <button class="pill-opt active" id="btn-toggle-posture" title="Alternar corrección de cuello y cabeza">🛡️ Postura Natural</button>
+            <button class="pill-opt" id="btn-toggle-skeleton">🦴 Ver Huesos</button>
+            <button class="pill-opt active" id="btn-toggle-mesh">👤 Modelo 3D</button>
+            <button class="pill-opt" id="btn-toggle-music">🎵 Música</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Audio Element for optional background beat -->
+  <audio id="audio-track" loop preload="auto">
+    <source src="music/tecktonik_killer.mp3" type="audio/mp3">
+  </audio>
+
+  <!-- 3D Engine Script -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    // --- State Variables ---
+    let scene, camera, renderer, controls;
+    let mixer, animAction, clip;
+    let rawClip = null, cleanClip = null;
+    let isPostureCorrected = true; // Por defecto: postura natural y cuello erguido
+    let characterModel = null;
+    let skeletonHelper = null;
+    let clock = new THREE.Clock();
+    let isPlaying = true;
+    let playbackSpeed = 1.0;
+    let totalDuration = 15.0;
+    let totalFrames = 451;
+    let isScrubbing = false;
+    let lightingMode = 1; // 0: Studio, 1: Disco Club, 2: Cyber Focus
+    let cameraModeIndex = 0;
+
+    // Lights
+    let ambientLight, dirLight, spotBlue, spotPink, spotCyan, pointFloor;
+
+    // DOM Elements
+    const container = document.getElementById('canvas-container');
+    const loaderScreen = document.getElementById('loader-screen');
+    const progressTrack = document.getElementById('progress-track');
+    const progressFill = document.getElementById('progress-fill');
+    const timeDisplay = document.getElementById('time-display');
+    const frameDisplay = document.getElementById('frame-display');
+    const btnPlay = document.getElementById('btn-play');
+    const btnPrevFrame = document.getElementById('btn-prev-frame');
+    const btnNextFrame = document.getElementById('btn-next-frame');
+    const speedButtons = document.querySelectorAll('.speed-btn');
+    const btnToggleSkeleton = document.getElementById('btn-toggle-skeleton');
+    const btnToggleMesh = document.getElementById('btn-toggle-mesh');
+    const btnToggleMusic = document.getElementById('btn-toggle-music');
+    const btnLighting = document.getElementById('btn-lighting');
+    const btnCameraView = document.getElementById('btn-camera-view');
+    const btnPosture = document.getElementById('btn-posture');
+    const btnTogglePosture = document.getElementById('btn-toggle-posture');
+    const btnToggleUI = document.getElementById('btn-toggle-ui');
+    const uiLayer = document.getElementById('ui-layer');
+    const audioTrack = document.getElementById('audio-track');
+
+    // --- Initialize Three.js Scene ---
+    function init() {
+      // Scene
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x06080e);
+      scene.fog = new THREE.FogExp2(0x06080e, 0.035);
+
+      // Camera
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 1.25, 3.2);
+
+      // Renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      container.appendChild(renderer.domElement);
+
+      // OrbitControls
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.target.set(0, 0.95, 0); // Focus on dancer's chest
+      controls.minDistance = 1.0;
+      controls.maxDistance = 10.0;
+      controls.maxPolarAngle = Math.PI / 2 + 0.02; // Don't dip below floor
+
+      // Setup Environment & Floor
+      createStageEnvironment();
+
+      // Setup Lighting
+      setupLighting();
+
+      // Load DeepMotion GLB Model
+      loadDeepMotionModel();
+
+      // Event Listeners
+      setupUIEventListeners();
+      window.addEventListener('resize', onWindowResize);
+
+      // Start Render Loop
+      animate();
+    }
+
+    // --- Stage Floor & Grid ---
+    function createStageEnvironment() {
+      // Reflective circular dance floor
+      const floorGeo = new THREE.CylinderGeometry(4.2, 4.2, 0.08, 64);
+      const floorMat = new THREE.MeshStandardMaterial({
+        color: 0x0f1422,
+        roughness: 0.22,
+        metalness: 0.65
+      });
+      const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+      floorMesh.position.y = -0.04;
+      floorMesh.receiveShadow = true;
+      scene.add(floorMesh);
+
+      // Outer Neon Ring
+      const ringGeo = new THREE.RingGeometry(4.2, 4.35, 64);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0x00f2fe,
+        side: THREE.DoubleSide
+      });
+      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+      ringMesh.rotation.x = -Math.PI / 2;
+      ringMesh.position.y = 0.002;
+      scene.add(ringMesh);
+
+      // Radial Grid Lines
+      const gridHelper = new THREE.GridHelper(10, 20, 0x00f2fe, 0x1f293d);
+      gridHelper.position.y = 0.001;
+      scene.add(gridHelper);
+    }
+
+    // --- Lighting Setups ---
+    function setupLighting() {
+      ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+      scene.add(ambientLight);
+
+      // Key Main Light
+      dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+      dirLight.position.set(2, 4, 3);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 2048;
+      dirLight.shadow.mapSize.height = 2048;
+      dirLight.shadow.camera.near = 0.5;
+      dirLight.shadow.camera.far = 15;
+      dirLight.shadow.bias = -0.0005;
+      scene.add(dirLight);
+
+      // Blue Rim Spot
+      spotBlue = new THREE.SpotLight(0x00f2fe, 3.5, 12, Math.PI / 4, 0.4);
+      spotBlue.position.set(-2.8, 3.5, -2.5);
+      spotBlue.target.position.set(0, 1.0, 0);
+      scene.add(spotBlue);
+      scene.add(spotBlue.target);
+
+      // Magenta Rim Spot
+      spotPink = new THREE.SpotLight(0xf72585, 3.5, 12, Math.PI / 4, 0.4);
+      spotPink.position.set(2.8, 3.5, -2.5);
+      spotPink.target.position.set(0, 1.0, 0);
+      scene.add(spotPink);
+      scene.add(spotPink.target);
+
+      // Overhead Cyan Accent
+      spotCyan = new THREE.SpotLight(0x4facfe, 2.5, 10, Math.PI / 3, 0.5);
+      spotCyan.position.set(0, 4.5, 1.5);
+      spotCyan.target.position.set(0, 0.8, 0);
+      scene.add(spotCyan);
+      scene.add(spotCyan.target);
+
+      // Under-glow floor point light
+      pointFloor = new THREE.PointLight(0x9d4edd, 1.5, 6);
+      pointFloor.position.set(0, 0.3, 0);
+      scene.add(pointFloor);
+
+      applyLightingMode(1); // Default to Disco Club
+    }
+
+    function applyLightingMode(mode) {
+      lightingMode = mode;
+      if (mode === 0) {
+        // Studio Clean
+        btnLighting.textContent = '💡 Luz: Estudio Limpio';
+        ambientLight.intensity = 1.2;
+        dirLight.intensity = 1.5;
+        spotBlue.intensity = 0.4;
+        spotPink.intensity = 0.4;
+        spotCyan.intensity = 0.5;
+        scene.background.setHex(0x181c24);
+        scene.fog.color.setHex(0x181c24);
+      } else if (mode === 1) {
+        // Disco Club Neón
+        btnLighting.textContent = '💡 Luz: Club Neón';
+        ambientLight.intensity = 0.45;
+        dirLight.intensity = 0.9;
+        spotBlue.intensity = 4.2;
+        spotPink.intensity = 4.2;
+        spotCyan.intensity = 2.8;
+        scene.background.setHex(0x06080e);
+        scene.fog.color.setHex(0x06080e);
+      } else {
+        // Dramatic Spotlight
+        btnLighting.textContent = '💡 Luz: Foco Dramático';
+        ambientLight.intensity = 0.15;
+        dirLight.intensity = 0.2;
+        spotBlue.intensity = 5.5;
+        spotPink.intensity = 5.5;
+        spotCyan.intensity = 6.0;
+        scene.background.setHex(0x020306);
+        scene.fog.color.setHex(0x020306);
+      }
+    }
+
+    // --- Load DeepMotion GLB ---
+    function loadDeepMotionModel() {
+      const loader = new GLTFLoader();
+      
+      loader.load(
+        'videoplayback_default.glb',
+        (gltf) => {
+          characterModel = gltf.scene;
+          
+          // Configure shadows & materials
+          characterModel.traverse((child) => {
+            if (child.isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+              if (child.material) {
+                child.material.roughness = 0.38;
+                child.material.metalness = 0.25;
+                child.material.needsUpdate = true;
+              }
+            }
+          });
+
+          // Ensure it's on ground
+          characterModel.position.set(0, 0, 0);
+          scene.add(characterModel);
+
+          // Setup Skeleton Helper
+          skeletonHelper = new THREE.SkeletonHelper(characterModel);
+          skeletonHelper.visible = false;
+          skeletonHelper.material.linewidth = 2;
+          scene.add(skeletonHelper);
+
+          // Setup AnimationMixer
+          mixer = new THREE.AnimationMixer(characterModel);
+          
+          if (gltf.animations && gltf.animations.length > 0) {
+            rawClip = gltf.animations[0];
+            cleanClip = sanitizeNeckAndHeadTracks(rawClip);
+            clip = isPostureCorrected ? cleanClip : rawClip;
+            totalDuration = clip.duration || 15.0;
+            animAction = mixer.clipAction(clip);
+            animAction.setLoop(THREE.LoopRepeat);
+            animAction.clampWhenFinished = false;
+            animAction.play();
+            console.log('DeepMotion animation loaded:', clip.name, 'Duration:', totalDuration);
+          } else {
+            console.warn('No animations found in videoplayback_default.glb');
+          }
+
+          // Hide Loader
+          loaderScreen.style.opacity = '0';
+          setTimeout(() => {
+            loaderScreen.style.display = 'none';
+          }, 400);
+        },
+        (xhr) => {
+          if (xhr.lengthComputable) {
+            const percentComplete = (xhr.loaded / xhr.total) * 100;
+            loaderScreen.querySelector('.loader-sub').textContent = 
+              `Cargando geometría y esqueleto: ${Math.round(percentComplete)}%`;
+          }
+        },
+        (error) => {
+          console.error('Error loading videoplayback_default.glb:', error);
+          loaderScreen.querySelector('.loader-text').textContent = 'Error al cargar el modelo original';
+          loaderScreen.querySelector('.loader-sub').textContent = error.message;
+        }
+      );
+    }
+
+    // --- Posture Correction Engine (Elimina el cuello encogido y cabeza caída) ---
+    function sanitizeNeckAndHeadTracks(sourceClip) {
+      const sanitized = sourceClip.clone();
+      sanitized.name = 'videoplayback_posture_clean';
+
+      const isNeck = (name) => name.toLowerCase().includes('neck');
+      const isHead = (name) => name.toLowerCase().includes('head');
+
+      const q = new THREE.Quaternion();
+      const e = new THREE.Euler(0, 0, 0, 'YXZ');
+
+      sanitized.tracks.forEach((track) => {
+        if (isNeck(track.name)) {
+          const vals = new Float32Array(track.values);
+          for (let i = 0; i < vals.length; i += 4) {
+            q.set(vals[i], vals[i+1], vals[i+2], vals[i+3]);
+            e.setFromQuaternion(q, 'YXZ');
+
+            // En DeepMotion, el cuello sufría retracciones bruscas de hasta -41° al subir brazos.
+            // Amortiguamos y limitamos a un rango humano suave y erguido.
+            e.x = Math.max(-0.09, Math.min(0.09, e.x * 0.18));
+            e.z = Math.max(-0.08, Math.min(0.08, e.z * 0.35));
+            e.y = Math.max(-0.20, Math.min(0.20, e.y * 0.60));
+
+            q.setFromEuler(e);
+            vals[i] = q.x;
+            vals[i+1] = q.y;
+            vals[i+2] = q.z;
+            vals[i+3] = q.w;
+          }
+          track.values = vals;
+        } else if (isHead(track.name)) {
+          const vals = new Float32Array(track.values);
+          for (let i = 0; i < vals.length; i += 4) {
+            q.set(vals[i], vals[i+1], vals[i+2], vals[i+3]);
+            e.setFromQuaternion(q, 'YXZ');
+
+            // En DeepMotion crudo, cuando los antebrazos pasan delante de la cara,
+            // la IA perdía la barbilla y colapsaba la cabeza hacia abajo a +91° (+1.59 rad) contra el pecho.
+            // Corrección: Mantenemos la mirada erguida, frontal y orgullosa de Tecktonik (-8° a +12°).
+            e.x = Math.max(-0.14, Math.min(0.18, e.x));
+            e.z = Math.max(-0.18, Math.min(0.18, e.z));
+            e.y = Math.max(-0.35, Math.min(0.35, e.y));
+
+            q.setFromEuler(e);
+            vals[i] = q.x;
+            vals[i+1] = q.y;
+            vals[i+2] = q.z;
+            vals[i+3] = q.w;
+          }
+
+          // Filtro temporal para eliminar micro-vibraciones por oclusión de manos
+          const smoothed = new Float32Array(vals);
+          for (let i = 4; i < vals.length - 4; i += 4) {
+            for (let k = 0; k < 4; k++) {
+              smoothed[i+k] = vals[i-4+k] * 0.25 + vals[i+k] * 0.5 + vals[i+4+k] * 0.25;
+            }
+            const len = Math.hypot(smoothed[i], smoothed[i+1], smoothed[i+2], smoothed[i+3]);
+            if (len > 0.0001) {
+              smoothed[i] /= len;
+              smoothed[i+1] /= len;
+              smoothed[i+2] /= len;
+              smoothed[i+3] /= len;
+            }
+          }
+          track.values = smoothed;
+        }
+      });
+
+      return sanitized;
+    }
+
+    function togglePostureMode() {
+      if (!rawClip || !cleanClip || !mixer) return;
+      isPostureCorrected = !isPostureCorrected;
+      
+      const curTime = animAction ? animAction.time : 0;
+      const wasPlaying = isPlaying;
+
+      animAction.stop();
+      clip = isPostureCorrected ? cleanClip : rawClip;
+      animAction = mixer.clipAction(clip);
+      animAction.setLoop(THREE.LoopRepeat);
+      animAction.clampWhenFinished = false;
+      animAction.time = curTime;
+      animAction.setEffectiveTimeScale(playbackSpeed);
+      animAction.play();
+      if (!wasPlaying) animAction.paused = true;
+
+      if (btnPosture) {
+        btnPosture.textContent = isPostureCorrected ? '🛡️ Postura: ✨ Natural' : '⚠️ Postura: Crudo DeepMotion';
+        btnPosture.classList.toggle('active', isPostureCorrected);
+      }
+      if (btnTogglePosture) {
+        btnTogglePosture.textContent = isPostureCorrected ? '🛡️ Postura Natural' : '⚠️ Cuello Crudo';
+        btnTogglePosture.classList.toggle('active', isPostureCorrected);
+      }
+    }
+
+    // --- Camera View Modes ---
+    const cameraPresets = [
+      { name: 'Frontal', pos: [0, 1.25, 3.2], target: [0, 0.95, 0] },
+      { name: 'Detalle Torso/Brazos', pos: [0, 1.28, 1.75], target: [0, 1.25, 0] },
+      { name: 'Diagonal 45°', pos: [2.2, 1.35, 2.4], target: [0, 0.95, 0] },
+      { name: 'Lateral Perfil', pos: [3.1, 1.25, 0], target: [0, 0.95, 0] },
+      { name: 'Cuerpo Entero Suelo', pos: [0, 0.45, 3.6], target: [0, 0.85, 0] }
+    ];
+
+    function setCameraPreset(index) {
+      cameraModeIndex = index % cameraPresets.length;
+      const preset = cameraPresets[cameraModeIndex];
+      btnCameraView.textContent = `🎥 Vista: ${preset.name}`;
+      
+      // Smooth camera transition
+      camera.position.set(...preset.pos);
+      controls.target.set(...preset.target);
+      controls.update();
+    }
+
+    // --- UI Controls & Event Handling ---
+    function setupUIEventListeners() {
+      // Play / Pause
+      btnPlay.addEventListener('click', togglePlayPause);
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlayPause();
+        }
+        if (e.code === 'ArrowRight') {
+          stepFrame(1);
+        }
+        if (e.code === 'ArrowLeft') {
+          stepFrame(-1);
+        }
+        if (e.code === 'KeyC') {
+          togglePostureMode();
+        }
+      });
+
+      // Frame Stepping
+      btnPrevFrame.addEventListener('click', () => stepFrame(-1));
+      btnNextFrame.addEventListener('click', () => stepFrame(1));
+
+      // Speed selection
+      speedButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          speedButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          playbackSpeed = parseFloat(btn.dataset.speed);
+          if (animAction) {
+            animAction.setEffectiveTimeScale(playbackSpeed);
+          }
+        });
+      });
+
+      // Posture Correction Toggle (Cuello y Cabeza Natural)
+      if (btnPosture) btnPosture.addEventListener('click', togglePostureMode);
+      if (btnTogglePosture) btnTogglePosture.addEventListener('click', togglePostureMode);
+
+      // Lighting Mode Cycle
+      btnLighting.addEventListener('click', () => {
+        applyLightingMode((lightingMode + 1) % 3);
+      });
+
+      // Camera Preset Cycle
+      btnCameraView.addEventListener('click', () => {
+        setCameraPreset(cameraModeIndex + 1);
+      });
+
+      // Skeleton Toggle
+      btnToggleSkeleton.addEventListener('click', () => {
+        if (!skeletonHelper) return;
+        skeletonHelper.visible = !skeletonHelper.visible;
+        btnToggleSkeleton.classList.toggle('active', skeletonHelper.visible);
+      });
+
+      // Mesh Toggle
+      btnToggleMesh.addEventListener('click', () => {
+        if (!characterModel) return;
+        characterModel.traverse((child) => {
+          if (child.isMesh) {
+            child.visible = !child.visible;
+          }
+        });
+        const isMeshVisible = btnToggleMesh.classList.toggle('active');
+      });
+
+      // Music Toggle
+      btnToggleMusic.addEventListener('click', () => {
+        if (audioTrack.paused) {
+          audioTrack.currentTime = (animAction ? animAction.time : 0) % (audioTrack.duration || 15);
+          audioTrack.play().then(() => {
+            btnToggleMusic.classList.add('active');
+            btnToggleMusic.textContent = '🔊 Música: ON';
+          }).catch(e => console.log('Audio autoplay blocked:', e));
+        } else {
+          audioTrack.pause();
+          btnToggleMusic.classList.remove('active');
+          btnToggleMusic.textContent = '🎵 Música';
+        }
+      });
+
+      // Timeline Scrubber Click & Drag
+      progressTrack.addEventListener('mousedown', onScrubberStart);
+      progressTrack.addEventListener('touchstart', onScrubberStart, { passive: false });
+
+      window.addEventListener('mousemove', onScrubberMove);
+      window.addEventListener('touchmove', onScrubberMove, { passive: false });
+
+      window.addEventListener('mouseup', onScrubberEnd);
+      window.addEventListener('touchend', onScrubberEnd);
+
+      // Cinema Hide UI Toggle
+      btnToggleUI.addEventListener('click', () => {
+        const isHidden = uiLayer.classList.toggle('hidden-ui');
+        document.getElementById('toggle-text').textContent = isHidden ? 'Mostrar UI' : 'Ocultar UI';
+        document.getElementById('eye-icon').textContent = isHidden ? '👁️‍🗨️' : '👁️';
+      });
+    }
+
+    function togglePlayPause() {
+      isPlaying = !isPlaying;
+      btnPlay.textContent = isPlaying ? '⏸️' : '▶️';
+      if (animAction) {
+        animAction.paused = !isPlaying;
+      }
+      if (!audioTrack.paused && !isPlaying) {
+        audioTrack.pause();
+      } else if (isPlaying && btnToggleMusic.classList.contains('active')) {
+        audioTrack.play().catch(() => {});
+      }
+    }
+
+    function stepFrame(delta) {
+      if (!animAction) return;
+      isPlaying = false;
+      animAction.paused = true;
+      btnPlay.textContent = '▶️';
+      
+      const frameDuration = 1 / 30; // 30 FPS
+      let newTime = animAction.time + (delta * frameDuration);
+      if (newTime < 0) newTime += totalDuration;
+      newTime = newTime % totalDuration;
+      
+      animAction.time = newTime;
+      mixer.update(0);
+      updateScrubberUI();
+    }
+
+    function onScrubberStart(e) {
+      isScrubbing = true;
+      updateScrubPosition(e);
+    }
+
+    function onScrubberMove(e) {
+      if (!isScrubbing) return;
+      if (e.cancelable) e.preventDefault();
+      updateScrubPosition(e);
+    }
+
+    function onScrubberEnd() {
+      isScrubbing = false;
+    }
+
+    function updateScrubPosition(e) {
+      const rect = progressTrack.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      
+      const targetTime = ratio * totalDuration;
+      if (animAction) {
+        animAction.time = targetTime;
+        mixer.update(0);
+      }
+      updateScrubberUI();
+    }
+
+    function updateScrubberUI() {
+      if (!animAction) return;
+      const curTime = (animAction.time % totalDuration);
+      const ratio = curTime / totalDuration;
+      progressFill.style.width = `${ratio * 100}%`;
+
+      // Time display
+      const mins = Math.floor(curTime / 60);
+      const secs = (curTime % 60).toFixed(1);
+      timeDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(4, '0')} / 15.0s`;
+
+      // Frame display
+      const curFrame = Math.floor(curTime * 30);
+      frameDisplay.textContent = `F: ${curFrame}`;
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // --- Main Render Loop ---
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const delta = clock.getDelta();
+
+      if (mixer && isPlaying && !isScrubbing) {
+        mixer.update(delta * playbackSpeed);
+        updateScrubberUI();
+      }
+
+      controls.update();
+
+      // Gentle animated neon reflections in Disco Club mode
+      if (lightingMode === 1) {
+        const time = clock.getElapsedTime();
+        spotBlue.position.x = Math.sin(time * 0.8) * 3.5;
+        spotPink.position.x = -Math.sin(time * 0.8) * 3.5;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // Run
+    init();
+  </script>
+</body>
+</html>
