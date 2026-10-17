@@ -5,7 +5,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Electro Dance 3D — Especialización Tecktonik & Ritmo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,6 +29,7 @@
       margin: 0;
       padding: 0;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
@@ -38,6 +39,11 @@
       overflow: hidden;
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
+    }
+
+    button, .pad-btn, .track-btn, .tool-btn, .btn-mobile-stage, .btn-immersive-toggle, .big-play-btn {
+      touch-action: manipulation;
     }
 
     #canvas-container {
@@ -47,6 +53,7 @@
       width: 100%;
       height: 100%;
       z-index: 1;
+      touch-action: none;
     }
 
     /* Ambient Pulsing Glow */
@@ -737,7 +744,7 @@
 
       /* Compact Top Bar */
       .top-bar {
-        padding: 8px 12px;
+        padding: max(8px, env(safe-area-inset-top)) 12px 8px 12px;
         gap: 6px;
       }
       .brand-logo {
@@ -822,7 +829,7 @@
       .dj-dock {
         width: calc(100% - 16px);
         bottom: 8px;
-        padding: 10px 12px;
+        padding: 10px 12px max(10px, env(safe-area-inset-bottom)) 12px;
         border-radius: 18px;
         gap: 8px;
       }
@@ -1100,8 +1107,9 @@
     scene.background = new THREE.Color(0x05070c);
     scene.fog = new THREE.FogExp2(0x05070c, 0.04);
 
+    const isPortrait = window.innerWidth < window.innerHeight;
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 1.4, 3.4);
+    camera.position.set(0, isPortrait ? 1.25 : 1.4, isPortrait ? 4.3 : 3.4);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -2713,29 +2721,24 @@
 
 
         // =====================================================================
-        // FLOW DINÁMICO TECKTONIK: MOVIMIENTOS DE CADERA Y PATADAS AL BEAT
+        // FLOW DINÁMICO TECKTONIK: CADERA Y PATADAS ELECTRO AL RITMO DEL BEAT
+        // (Basado en la cinemática del baile original con rebote, patadas y balanceo pélvico)
         // =====================================================================
-        const effLegAmp = Math.max(0.5, Math.min(1.25, amp));
-        const baseHipFlex = 0.22 * effLegAmp;
-        const baseKneeFlex = 0.36 * effLegAmp;
-        const legSpread = 0.088 * effLegAmp;
-        const footTurnOut = 0.10 * effLegAmp;
-
+        const effLegAmp = Math.max(0.6, Math.min(1.35, amp));
         const grooveDip = extraKneeDip * effLegAmp;
 
-        // Rebote elástico percusivo en cada beat (138 BPM electro kick)
-        const bounceBeat = Math.pow(Math.abs(Math.sin(phase)), 2.2);
-        const bounceKnee = Math.max(-0.08, bounceBeat * 0.10 * effLegAmp + grooveDip);
-        const bounceHip = Math.max(-0.04, bounceBeat * 0.050 * effLegAmp + grooveDip * 0.5);
+        // Rebote elástico percusivo en cada beat (138 BPM electro kick drum)
+        const beatPulse = Math.pow(Math.abs(Math.sin(phase)), 2.0);
 
-        // Ciclo alternante de paso y patadas (138 BPM)
-        const stepCycle = Math.sin(phase * 0.5);
-        const cosCycle = Math.cos(phase * 0.5);
+        // Ciclo alternante de patadas (1 compás por pierna = 2 beats por ciclo)
+        const stepPhase = phase * 0.5;
+        const stepCycle = Math.sin(stepPhase);
+        const stepCos = Math.cos(stepPhase);
 
-        // Movimiento de cadera (Hip Swivel & Pelvic Sway con actitud electro)
-        const hipSwayX = (stepCycle * 0.065 + armBiasX * 0.045) * effLegAmp;
-        const hipDropY = -(0.030 * effLegAmp + bounceBeat * 0.034 * effLegAmp + grooveDip * 0.44);
-        const hipShiftZ = (cosCycle * 0.032 + armBiasZ * 0.026) * effLegAmp;
+        // 1. Desplazamiento pélvico (Hip Swivel & Pelvic Sway con actitud electro real)
+        const hipSwayX = (stepCycle * 0.125 + armBiasX * 0.14) * effLegAmp;
+        const hipDropY = -(0.038 * effLegAmp + beatPulse * 0.046 * effLegAmp + grooveDip * 0.65);
+        const hipShiftZ = (stepCos * 0.055 + armBiasZ * 0.10) * effLegAmp;
 
         if (this.bones.pelvis && this.initPositions.pelvis) {
           const worldPelvisDelta = new THREE.Vector3(hipSwayX, hipDropY, hipShiftZ);
@@ -2746,10 +2749,10 @@
           this.bones.pelvis.position.copy(this.initPositions.pelvis).add(worldPelvisDelta);
         }
 
-        // Torsión y rotación de cadera (Pelvic Yaw & Roll en figura de 8)
-        const pelvisYaw = (stepCycle * 0.22 + armBiasX * 0.12) * effLegAmp;
-        const pelvisRoll = (cosCycle * 0.09 + hipSwayX * 1.2) * effLegAmp;
-        const pelvisPitch = (0.03 * effLegAmp + bounceBeat * 0.04 + grooveDip * 0.55);
+        // 2. Torsión y rotación de cadera (Pelvic Yaw & Roll en 8 electro)
+        const pelvisYaw = (stepCycle * 0.28 + armBiasX * 0.20) * effLegAmp;
+        const pelvisRoll = (stepCycle * 0.16 + armBiasX * 0.14) * effLegAmp;
+        const pelvisPitch = (0.04 * effLegAmp + beatPulse * 0.05 + grooveDip * 0.65);
 
         this.setWorldDelta(
           'pelvis',
@@ -2759,35 +2762,35 @@
           qDelta
         );
 
-        // Patadas Electro (Electro Kick / Tap Kick rítmico bajo y diagonal):
-        // En los tiempos fuertes, la pierna activa lanza una patada baja estirando la rodilla hacia delante,
-        // mientras la pierna de apoyo flexiona para absorber el impacto con actitud
-        const kickPulseL = Math.pow(Math.max(0.0, stepCycle), 2.8) * effLegAmp;
-        const kickPulseR = Math.pow(Math.max(0.0, -stepCycle), 2.8) * effLegAmp;
+        // 3. Patadas Electro (Electro Kick / Tap Kick Tecktonik bajo y diagonal):
+        // Pierna activa: eleva el muslo hacia delante (+X), estira la rodilla en latigazo y proyecta la punta del pie.
+        // Pierna de apoyo: flexiona elásticamente para absorber el golpe del beat y mantener la estabilidad.
+        const kickPulseL = Math.pow(Math.max(0.0, stepCycle), 1.8) * effLegAmp;
+        const kickPulseR = Math.pow(Math.max(0.0, -stepCycle), 1.8) * effLegAmp;
+        const kickSnapL = Math.sin(kickPulseL * Math.PI);
+        const kickSnapR = Math.sin(kickPulseR * Math.PI);
 
-        const kickThighL = kickPulseL * 0.35;
-        const kickKneeL = -kickPulseL * 0.44; // Extiende la rodilla hacia delante para el latigazo de la patada
-        const kickFootL = kickPulseL * 0.28;
+        // Pierna izquierda (activa cuando stepCycle > 0, de apoyo cuando stepCycle < 0)
+        const lThighPitch = 0.14 + kickPulseL * 0.46; // Elevación limpia del muslo al frente hasta ~35°
+        const lThighYaw = 0.08 + kickPulseL * 0.16;   // Apertura angular diagonal
+        const lThighRoll = 0.06 + kickPulseL * 0.08;
+        const lKnee = 0.26 + (1.0 - kickPulseL) * 0.20 + kickSnapL * 0.52; // Flexión y latigazo hacia delante
+        const lFoot = -0.10 + kickPulseL * 0.32;      // Punta del pie extendida hacia el kick
 
-        const kickThighR = kickPulseR * 0.35;
-        const kickKneeR = -kickPulseR * 0.44; // Extiende la rodilla hacia delante para el latigazo de la patada
-        const kickFootR = kickPulseR * 0.28;
+        this.setWorldDelta('thigh_l', lThighPitch, lThighYaw, lThighRoll, qDelta);
+        this.setWorldDelta('calf_l', -lKnee, 0.0, 0.0, qDelta);
+        this.setWorldDelta('foot_l', lFoot, 0.0, -0.06, qDelta);
 
-        // Pierna izquierda: combina flexión base, apoyo elástico y patada activa
-        const lSupport = Math.max(0.0, -stepCycle);
-        const lHip = baseHipFlex + bounceHip + lSupport * 0.08 + kickThighL;
-        const lKnee = Math.max(0.04, baseKneeFlex + bounceKnee + lSupport * 0.10 + kickKneeL);
-        this.setWorldDelta('thigh_l', -lHip, footTurnOut + kickPulseL * 0.06, legSpread + kickPulseL * 0.04, qDelta);
-        this.setWorldDelta('calf_l', lKnee, 0.0, 0.0, qDelta);
-        this.setWorldDelta('foot_l', -(lKnee - lHip) + kickFootL, 0.0, -legSpread * 0.85, qDelta);
+        // Pierna derecha (activa cuando stepCycle < 0, de apoyo cuando stepCycle > 0)
+        const rThighPitch = 0.14 + kickPulseR * 0.46; // Elevación limpia del muslo al frente hasta ~35°
+        const rThighYaw = -0.08 - kickPulseR * 0.16;  // Apertura angular diagonal
+        const rThighRoll = -0.06 - kickPulseR * 0.08;
+        const rKnee = 0.26 + (1.0 - kickPulseR) * 0.20 + kickSnapR * 0.52; // Flexión y latigazo hacia delante
+        const rFoot = -0.10 + kickPulseR * 0.32;      // Punta del pie extendida hacia el kick
 
-        // Pierna derecha: combina flexión base, apoyo elástico y patada activa
-        const rSupport = Math.max(0.0, stepCycle);
-        const rHip = baseHipFlex + bounceHip + rSupport * 0.08 + kickThighR;
-        const rKnee = Math.max(0.04, baseKneeFlex + bounceKnee + rSupport * 0.10 + kickKneeR);
-        this.setWorldDelta('thigh_r', -rHip, -footTurnOut - kickPulseR * 0.06, -legSpread - kickPulseR * 0.04, qDelta);
-        this.setWorldDelta('calf_r', rKnee, 0.0, 0.0, qDelta);
-        this.setWorldDelta('foot_r', -(rKnee - rHip) + kickFootR, 0.0, legSpread * 0.85, qDelta);
+        this.setWorldDelta('thigh_r', rThighPitch, rThighYaw, rThighRoll, qDelta);
+        this.setWorldDelta('calf_r', -rKnee, 0.0, 0.0, qDelta);
+        this.setWorldDelta('foot_r', rFoot, 0.0, 0.06, qDelta);
 
         for (const [key, deltaQ] of Object.entries(qDelta)) {
           if (this.initQuats[key]) {
@@ -3427,12 +3430,20 @@
     }
     animate();
 
-    // Resize handler
+    // Resize handler optimizado para móviles (rotación vertical/horizontal)
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     });
+
+    // Desbloqueo de audio al primer toque en pantalla en navegadores móviles (iOS/Android)
+    window.addEventListener('touchstart', () => {
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }, { once: true, passive: true });
   </script>
 </body>
 </html>
