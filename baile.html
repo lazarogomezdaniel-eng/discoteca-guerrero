@@ -651,14 +651,242 @@
       transform: translateY(0) scale(1);
     }
 
-    /* Mobile Responsive */
+    /* Mobile Stage Tools Floating & Modal Styles */
+    .btn-mobile-stage {
+      display: none;
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.22), rgba(157, 78, 221, 0.28));
+      border: 1px solid var(--accent-cyan);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      align-items: center;
+      gap: 5px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 0 14px rgba(0, 242, 254, 0.25);
+      touch-action: manipulation;
+    }
+    .btn-mobile-stage:active {
+      transform: scale(0.96);
+    }
+    .stage-tools-header-mobile {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--accent-cyan);
+    }
+    .btn-close-stage-mobile {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mobile-stage-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 1999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .mobile-stage-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    body.ui-hidden .btn-mobile-stage {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
+    }
+
+    /* Mobile Responsive Optimizations */
     @media (max-width: 768px) {
-      .top-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
-      .top-bar-actions { width: 100%; justify-content: space-between; }
-      .current-move-card { top: 130px; padding: 8px 16px; }
-      .stage-tools { display: none; }
-      .pads-container { max-height: 110px; overflow-y: auto; }
-      .btn-immersive-toggle span { font-size: 11px; }
+      .btn-mobile-stage {
+        display: inline-flex;
+      }
+      .stage-tools-header-mobile {
+        display: flex;
+      }
+      .mobile-stage-backdrop {
+        display: block;
+      }
+
+      /* Compact Top Bar */
+      .top-bar {
+        padding: 8px 12px;
+        gap: 6px;
+      }
+      .brand-logo {
+        gap: 6px;
+      }
+      .brand-text {
+        font-size: 13px;
+        letter-spacing: -0.2px;
+      }
+      .badge-teck {
+        display: none;
+      }
+      .status-badge {
+        font-size: 10px;
+        padding: 3px 7px;
+      }
+      .top-bar-actions {
+        gap: 6px;
+      }
+      .btn-immersive-toggle, .btn-studio-link {
+        padding: 5px 9px;
+        font-size: 11px;
+      }
+      .btn-immersive-toggle kbd {
+        display: none;
+      }
+
+      /* Compact Move Card */
+      .current-move-card {
+        top: 56px;
+        padding: 6px 12px;
+        max-width: calc(100vw - 24px);
+        width: 360px;
+        border-radius: 12px;
+        gap: 8px;
+      }
+      .move-icon {
+        font-size: 18px;
+      }
+      .move-title {
+        font-size: 12px;
+      }
+      .move-meta {
+        font-size: 10px;
+      }
+
+      /* Full Stage Tools Drawer on Mobile */
+      .stage-tools {
+        display: flex;
+        position: fixed;
+        top: auto;
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
+        transform: translateY(130%);
+        transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.28s ease;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 2000;
+        background: rgba(10, 14, 26, 0.98);
+        border: 1px solid rgba(0, 242, 254, 0.45);
+        border-radius: 20px;
+        padding: 14px 16px;
+        box-shadow: 0 12px 45px rgba(0, 0, 0, 0.9), 0 0 25px rgba(0, 242, 254, 0.25);
+        max-height: 72vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .stage-tools.mobile-open {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .stage-tools .tool-btn {
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        border-radius: 12px;
+      }
+
+      /* DJ Dock on Mobile */
+      .dj-dock {
+        width: calc(100% - 16px);
+        bottom: 8px;
+        padding: 10px 12px;
+        border-radius: 18px;
+        gap: 8px;
+      }
+      .dj-player-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 8px;
+        padding-bottom: 2px;
+      }
+      .dj-player-bar::-webkit-scrollbar {
+        display: none;
+      }
+      .big-play-btn {
+        min-width: 44px;
+        height: 44px;
+        border-radius: 12px;
+      }
+      .track-selector {
+        flex-shrink: 0;
+        gap: 5px;
+      }
+      .track-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+      }
+      .bpm-box {
+        flex-shrink: 0;
+      }
+      .vis-box {
+        display: none;
+      }
+      .upload-btn-label {
+        flex-shrink: 0;
+        padding: 6px 10px;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+
+      /* Pads Container: 2-column touch grid with smooth scrolling */
+      .pads-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        max-height: 135px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 6px;
+        padding: 2px;
+      }
+      .pad-btn {
+        padding: 7px 9px;
+        font-size: 11px;
+        border-radius: 10px;
+        justify-content: space-between;
+      }
+      .pad-btn span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .pad-btn kbd {
+        display: none;
+      }
     }
   </style>
 
@@ -706,6 +934,9 @@
       </div>
     </div>
     <div class="top-bar-actions">
+      <button class="btn-mobile-stage" id="btn-mobile-stage" onclick="window.toggleMobileStageTools()" title="Cámaras y Luces de Pista">
+        <span>🎛️ Pista & Luces</span>
+      </button>
       <button class="btn-immersive-toggle" id="btn-toggle-ui" onclick="window.toggleImmersiveMode()" title="Ocultar interfaz / Pantalla limpia (Tecla H o doble tap)">
         <span>👁️ Pantalla Limpia</span>
         <kbd>H</kbd>
@@ -716,21 +947,28 @@
     </div>
   </div>
 
+  <!-- Mobile Stage Backdrop -->
+  <div class="mobile-stage-backdrop" id="mobile-stage-backdrop" onclick="window.toggleMobileStageTools(false)"></div>
+
   <!-- Floating Current Move Card -->
   <div class="current-move-card" id="move-card">
-    <div class="move-icon" id="move-icon">🔀</div>
+    <div class="move-icon" id="move-icon">🎬</div>
     <div class="move-info">
-      <div class="move-title" id="move-name">1. Flujo Continuo (Coreografía Real)</div>
+      <div class="move-title" id="move-name">🎬 Captura Real DeepMotion (Video Original 15s)</div>
       <div class="move-meta">
-        <span id="move-phase">135 BPM • Encadenado dinámico sin repetición</span>
+        <span id="move-phase">138 BPM • Secuencia real fotograma a fotograma con DeepMotion</span>
         <span>•</span>
-        <span id="move-arm">Ambos Brazos Activos</span>
+        <span id="move-arm">Cuerpo Entero Activo</span>
       </div>
     </div>
   </div>
 
-  <!-- Stage & Camera Tools (Right Floating) -->
+  <!-- Stage & Camera Tools (Right Floating on Desktop, Modal Drawer on Mobile) -->
   <div class="stage-tools">
+    <div class="stage-tools-header-mobile">
+      <span>🎛️ Cámaras & Efectos de Pista</span>
+      <button class="btn-close-stage-mobile" onclick="window.toggleMobileStageTools(false)" aria-label="Cerrar">✕</button>
+    </div>
     <div class="tool-title">Cámaras</div>
     <button class="tool-btn active" id="cam-dynamic" onclick="setCameraMode('dynamic')">
       <span>🎥</span> Beat Cam (Reactiva)
@@ -800,7 +1038,10 @@
 
     <!-- Live Action Figure Pads (Bilateral Tecktonik Moves) -->
     <div class="pads-container">
-      <button class="pad-btn active" id="pad-viral" onclick="window.triggerMoveNow('combo_viral')">
+      <button class="pad-btn active" id="pad-deepmotion" onclick="window.triggerMoveNow('deepmotion')" style="border-color: rgba(247, 37, 133, 0.7); background: linear-gradient(135deg, rgba(247, 37, 133, 0.35), rgba(0, 242, 254, 0.25)); box-shadow: 0 0 12px rgba(247, 37, 133, 0.35);">
+        <span>🎬 DeepMotion Real</span> <kbd>D</kbd>
+      </button>
+      <button class="pad-btn" id="pad-viral" onclick="window.triggerMoveNow('combo_viral')">
         <span>🔥 Baile Viral 360°</span> <kbd>V</kbd>
       </button>
       <button class="pad-btn" id="pad-1" onclick="window.triggerMoveNow('flujo')">
@@ -855,6 +1096,7 @@
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { DEEPMOTION_DANCE_FRAMES } from './deepmotion_dance_data.js';
 
     // =========================================================================
     // 1. THREE.JS 3D STAGE & LIGHTING SETUP
@@ -941,7 +1183,7 @@
         this.bpm = 138;
         this.amplitude = 1.0;
         this.snappiness = 0.65;
-        this.currentMode = 'combo_viral';
+        this.currentMode = 'deepmotion';
 
         this.time = 0;
         this.totalBeats = 0;
@@ -949,7 +1191,7 @@
 
         // Auto-show mixer
         this.autoSequenceIndex = 0;
-        this.autoSequenceList = ['combo_viral', 'flujo', 'estirados', 'cielo', 'cuadrado_reloj', 'peinada', 'trenzado', 'arco_vertigo', 'laser_front', 'enhebrado', 'brazos_cruzados', 'nudo', 'l_shapes', 'frenesi', 'molino'];
+        this.autoSequenceList = ['deepmotion', 'combo_viral', 'flujo', 'estirados', 'cielo', 'cuadrado_reloj', 'peinada', 'trenzado', 'arco_vertigo', 'laser_front', 'enhebrado', 'brazos_cruzados', 'nudo', 'l_shapes', 'frenesi', 'molino'];
         this.autoSwitchBeats = 8;
         this.autoBeatCounter = 0;
 
@@ -2288,7 +2530,63 @@
       }
 
       // =======================================================================
-      // EVALUADOR PRINCIPAL DE OBJETIVOS CINEMÁTICOS (15 Modos)
+      // 14. SECUENCIA REAL DEEPMOTION (451 fotogramas - Video Original 15s)
+      // =======================================================================
+      sampleDeepMotion(t) {
+        const frames = DEEPMOTION_DANCE_FRAMES;
+        if (!frames || frames.length === 0) return null;
+        const duration = 15.0; // 15.00 segundos exactos del video capturado
+        const loopT = ((t % duration) + duration) % duration;
+        const exactIndex = (loopT / duration) * (frames.length - 1);
+        const i0 = Math.floor(exactIndex);
+        const i1 = Math.min(frames.length - 1, i0 + 1);
+        const alpha = exactIndex - i0;
+
+        const f0 = frames[i0];
+        const f1 = frames[i1];
+
+        const lerp3 = (a, b) => [
+          a[0] + (b[0] - a[0]) * alpha,
+          a[1] + (b[1] - a[1]) * alpha,
+          a[2] + (b[2] - a[2]) * alpha
+        ];
+
+        return {
+          wL: lerp3(f0.wL, f1.wL),
+          wR: lerp3(f0.wR, f1.wR),
+          pL: lerp3(f0.pL, f1.pL),
+          pR: lerp3(f0.pR, f1.pR),
+          hip: lerp3(f0.hip, f1.hip),
+          hipRot: lerp3(f0.hipRot, f1.hipRot),
+          spine: lerp3(f0.spine, f1.spine),
+          head: lerp3(f0.head, f1.head),
+          knee: [
+            f0.knee[0] + (f1.knee[0] - f0.knee[0]) * alpha,
+            f0.knee[1] + (f1.knee[1] - f0.knee[1]) * alpha
+          ]
+        };
+      }
+
+      applyDeepMotion(qDelta, amp = 1.0, t = 0) {
+        const s = this.sampleDeepMotion(t);
+        if (!s) return { x: 0, z: 0, dip: 0 };
+
+        this.solveArmIK(true, s.wR, s.pR, 0.22, 0.0, qDelta, amp);
+        this.solveArmIK(false, s.wL, s.pL, 0.22, 0.0, qDelta, amp);
+
+        this.setWorldDelta('spine', s.spine[0] * amp, s.spine[1] * amp, s.spine[2] * amp, qDelta);
+        this.setWorldDelta('chest', s.spine[0] * 0.7 * amp, s.spine[1] * 0.7 * amp, s.spine[2] * 0.7 * amp, qDelta);
+        this.setWorldDelta('head', s.head[0] * amp, s.head[1] * amp, s.head[2] * amp, qDelta);
+
+        return {
+          x: s.hip[0] * 2.2 * amp,
+          z: s.hip[2] * 2.2 * amp,
+          dip: s.hip[1] * amp
+        };
+      }
+
+      // =======================================================================
+      // EVALUADOR PRINCIPAL DE OBJETIVOS CINEMÁTICOS (16 Modos)
       // =======================================================================
       computeTargets(mode, t, halfStep, beatDur, halfBeatDur) {
         const amp = this.amplitude;
@@ -2405,6 +2703,13 @@
         // 13. DISPARO FRONTAL LÁSER & ELECTRO DROP
         } else if (mode === 'laser_front') {
           const bias = this.applyLaserFrontDrop(qDelta, amp, t, beatDur);
+          armBiasX = bias.x;
+          armBiasZ = bias.z;
+          extraKneeDip = bias.dip || 0.0;
+
+        // 14. CAPTURA REAL DEEPMOTION (Video Original 15s)
+        } else if (mode === 'deepmotion') {
+          const bias = this.applyDeepMotion(qDelta, amp, t);
           armBiasX = bias.x;
           armBiasZ = bias.z;
           extraKneeDip = bias.dip || 0.0;
@@ -2644,6 +2949,7 @@
     // 5. ANIMATION PLAYBACK & CHOREOGRAPHY MANAGER
     // =========================================================================
     const SEQ_DATA = {
+      deepmotion: { name: '🎬 Captura Real DeepMotion (Video Original 15s)', icon: '🎬', desc: 'Secuencia real fotograma a fotograma de DeepMotion: brazos, cabeza, torso y piernas del video' },
       combo_viral: { name: '🔥 Baile Viral Continuo (48 Pasos / 14 Movimientos)', icon: '🔥', desc: 'Coreografía completa a velocidad real: incluye Extensión Horizontal, Señalar al Cielo, Peinada 360°, Cuadrado en Cabeza, Vértigo y más' },
       flujo: { name: '🔀 1. Flujo Electro Continuo (Fase Alterna)', icon: '🔀', desc: 'Segunda mitad del fraseo continuo entrelazando todos los movimientos sin cortes' },
       estirados: { name: '💥 2. Extensión Horizontal Total & Cruce Máximo', icon: '💥', desc: 'Brazos 100% estirados en horizontal y latigazo al cruce frontal profundo sobrepasando codos' },
@@ -2773,6 +3079,22 @@
       }
     };
 
+    // Control del cajón de herramientas de pista (Cámaras y Luces) en Móvil
+    window.toggleMobileStageTools = function(forceState = null) {
+      const tools = document.querySelector('.stage-tools');
+      const backdrop = document.getElementById('mobile-stage-backdrop');
+      if (!tools) return;
+      const isOpen = tools.classList.contains('mobile-open');
+      const next = (forceState !== null) ? forceState : !isOpen;
+      if (next) {
+        tools.classList.add('mobile-open');
+        if (backdrop) backdrop.classList.add('show');
+      } else {
+        tools.classList.remove('mobile-open');
+        if (backdrop) backdrop.classList.remove('show');
+      }
+    };
+
     // Doble click o doble tap en el escenario 3D para alternar modo inmersivo
     let lastCanvasTouch = 0;
     container.addEventListener('dblclick', () => {
@@ -2790,7 +3112,7 @@
 
     document.getElementById('btn-play-toggle').addEventListener('click', () => toggleDance());
 
-    // Teclado rápido (Espacio = Play/Pause, H = Ocultar/Mostrar UI, V = Combo Viral, 1-0 = Pads, Q-R = Nuevas Figuras)
+    // Teclado rápido (Espacio = Play/Pause, H = Ocultar/Mostrar UI, D = DeepMotion Real, V = Combo Viral, 1-0 = Pads, Q-R = Nuevas Figuras)
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space') {
         e.preventDefault();
@@ -2803,6 +3125,8 @@
         window.toggleImmersiveMode(true);
       } else {
         const keyMap = {
+          'd': 'deepmotion',
+          'D': 'deepmotion',
           'v': 'combo_viral',
           'V': 'combo_viral',
           '1': 'flujo',
@@ -2908,6 +3232,11 @@
         camera.position.set(0, 1.35, 3.2);
         controls.target.set(0, 0.95, 0);
       }
+
+      // En móviles, cerrar el cajón tras seleccionar la cámara para ver la pista
+      if (window.innerWidth <= 768) {
+        setTimeout(() => window.toggleMobileStageTools(false), 260);
+      }
     };
 
     window.setLightingTheme = function(theme) {
@@ -2933,6 +3262,11 @@
         rightStrobe.color.setHex(0x219ebc);
         grid.material.color.setHex(0xffb703);
       }
+
+      // En móviles, cerrar el cajón tras seleccionar iluminación
+      if (window.innerWidth <= 768) {
+        setTimeout(() => window.toggleMobileStageTools(false), 260);
+      }
     };
 
     // =========================================================================
@@ -2952,18 +3286,18 @@
           }
         });
 
-        // Inicializar controlador Tecktonik (Combo Viral 8-Beats por defecto)
+        // Inicializar controlador Tecktonik (Secuencia DeepMotion Original por defecto)
         tecktonikController = new TecktonikController(currentModel);
-        tecktonikController.setMode('combo_viral');
+        tecktonikController.setMode('deepmotion');
 
         // Ocultar pantalla de carga
         const loaderScreen = document.getElementById('loader');
         loaderScreen.style.opacity = '0';
         setTimeout(() => loaderScreen.style.display = 'none', 400);
 
-        updateMoveDisplay(SEQ_DATA.combo_viral);
-        const padViral = document.getElementById('pad-viral');
-        if (padViral) padViral.classList.add('active');
+        updateMoveDisplay(SEQ_DATA.deepmotion);
+        const padDeep = document.getElementById('pad-deepmotion');
+        if (padDeep) padDeep.classList.add('active');
       },
       (xhr) => {
         if (xhr.lengthComputable) {

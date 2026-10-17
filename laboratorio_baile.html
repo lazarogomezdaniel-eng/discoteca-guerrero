@@ -496,6 +496,50 @@
       visibility: visible;
       transform: translateY(0) scale(1);
     }
+
+    /* Mobile Responsive Optimizations for Lab */
+    @media (max-width: 768px) {
+      .control-panel {
+        width: calc(100vw - 24px);
+        left: 12px;
+        top: 64px;
+        max-height: 48vh;
+        padding: 12px 14px;
+        border-radius: 16px;
+      }
+      .lab-badge {
+        top: 10px;
+        left: 10px;
+        padding: 4px 8px;
+        gap: 6px;
+      }
+      .badge-tag {
+        font-size: 8px;
+        padding: 2px 4px;
+      }
+      .badge-title {
+        font-size: 11px;
+      }
+      .live-hud {
+        top: 10px;
+        padding: 4px 10px;
+        gap: 6px;
+        max-width: calc(100vw - 160px);
+      }
+      .hud-seq-name {
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      #hud-sub {
+        display: none;
+      }
+      .hud-beat-counter {
+        font-size: 10px;
+        padding: 2px 5px;
+      }
+    }
   </style>
 
   <!-- Modern Import Map for Three.js & Addons -->
@@ -596,7 +640,11 @@
       <span>135 BPM</span>
     </div>
     <div class="seq-grid">
-      <button class="seq-btn active" id="btn-seq-combo_viral" onclick="window.setSequence('combo_viral')">
+      <button class="seq-btn active" id="btn-seq-deepmotion" onclick="window.setSequence('deepmotion')" style="border-color: rgba(247, 37, 133, 0.6); background: linear-gradient(135deg, rgba(247, 37, 133, 0.25), rgba(0, 242, 254, 0.25)); box-shadow: 0 0 12px rgba(247, 37, 133, 0.35);">
+        <span>🎬 Captura Real DeepMotion (Video 15s)</span>
+        <kbd>D</kbd>
+      </button>
+      <button class="seq-btn" id="btn-seq-combo_viral" onclick="window.setSequence('combo_viral')">
         <span>🔥 Baile Viral Continuo (360° Flow)</span>
         <kbd>V</kbd>
       </button>
@@ -710,12 +758,14 @@
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { DEEPMOTION_DANCE_FRAMES } from './deepmotion_dance_data.js';
 
     // =========================================================================
     // LISTA DE ARCHIVOS .GLB DEL PROYECTO
     // =========================================================================
     const AVAILABLE_GLB_FILES = [
       { id: 'actionforge_85_clips_fit.glb', name: 'actionforge_85_clips_fit.glb (PRINCIPAL)', isDefault: true },
+      { id: 'videoplayback_default.glb', name: 'videoplayback_default.glb (Captura DeepMotion)', isDefault: false },
       { id: 'character_rest_pose.glb', name: 'character_rest_pose.glb (Pose Base T)', isDefault: false },
       { id: 'guerrero_completo_84_animaciones_inplace.glb', name: 'guerrero_completo_84_animaciones_inplace.glb', isDefault: false },
       { id: 'guerrero_animado_perfecto.glb', name: 'guerrero_animado_perfecto.glb', isDefault: false },
@@ -741,7 +791,7 @@
         this.bpm = 138;
         this.amplitude = 1.0;
         this.snappiness = 0.65;
-        this.currentMode = 'combo_viral';
+        this.currentMode = 'deepmotion';
 
         this.time = 0;
         this.totalBeats = 0;
@@ -749,7 +799,7 @@
 
         // Auto-show mixer
         this.autoSequenceIndex = 0;
-        this.autoSequenceList = ['combo_viral', 'flujo', 'estirados', 'cielo', 'cuadrado_reloj', 'peinada', 'trenzado', 'arco_vertigo', 'laser_front', 'enhebrado', 'brazos_cruzados', 'nudo', 'l_shapes', 'frenesi', 'molino'];
+        this.autoSequenceList = ['deepmotion', 'combo_viral', 'flujo', 'estirados', 'cielo', 'cuadrado_reloj', 'peinada', 'trenzado', 'arco_vertigo', 'laser_front', 'enhebrado', 'brazos_cruzados', 'nudo', 'l_shapes', 'frenesi', 'molino'];
         this.autoSwitchBeats = 8;
         this.autoBeatCounter = 0;
 
@@ -2088,7 +2138,63 @@
       }
 
       // =======================================================================
-      // EVALUADOR PRINCIPAL DE OBJETIVOS CINEMÁTICOS (15 Modos)
+      // 14. SECUENCIA REAL DEEPMOTION (451 fotogramas - Video Original 15s)
+      // =======================================================================
+      sampleDeepMotion(t) {
+        const frames = DEEPMOTION_DANCE_FRAMES;
+        if (!frames || frames.length === 0) return null;
+        const duration = 15.0; // 15.00 segundos exactos del video capturado
+        const loopT = ((t % duration) + duration) % duration;
+        const exactIndex = (loopT / duration) * (frames.length - 1);
+        const i0 = Math.floor(exactIndex);
+        const i1 = Math.min(frames.length - 1, i0 + 1);
+        const alpha = exactIndex - i0;
+
+        const f0 = frames[i0];
+        const f1 = frames[i1];
+
+        const lerp3 = (a, b) => [
+          a[0] + (b[0] - a[0]) * alpha,
+          a[1] + (b[1] - a[1]) * alpha,
+          a[2] + (b[2] - a[2]) * alpha
+        ];
+
+        return {
+          wL: lerp3(f0.wL, f1.wL),
+          wR: lerp3(f0.wR, f1.wR),
+          pL: lerp3(f0.pL, f1.pL),
+          pR: lerp3(f0.pR, f1.pR),
+          hip: lerp3(f0.hip, f1.hip),
+          hipRot: lerp3(f0.hipRot, f1.hipRot),
+          spine: lerp3(f0.spine, f1.spine),
+          head: lerp3(f0.head, f1.head),
+          knee: [
+            f0.knee[0] + (f1.knee[0] - f0.knee[0]) * alpha,
+            f0.knee[1] + (f1.knee[1] - f0.knee[1]) * alpha
+          ]
+        };
+      }
+
+      applyDeepMotion(qDelta, amp = 1.0, t = 0) {
+        const s = this.sampleDeepMotion(t);
+        if (!s) return { x: 0, z: 0, dip: 0 };
+
+        this.solveArmIK(true, s.wR, s.pR, 0.22, 0.0, qDelta, amp);
+        this.solveArmIK(false, s.wL, s.pL, 0.22, 0.0, qDelta, amp);
+
+        this.setWorldDelta('spine', s.spine[0] * amp, s.spine[1] * amp, s.spine[2] * amp, qDelta);
+        this.setWorldDelta('chest', s.spine[0] * 0.7 * amp, s.spine[1] * 0.7 * amp, s.spine[2] * 0.7 * amp, qDelta);
+        this.setWorldDelta('head', s.head[0] * amp, s.head[1] * amp, s.head[2] * amp, qDelta);
+
+        return {
+          x: s.hip[0] * 2.2 * amp,
+          z: s.hip[2] * 2.2 * amp,
+          dip: s.hip[1] * amp
+        };
+      }
+
+      // =======================================================================
+      // EVALUADOR PRINCIPAL DE OBJETIVOS CINEMÁTICOS (16 Modos)
       // =======================================================================
       computeTargets(mode, t, halfStep, beatDur, halfBeatDur) {
         const amp = this.amplitude;
@@ -2205,6 +2311,13 @@
         // 13. DISPARO FRONTAL LÁSER & ELECTRO DROP
         } else if (mode === 'laser_front') {
           const bias = this.applyLaserFrontDrop(qDelta, amp, t, beatDur);
+          armBiasX = bias.x;
+          armBiasZ = bias.z;
+          extraKneeDip = bias.dip || 0.0;
+
+        // 14. CAPTURA REAL DEEPMOTION (Video Original 15s)
+        } else if (mode === 'deepmotion') {
+          const bias = this.applyDeepMotion(qDelta, amp, t);
           armBiasX = bias.x;
           armBiasZ = bias.z;
           extraKneeDip = bias.dip || 0.0;
@@ -2592,6 +2705,7 @@
     // CONTROLES DE LA INTERFAZ
     // =========================================================================
     const SEQ_META = {
+      deepmotion: { name: 'Captura Real DeepMotion (Video Original 15s)', icon: '🎬', desc: 'Secuencia real extraída fotograma a fotograma con DeepMotion: brazos, cabeza, torso y piernas del video' },
       combo_viral: { name: 'Baile Viral Continuo (48 Pasos / 14 Movimientos)', icon: '🔥', desc: 'Coreografía completa a velocidad real: incluye Extensión Horizontal, Señalar al Cielo, Peinada 360°, Cuadrado en Cabeza, Vértigo y más' },
       flujo: { name: 'Flujo Electro Continuo (Fase Alterna)', icon: '🔀', desc: 'Segunda mitad del fraseo continuo entrelazando todos los movimientos sin cortes' },
       estirados: { name: 'Extensión Horizontal Total & Cruce Máximo', icon: '💥', desc: 'Brazos 100% estirados en horizontal y latigazo al cruce frontal profundo sobrepasando codos' },
@@ -2717,6 +2831,8 @@
         return;
       }
       const map = {
+        'd': 'deepmotion',
+        'D': 'deepmotion',
         'v': 'combo_viral',
         'V': 'combo_viral',
         '1': 'flujo',
