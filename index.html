@@ -1785,7 +1785,14 @@
           'clavicle_r', 'upperarm_r', 'lowerarm_r', 'hand_r',
           'neck', 'head'
         ];
-        for (const key of this.keysToUpdate) {
+        this.allBoneKeys = [
+          'pelvis', 'spine', 'chest', 'neck', 'head',
+          'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
+          'clavicle_r', 'upperarm_r', 'lowerarm_r', 'hand_r',
+          'thigh_l', 'calf_l', 'foot_l',
+          'thigh_r', 'calf_r', 'foot_r'
+        ];
+        for (const key of this.allBoneKeys) {
           this.fromQuats[key] = new THREE.Quaternion();
         }
 
@@ -1856,6 +1863,7 @@
               this.initQuats[key] = match.quaternion.clone();
               this.targetQuats[key] = match.quaternion.clone();
               this.currentQuats[key] = match.quaternion.clone();
+              this.fromQuats[key] = match.quaternion.clone();
               this.initPositions[key] = match.position.clone();
 
               const wq = new THREE.Quaternion();
@@ -1921,17 +1929,19 @@
         this.currentMode = mode;
         this.autoBeatCounter = 0;
 
-        // Capturar la postura exacta del personaje en este instante (desde currentQuats, NUNCA de bone.quaternion que sobreescribe el mixer)
-        for (const key of this.keysToUpdate) {
-          if (this.currentQuats[key]) {
-            this.fromQuats[key].copy(this.currentQuats[key]);
-          } else if (this.bones[key]) {
-            this.fromQuats[key].copy(this.bones[key].quaternion);
-            this.currentQuats[key] = this.bones[key].quaternion.clone();
+        this.transitionDuration = (mode === 'idle') ? 0.60 : 0.48;
+        this.transitionTime = 0.0;
+
+        // Capturar la postura física real de cada articulación en este fotograma exacto desde bone.quaternion
+        const keysToCapture = (mode === 'idle') ? (this.allBoneKeys || this.keysToUpdate) : this.keysToUpdate;
+        for (const key of keysToCapture) {
+          const bone = this.bones[key];
+          if (bone) {
+            this.fromQuats[key].copy(bone.quaternion);
+            if (!this.currentQuats[key]) this.currentQuats[key] = new THREE.Quaternion();
+            this.currentQuats[key].copy(bone.quaternion);
           }
         }
-        this.transitionTime = 0.0;
-        this.transitionDuration = 0.48;
       }
 
       setBPM(bpm) {
@@ -2615,16 +2625,18 @@
 
         this.computeTargets(effectiveMode, this.time, currentHalfBeatStep, beatDuration, halfBeatDuration);
 
-        // Transición orgánica sin saltos al cambiar de figura (Hermite Smootherstep C2 S-Curve)
+        const keysToProcess = (effectiveMode === 'idle') ? (this.allBoneKeys || this.keysToUpdate) : this.keysToUpdate;
+
+        // Transición orgánica sin saltos al cambiar de figura o entrar en reposo (Hermite Smootherstep C2 S-Curve)
         if (this.transitionTime < this.transitionDuration) {
           this.transitionTime += delta;
           const progress = Math.min(1.0, this.transitionTime / this.transitionDuration);
           // Smootherstep Hermite C2: 6p^5 - 15p^4 + 10p^3 (velocidad y aceleración cero en ambos extremos)
           const smoothT = progress * progress * progress * (progress * (progress * 6.0 - 15.0) + 10.0);
 
-          for (const key of this.keysToUpdate) {
+          for (const key of keysToProcess) {
             const bone = this.bones[key];
-            if (!bone || !this.targetQuats[key]) continue;
+            if (!bone || !this.targetQuats[key] || !this.fromQuats[key]) continue;
             const tq = this.targetQuats[key].clone();
             if (isNaN(tq.x) || isNaN(tq.y) || isNaN(tq.z) || isNaN(tq.w)) continue;
 
@@ -2638,10 +2650,13 @@
           }
         } else {
           // Continuidad muscular fluida
-          const slerpFactorArms = Math.min(1.0, delta * 20.0 * Math.max(0.65, this.snappiness));
-          for (const key of this.keysToUpdate) {
+          const slerpFactor = (effectiveMode === 'idle')
+            ? Math.min(1.0, delta * 10.0)
+            : Math.min(1.0, delta * 20.0 * Math.max(0.65, this.snappiness));
+
+          for (const key of keysToProcess) {
             const bone = this.bones[key];
-            if (!bone || !this.targetQuats[key]) continue;
+            if (!bone || !this.targetQuats[key] || !this.currentQuats[key]) continue;
             const tq = this.targetQuats[key].clone();
             if (isNaN(tq.x) || isNaN(tq.y) || isNaN(tq.z) || isNaN(tq.w)) continue;
 
@@ -2649,9 +2664,14 @@
               tq.negate();
             }
 
-            this.currentQuats[key].slerp(tq, slerpFactorArms);
+            this.currentQuats[key].slerp(tq, slerpFactor);
             bone.quaternion.copy(this.currentQuats[key]);
           }
+        }
+
+        // En reposo: devolver suavemente la pelvis y cadera a su posición original centrada de pie
+        if (effectiveMode === 'idle' && this.bones.pelvis && this.initPositions.pelvis) {
+          this.bones.pelvis.position.lerp(this.initPositions.pelvis, Math.min(1.0, delta * 8.0));
         }
       }
 
@@ -3484,14 +3504,28 @@
           this.setWorldDelta('neck', breath * 0.2, 0.0, 0.0, qDelta);
           this.setWorldDelta('head', breath * 0.3, 0.0, 0.0, qDelta);
 
-          // Brazos relajados hacia abajo junto a los muslos (postura natural de descanso)
-          const wR = [-0.25, 0.92, 0.03];
-          const wL = [ 0.25, 0.92, 0.03];
+          // Brazos relajados hacia abajo de forma natural junto al cuerpo
+          const wR = [-0.25, 0.95, 0.02];
+          const wL = [ 0.25, 0.95, 0.02];
           const pR = [-0.30, -0.10, -0.90];
           const pL = [ 0.30, -0.10, -0.90];
 
-          this.solveArmIK(true, wR, pR, 0.05, 0.0, qDelta, 1.0);
-          this.solveArmIK(false, wL, pL, 0.05, 0.0, qDelta, 1.0);
+          this.solveArmIK(true, wR, pR, 0.02, 0.0, qDelta, 1.0);
+          this.solveArmIK(false, wL, pL, 0.02, 0.0, qDelta, 1.0);
+
+          // Piernas y pelvis a posición de reposo anatómica de pie (initQuats)
+          const LOWER_BODY_KEYS = ['thigh_l', 'calf_l', 'foot_l', 'thigh_r', 'calf_r', 'foot_r', 'pelvis'];
+          for (const key of LOWER_BODY_KEYS) {
+            if (this.initQuats[key]) {
+              this.targetQuats[key] = this.initQuats[key].clone();
+            }
+          }
+          if (this.initQuats.spine && qDelta.spine) {
+            this.targetQuats.spine = this.initQuats.spine.clone().multiply(qDelta.spine);
+          }
+          if (this.initQuats.chest && qDelta.chest) {
+            this.targetQuats.chest = this.initQuats.chest.clone().multiply(qDelta.chest);
+          }
 
           armBiasX = 0;
           armBiasZ = 0;
@@ -3566,6 +3600,15 @@
       }
       if (sampleAudio) sampleAudio.volume = 1.0;
       if (userAudio) userAudio.volume = 1.0;
+      if (isDancing) {
+        if ((activeBeatTrack === 'cyber' || activeBeatTrack === 'rave' || activeBeatTrack === 'lofi') && !beatInterval) {
+          startBeatClock();
+        } else if (activeBeatTrack === 'sample' && sampleAudio && sampleAudio.paused) {
+          sampleAudio.play().catch(e => console.log('Audio wait'));
+        } else if (activeBeatTrack === 'custom' && userAudio && userAudio.paused) {
+          userAudio.play().catch(e => console.log('Audio wait'));
+        }
+      }
     }
     ['touchstart', 'touchend', 'click'].forEach(evt => {
       document.addEventListener(evt, unlockAudioContext, { passive: true });
@@ -3809,13 +3852,18 @@
 
       if (!targetAction) {
         allActions.forEach(act => {
-          if (act && act.isRunning()) act.fadeOut(duration);
+          if (act) {
+            act.fadeOut(duration);
+            setTimeout(() => {
+              if (act && !currentClipAction) act.stop();
+            }, Math.round(duration * 1000));
+          }
         });
         currentClipAction = null;
         return;
       }
 
-      if (currentClipAction === targetAction && targetAction.isRunning()) {
+      if (currentClipAction === targetAction && targetAction.isRunning() && targetAction.getEffectiveWeight() > 0.2) {
         targetAction.paused = false;
         return;
       }
@@ -3823,22 +3871,18 @@
       const prevAction = currentClipAction;
       currentClipAction = targetAction;
 
+      targetAction.reset();
       targetAction.enabled = true;
       targetAction.paused = false;
       targetAction.setEffectiveTimeScale(currentBPM / 138);
+      targetAction.setEffectiveWeight(1.0);
 
-      if (prevAction && prevAction !== targetAction && prevAction.isRunning()) {
-        targetAction.setEffectiveWeight(1.0);
-        if (!targetAction.isRunning()) {
-          targetAction.play();
-        }
+      if (prevAction && prevAction !== targetAction && prevAction.isRunning() && prevAction.getEffectiveWeight() > 0.2) {
+        targetAction.play();
         prevAction.crossFadeTo(targetAction, duration, true);
       } else {
-        targetAction.setEffectiveWeight(1.0);
-        if (!targetAction.isRunning()) {
-          targetAction.fadeIn(duration);
-          targetAction.play();
-        }
+        targetAction.fadeIn(duration);
+        targetAction.play();
       }
 
       allActions.forEach(act => {
@@ -3863,7 +3907,7 @@
       updateGrooveUI();
 
       const currentMode = tecktonikController ? tecktonikController.currentMode : 'combo_viral';
-      if (currentMode !== 'deepmotion' && currentMode !== 'singleladies') {
+      if (isDancing && currentMode !== 'deepmotion' && currentMode !== 'singleladies') {
         const isProceduralGroove = (baseMocapGroove === 'combo' || baseMocapGroove === 'patadas' || baseMocapGroove === 'rodillas');
         if (isProceduralGroove) {
           playClipExclusively(null);
@@ -3930,27 +3974,38 @@
         playBtn.classList.remove('paused');
         statusDot.innerText = '🟢';
 
-        if (activeBeatTrack === 'custom' && customAudioFileName) {
-          const shortName = customAudioFileName.length > 20 ? customAudioFileName.substring(0, 18) + '...' : customAudioFileName;
-          statusText.innerText = `🎵 ${shortName}`;
-        } else if (activeBeatTrack === 'none') {
+        if (activeBeatTrack === 'none' || !activeBeatTrack) {
           activeBeatTrack = 'cyber';
-          const activeBtn = document.getElementById('trk-cyber');
-          if (activeBtn) activeBtn.classList.add('active');
-          statusText.innerText = `Bailando Tecktonik (${currentBPM} BPM)`;
-          startBeatClock();
-        } else {
-          statusText.innerText = `Bailando Tecktonik (${currentBPM} BPM)`;
         }
 
-        if (activeBeatTrack === 'sample') {
+        document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.getElementById(`trk-${activeBeatTrack}`);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        if (activeBeatTrack === 'custom') {
+          if (!customAudioLoaded) {
+            window.triggerAudioUpload();
+          } else {
+            userAudio.loop = true;
+            ensureUserAudioConnected();
+            userAudio.play().catch(e => console.log('Audio wait'));
+            const shortName = customAudioFileName.length > 20 ? customAudioFileName.substring(0, 18) + '...' : customAudioFileName;
+            statusText.innerText = `🎵 ${shortName}`;
+          }
+        } else if (activeBeatTrack === 'sample') {
+          sampleAudio.loop = true;
           ensureSampleAudioConnected();
-          if (sampleAudio) sampleAudio.play().catch(e => console.log('Audio wait user gesture'));
-        } else if (activeBeatTrack === 'custom') {
-          ensureUserAudioConnected();
-          if (userAudio) userAudio.play().catch(e => console.log('Audio wait user gesture'));
-        } else if (activeBeatTrack === 'cyber' || activeBeatTrack === 'rave' || activeBeatTrack === 'lofi') {
+          sampleAudio.play().catch(e => console.log('Audio wait'));
+          statusText.innerText = 'Pista: Beat WAV (Muestra)';
+        } else {
+          // 'cyber', 'rave', 'lofi'
           startBeatClock();
+          const trackNames = {
+            cyber: `Electro House (${currentBPM} BPM)`,
+            rave: `Cyber Rave (${currentBPM} BPM)`,
+            lofi: `Lofi Groove (${currentBPM} BPM)`
+          };
+          statusText.innerText = `Ritmo: ${trackNames[activeBeatTrack] || activeBeatTrack}`;
         }
 
         if (tecktonikController) {
@@ -4134,8 +4189,8 @@
     window.setBeatTrack = function(track) {
       initAudio();
 
-      // Si se pulsa la pista que YA está activa, desconectarla (apagar la música y pasar a reposo)
-      if (activeBeatTrack === track) {
+      // Si se pulsa la pista que YA está activa y sonando, desconectarla (apagar la música y pasar a reposo)
+      if (activeBeatTrack === track && isDancing) {
         stopBeatClock();
         if (sampleAudio) sampleAudio.pause();
         if (userAudio) userAudio.pause();
@@ -4146,42 +4201,13 @@
         return;
       }
 
-      // Desconectar cualquier sonido anterior antes de activar la nueva pista
+      // Detener cualquier sonido anterior antes de activar la nueva pista
       stopBeatClock();
       if (sampleAudio) sampleAudio.pause();
       if (userAudio) userAudio.pause();
 
       activeBeatTrack = track;
-      document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
-      const activeBtn = document.getElementById(`trk-${track}`);
-      if (activeBtn) activeBtn.classList.add('active');
-
       toggleDance(true);
-
-      if (track === 'sample') {
-        sampleAudio.loop = true;
-        ensureSampleAudioConnected();
-        sampleAudio.play().catch(e => console.log('Audio wait user gesture'));
-        document.getElementById('status-text').innerText = 'Pista: Beat WAV (Muestra)';
-      } else if (track === 'custom') {
-        if (!customAudioLoaded) {
-          window.triggerAudioUpload();
-          return;
-        }
-        userAudio.loop = true;
-        ensureUserAudioConnected();
-        userAudio.play().catch(e => console.log('Audio wait user gesture'));
-        const shortName = customAudioFileName.length > 20 ? customAudioFileName.substring(0, 18) + '...' : customAudioFileName;
-        document.getElementById('status-text').innerText = `🎵 ${shortName}`;
-      } else if (track === 'cyber' || track === 'rave' || track === 'lofi') {
-        startBeatClock();
-        const trackNames = {
-          cyber: `Electro House (${currentBPM} BPM)`,
-          rave: `Cyber Rave (${currentBPM} BPM)`,
-          lofi: `Lofi Groove (${currentBPM} BPM)`
-        };
-        document.getElementById('status-text').innerText = `Ritmo: ${trackNames[track] || track}`;
-      }
     };
 
     // Control de BPM
@@ -4615,7 +4641,9 @@
           tecktonikController.update(delta);
         }
         if (currentModel) {
+          currentModel.position.x = THREE.MathUtils.lerp(currentModel.position.x, 0, delta * 8.0);
           currentModel.position.y = THREE.MathUtils.lerp(currentModel.position.y, 0, delta * 8.0);
+          currentModel.position.z = THREE.MathUtils.lerp(currentModel.position.z, 0, delta * 8.0);
         }
       }
 
