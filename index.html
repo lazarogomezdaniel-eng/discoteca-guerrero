@@ -1365,6 +1365,22 @@
           this.fromQuats[key] = new THREE.Quaternion();
         }
 
+        // Secuencia dinámica para Baile 360 (encadena todas las figuras)
+        this.currentChoreoMove = 'estirados';
+        this.choreoCycle = [
+          'estirados',
+          'peinada',
+          'molino',
+          'trenzado',
+          'cielo',
+          'cuadrado_reloj',
+          'arco_vertigo',
+          'l_shapes',
+          'laser_front',
+          'enhebrado',
+          'brazos_cruzados'
+        ];
+
         this.initBones(modelOrSkeleton);
       }
 
@@ -2942,6 +2958,25 @@
         }
       }
 
+      // Evaluador modular de figuras Tecktonik
+      evaluateMove(m, qDelta, amp, t, beatDur, phase) {
+        let bias = { x: 0, z: 0, dip: 0 };
+        if (m === 'estirados') bias = this.applyDeepCross(qDelta, amp, t, beatDur);
+        else if (m === 'trenzado') bias = this.applyBicycleArmWrap(qDelta, amp, t, beatDur);
+        else if (m === 'peinada') bias = this.apply360HeadWrap(qDelta, amp, t, beatDur);
+        else if (m === 'enhebrado') { this.applyThreading(qDelta, amp, t, beatDur); bias.z = 0.05; }
+        else if (m === 'l_shapes') { this.applyLShapes(qDelta, amp, t, beatDur); bias.z = 0.05; }
+        else if (m === 'molino') { this.applyMolino(qDelta, amp, t, beatDur); bias.z = 0.05; }
+        else if (m === 'cielo') bias = this.applySkyPoint(qDelta, amp, t, beatDur);
+        else if (m === 'cuadrado_reloj') bias = this.applyCrownSquareClock(qDelta, amp, t, beatDur);
+        else if (m === 'arco_vertigo') bias = this.applyVertigoRainbow(qDelta, amp, t, beatDur);
+        else if (m === 'laser_front') bias = this.applyLaserFrontDrop(qDelta, amp, t, beatDur);
+        else if (m === 'brazos_cruzados') { this.applyFoldedArms(qDelta, amp, phase); bias.z = 0.05; }
+        else if (m === 'deepmotion') bias = this.applyDeepMotion(qDelta, amp, t);
+        else bias = this.applyViralContinuousDance(qDelta, amp, t, beatDur, 0.0);
+        return bias || { x: 0, z: 0, dip: 0 };
+      }
+
       // =======================================================================
       // EVALUADOR PRINCIPAL DE OBJETIVOS CINEMÁTICOS (16 Modos)
       // =======================================================================
@@ -2975,88 +3010,62 @@
         let armBiasZ = 0;
         let extraKneeDip = 0;
 
-        // 0. BAILE VIRAL CONTINUO (Coreografía continua que enlaza las figuras)
+        // 0. BAILE VIRAL 360° CONTINUO (Encadena dinámicamente todas las figuras del repertorio cada 8 beats)
         if (mode === 'combo_viral' || mode === 'auto') {
-          const bias = this.applyViralContinuousDance(qDelta, amp, t, beatDur, 0.0);
-          armBiasX = bias.x;
-          armBiasZ = bias.z;
-          extraKneeDip = bias.dip || 0.0;
+          const totalBeats = Math.floor(t / beatDur);
+          const beatsPerMove = 8; // Cambia fluidamente de figura cada 8 beats (2 compases a tempo)
+          const cycleIdx = Math.floor(totalBeats / beatsPerMove) % this.choreoCycle.length;
+          const currentMoveKey = this.choreoCycle[cycleIdx];
 
-        // 1. EXTENSIÓN HORIZONTAL 100% ESTIRADA & CRUCE MÁXIMO
-        } else if (mode === 'estirados') {
-          const bias = this.applyDeepCross(qDelta, amp, t, beatDur);
-          armBiasX = bias.x;
-          armBiasZ = bias.z;
-          extraKneeDip = bias.dip || 0.0;
+          if (this.currentChoreoMove !== currentMoveKey) {
+            this.currentChoreoMove = currentMoveKey;
+            // Capturar la postura exacta del instante para deslizar los brazos suavemente hacia la nueva figura
+            for (const key of this.keysToUpdate) {
+              const bone = this.bones[key];
+              if (bone) this.fromQuats[key].copy(bone.quaternion);
+            }
+            this.transitionTime = 0.0;
+            this.transitionDuration = 0.38;
 
-        // 2. ENTRELAZADO RÁPIDO (Pot de Colle / Bicycle Wrap)
-        } else if (mode === 'trenzado') {
-          const bias = this.applyBicycleArmWrap(qDelta, amp, t, beatDur);
-          armBiasX = bias.x;
-          armBiasZ = bias.z;
+            if (typeof window.onChoreoFigureChanged === 'function') {
+              window.onChoreoFigureChanged(currentMoveKey);
+            }
+          }
 
-        // 3. LA PEINADA REAL (360° Head Wrap con Relevo y Esquiva)
-        } else if (mode === 'peinada') {
-          const bias = this.apply360HeadWrap(qDelta, amp, t, beatDur);
-          armBiasX = bias.x;
-          armBiasZ = bias.z;
+          const bias = this.evaluateMove(currentMoveKey, qDelta, amp, t, beatDur, phase);
+          armBiasX = bias.x || 0;
+          armBiasZ = bias.z || 0;
+          extraKneeDip = bias.dip || 0;
 
-        // 4. EL ENHEBRADO (Window Threading)
-        } else if (mode === 'enhebrado') {
-          this.applyThreading(qDelta, amp, t, beatDur);
+        // POSICIÓN DE REPOSO NATURAL AL PARAR LA MÚSICA (Idle Stance como la realidad)
+        } else if (mode === 'idle' || mode === 'freeze') {
+          const breath = Math.sin(t * 1.8) * 0.015;
+          const breathChest = Math.sin(t * 1.8 + 0.3) * 0.018;
+
+          this.setWorldDelta('spine', breath * 0.4, 0.0, 0.0, qDelta);
+          this.setWorldDelta('chest', breathChest * 0.5, 0.0, 0.0, qDelta);
+          this.setWorldDelta('neck', breath * 0.2, 0.0, 0.0, qDelta);
+          this.setWorldDelta('head', breath * 0.3, 0.0, 0.0, qDelta);
+
+          // Brazos relajados hacia abajo junto a los muslos (postura natural de descanso)
+          const wR = [-0.25, 0.92, 0.03];
+          const wL = [ 0.25, 0.92, 0.03];
+          const pR = [-0.30, -0.10, -0.90];
+          const pL = [ 0.30, -0.10, -0.90];
+
+          this.solveArmIK(true, wR, pR, 0.05, 0.0, qDelta, 1.0);
+          this.solveArmIK(false, wL, pL, 0.05, 0.0, qDelta, 1.0);
+
           armBiasX = 0;
-          armBiasZ = 0.05;
+          armBiasZ = 0;
+          extraKneeDip = 0;
 
-        // 5. GEOMETRÍA NEÓN (L-Shapes / Tutting)
-        } else if (mode === 'l_shapes') {
-          this.applyLShapes(qDelta, amp, t, beatDur);
-          armBiasX = 0;
-          armBiasZ = 0.05;
-
-        // 6. EL MOLINO (Windmills 360° Figura-8)
-        } else if (mode === 'molino') {
-          this.applyMolino(qDelta, amp, t, beatDur);
-          armBiasX = 0;
-          armBiasZ = 0.05;
-
-        // 7. SEÑALAR ARRIBA AL CIELO (Sky Point con los dos brazos extendidos)
-        } else if (mode === 'cielo') {
-          const bias = this.applySkyPoint(qDelta, amp, t, beatDur);
-          armBiasX = bias.x;
-          armBiasZ = bias.z;
-          extraKneeDip = bias.dip || 0.0;
-
-        // 8. CUADRADO EN CABEZA (Muñeca a 90°) & AGUJAS DE RELOJ
-        } else if (mode === 'cuadrado_reloj') {
-          const bias = this.applyCrownSquareClock(qDelta, amp, t, beatDur);
-          armBiasX = bias.x;
-          armBiasZ = bias.z;
-
-        // 9. ARCO AÉREO VÉRTIGO & SLASH DIAGONAL
-        } else if (mode === 'arco_vertigo') {
-          const bias = this.applyVertigoRainbow(qDelta, amp, t, beatDur);
-          armBiasX = bias.x;
-          armBiasZ = bias.z;
-
-        // 10. DISPARO FRONTAL LÁSER & ELECTRO DROP
-        } else if (mode === 'laser_front') {
-          const bias = this.applyLaserFrontDrop(qDelta, amp, t, beatDur);
-          armBiasX = bias.x;
-          armBiasZ = bias.z;
-          extraKneeDip = bias.dip || 0.0;
-
-        // 11. BRAZOS CRUZADOS (Freeze Attitude Lock con rebote al beat)
-        } else if (mode === 'brazos_cruzados') {
-          this.applyFoldedArms(qDelta, amp, phase);
-          armBiasX = 0;
-          armBiasZ = 0.05;
-
-        // CAPTURA REAL DEEPMOTION (Video Original 15s - 100% Intacta)
-        } else if (mode === 'deepmotion') {
-          const bias = this.applyDeepMotion(qDelta, amp, t);
-          armBiasX = bias.x;
-          armBiasZ = bias.z;
-          extraKneeDip = bias.dip || 0.0;
+        // Figuras fijadas manualmente por el usuario (Pads 1-10)
+        } else {
+          const bias = this.evaluateMove(mode, qDelta, amp, t, beatDur, phase);
+          armBiasX = bias.x || 0;
+          armBiasZ = bias.z || 0;
+          extraKneeDip = bias.dip || 0;
         }
 
         // =====================================================================
@@ -3294,14 +3303,31 @@
       laser_front: { name: '🎯 10. Disparo Frontal Láser & Electro Drop', icon: '🎯', desc: 'Brazos estirados al frente + flexión y explosión vertical de piernas mocap' },
       brazos_cruzados: { name: '🛡️ Freeze Brazos Cruzados (Attitude Lock)', icon: '🛡️', desc: 'Pose clásica con actitud sobre el pecho y rebote de cadera mocap' },
       freeze: { name: '❄️ Freeze Lock Electropop', icon: '❄️', desc: 'Bloqueo y pose fija estilizada' },
-      auto: { name: '🔥 Baile Viral Continuo (Auto-Show)', icon: '🔥', desc: 'Coreografía 360° en brazos + dinamismo real de cadera y piernas mocap' }
+      auto: { name: '🔥 Baile Viral Continuo (Auto-Show)', icon: '🔥', desc: 'Coreografía 360° en brazos + dinamismo real de cadera y piernas mocap' },
+      idle: { name: 'Posición de Reposo', icon: '🧍', desc: 'Descanso natural de pie • Respiración relajada' }
     };
 
     function updateMoveDisplay(move) {
-      document.getElementById('move-icon').innerText = move.icon || '🕺';
-      document.getElementById('move-name').innerText = move.name;
-      document.getElementById('move-phase').innerText = `${currentBPM} BPM • ${move.desc || 'Ambos Brazos Activos'}`;
+      if (!move) return;
+      const iconEl = document.getElementById('move-icon');
+      const nameEl = document.getElementById('move-name');
+      const phaseEl = document.getElementById('move-phase');
+      if (iconEl) iconEl.innerText = move.icon || '🕺';
+      if (nameEl) nameEl.innerText = move.name;
+      if (phaseEl) phaseEl.innerText = `${currentBPM} BPM • ${move.desc || 'Ambos Brazos Activos'}`;
     }
+
+    window.onChoreoFigureChanged = function(moveKey) {
+      const meta = SEQ_DATA[moveKey];
+      if (meta) {
+        const nameEl = document.getElementById('move-name');
+        const iconEl = document.getElementById('move-icon');
+        const phaseEl = document.getElementById('move-phase');
+        if (nameEl) nameEl.innerText = `Baile 360 • ${meta.name}`;
+        if (iconEl) iconEl.innerText = meta.icon || '🔥';
+        if (phaseEl) phaseEl.innerText = `${currentBPM} BPM • ${meta.desc || 'Coreografía 360 Dinámica'}`;
+      }
+    };
 
     let baseMocapGroove = 'combo'; // 'combo' | 'patadas' | 'rodillas' | 'tecktonik_mocap' | 'singleladies'
 
@@ -3445,7 +3471,11 @@
           const shortName = customAudioFileName.length > 20 ? customAudioFileName.substring(0, 18) + '...' : customAudioFileName;
           statusText.innerText = `🎵 ${shortName}`;
         } else if (activeBeatTrack === 'none') {
-          statusText.innerText = `Bailando en silencio (${currentBPM} BPM)`;
+          activeBeatTrack = 'cyber';
+          const activeBtn = document.getElementById('trk-cyber');
+          if (activeBtn) activeBtn.classList.add('active');
+          statusText.innerText = `Bailando Tecktonik (${currentBPM} BPM)`;
+          startBeatClock();
         } else {
           statusText.innerText = `Bailando Tecktonik (${currentBPM} BPM)`;
         }
@@ -3461,7 +3491,7 @@
         }
 
         if (tecktonikController) {
-          const resumeMode = tecktonikController.lastActiveMode || 'combo_viral';
+          const resumeMode = (tecktonikController.lastActiveMode && tecktonikController.lastActiveMode !== 'idle') ? tecktonikController.lastActiveMode : 'combo_viral';
           tecktonikController.setMode(resumeMode);
           if (resumeMode === 'deepmotion') {
             playClipExclusively(danceAction);
@@ -3470,28 +3500,28 @@
           } else {
             playBaseMocap(danceAction);
           }
-          updateMoveDisplay(SEQ_DATA[resumeMode] || SEQ_DATA.deepmotion);
+          updateMoveDisplay(SEQ_DATA[resumeMode] || SEQ_DATA.combo_viral);
         }
       } else {
         iconPlay.style.display = 'block';
         iconPause.style.display = 'none';
         playBtn.classList.add('paused');
-        statusText.innerText = 'Pausa (Freeze Lock)';
+        statusText.innerText = 'Música en pausa (Posición de reposo)';
         statusDot.innerText = '⏸️';
 
         stopBeatClock();
         if (sampleAudio) sampleAudio.pause();
         if (userAudio) userAudio.pause();
 
-        if (danceAction && danceAction.isRunning()) danceAction.paused = true;
-        if (singleLadiesAction && singleLadiesAction.isRunning()) singleLadiesAction.paused = true;
+        // Desvanecer clips suavemente hacia la postura de reposo natural de pie
+        crossFadeToClip(null, 0.45);
 
         if (tecktonikController) {
-          if (tecktonikController.currentMode !== 'freeze') {
+          if (tecktonikController.currentMode !== 'idle') {
             tecktonikController.lastActiveMode = tecktonikController.currentMode;
           }
-          tecktonikController.setMode('freeze');
-          updateMoveDisplay(SEQ_DATA.freeze);
+          tecktonikController.setMode('idle');
+          updateMoveDisplay(SEQ_DATA.idle);
         }
       }
     }
@@ -3612,14 +3642,15 @@
     window.setBeatTrack = function(track) {
       initAudio();
 
-      // Si se pulsa la pista que YA está activa, desconectarla (toggle off)
+      // Si se pulsa la pista que YA está activa, desconectarla (apagar la música y pasar a reposo)
       if (activeBeatTrack === track) {
         stopBeatClock();
         if (sampleAudio) sampleAudio.pause();
         if (userAudio) userAudio.pause();
         activeBeatTrack = 'none';
         document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('status-text').innerText = 'Ritmo desconectado (Sin sonido)';
+        toggleDance(false);
+        document.getElementById('status-text').innerText = 'Música apagada (Posición de reposo)';
         return;
       }
 
@@ -3633,12 +3664,12 @@
       const activeBtn = document.getElementById(`trk-${track}`);
       if (activeBtn) activeBtn.classList.add('active');
 
+      toggleDance(true);
+
       if (track === 'sample') {
         sampleAudio.loop = true;
         ensureSampleAudioConnected();
-        if (isDancing) {
-          sampleAudio.play().catch(e => console.log('Audio wait user gesture'));
-        }
+        sampleAudio.play().catch(e => console.log('Audio wait user gesture'));
         document.getElementById('status-text').innerText = 'Pista: Beat WAV (Muestra)';
       } else if (track === 'custom') {
         if (!customAudioLoaded) {
@@ -3647,15 +3678,11 @@
         }
         userAudio.loop = true;
         ensureUserAudioConnected();
-        if (isDancing) {
-          userAudio.play().catch(e => console.log('Audio wait user gesture'));
-        }
+        userAudio.play().catch(e => console.log('Audio wait user gesture'));
         const shortName = customAudioFileName.length > 20 ? customAudioFileName.substring(0, 18) + '...' : customAudioFileName;
         document.getElementById('status-text').innerText = `🎵 ${shortName}`;
       } else if (track === 'cyber' || track === 'rave' || track === 'lofi') {
-        if (isDancing) {
-          startBeatClock();
-        }
+        startBeatClock();
         const trackNames = {
           cyber: `Electro House (${currentBPM} BPM)`,
           rave: `Cyber Rave (${currentBPM} BPM)`,
@@ -4008,6 +4035,16 @@
           }
         }
       } else {
+        // En reposo: completar cualquier fade-out del mixer y mantener el personaje en descanso natural
+        if (mixer) {
+          mixer.update(delta);
+        }
+        if (currentModel && typeof currentModel.updateMatrixWorld === 'function') {
+          currentModel.updateMatrixWorld(true);
+        }
+        if (tecktonikController) {
+          tecktonikController.update(delta);
+        }
         if (currentModel) {
           currentModel.position.y = THREE.MathUtils.lerp(currentModel.position.y, 0, delta * 8.0);
         }
