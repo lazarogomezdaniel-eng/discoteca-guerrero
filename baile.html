@@ -1777,8 +1777,8 @@
         this.pelvisParentInvQuat = new THREE.Quaternion();
 
         // Control de transición suave sin saltos entre figuras
-        this.transitionDuration = 0.38;
-        this.transitionTime = 0.38;
+        this.transitionDuration = 0.48;
+        this.transitionTime = 0.48;
         this.fromQuats = {};
         this.keysToUpdate = [
           'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
@@ -1921,17 +1921,17 @@
         this.currentMode = mode;
         this.autoBeatCounter = 0;
 
-        // Capturar la postura exacta actual de cada hueso para interpolar desde ella suavemente (sin saltos bruscos)
+        // Capturar la postura exacta del personaje en este instante (desde currentQuats, NUNCA de bone.quaternion que sobreescribe el mixer)
         for (const key of this.keysToUpdate) {
-          const bone = this.bones[key];
-          if (bone) {
-            this.fromQuats[key].copy(bone.quaternion);
-            if (this.currentQuats[key]) {
-              this.currentQuats[key].copy(bone.quaternion);
-            }
+          if (this.currentQuats[key]) {
+            this.fromQuats[key].copy(this.currentQuats[key]);
+          } else if (this.bones[key]) {
+            this.fromQuats[key].copy(this.bones[key].quaternion);
+            this.currentQuats[key] = this.bones[key].quaternion.clone();
           }
         }
         this.transitionTime = 0.0;
+        this.transitionDuration = 0.48;
       }
 
       setBPM(bpm) {
@@ -2615,17 +2615,23 @@
 
         this.computeTargets(effectiveMode, this.time, currentHalfBeatStep, beatDuration, halfBeatDuration);
 
-        // Transición orgánica sin saltos al cambiar de figura (Smoothstep S-Curve)
+        // Transición orgánica sin saltos al cambiar de figura (Hermite Smootherstep C2 S-Curve)
         if (this.transitionTime < this.transitionDuration) {
           this.transitionTime += delta;
           const progress = Math.min(1.0, this.transitionTime / this.transitionDuration);
-          const smoothT = progress * progress * (3.0 - 2.0 * progress);
+          // Smootherstep Hermite C2: 6p^5 - 15p^4 + 10p^3 (velocidad y aceleración cero en ambos extremos)
+          const smoothT = progress * progress * progress * (progress * (progress * 6.0 - 15.0) + 10.0);
 
           for (const key of this.keysToUpdate) {
             const bone = this.bones[key];
             if (!bone || !this.targetQuats[key]) continue;
-            const tq = this.targetQuats[key];
+            const tq = this.targetQuats[key].clone();
             if (isNaN(tq.x) || isNaN(tq.y) || isNaN(tq.z) || isNaN(tq.w)) continue;
+
+            // Garantizar el camino geodésico más corto en S3 (evitar giros inversos de 360°)
+            if (this.fromQuats[key].dot(tq) < 0) {
+              tq.negate();
+            }
 
             this.currentQuats[key].copy(this.fromQuats[key]).slerp(tq, smoothT);
             bone.quaternion.copy(this.currentQuats[key]);
@@ -2636,8 +2642,12 @@
           for (const key of this.keysToUpdate) {
             const bone = this.bones[key];
             if (!bone || !this.targetQuats[key]) continue;
-            const tq = this.targetQuats[key];
+            const tq = this.targetQuats[key].clone();
             if (isNaN(tq.x) || isNaN(tq.y) || isNaN(tq.z) || isNaN(tq.w)) continue;
+
+            if (this.currentQuats[key].dot(tq) < 0) {
+              tq.negate();
+            }
 
             this.currentQuats[key].slerp(tq, slerpFactorArms);
             bone.quaternion.copy(this.currentQuats[key]);
@@ -3443,13 +3453,16 @@
 
           if (this.currentChoreoMove !== currentMoveKey) {
             this.currentChoreoMove = currentMoveKey;
-            // Capturar la postura exacta del instante para deslizar los brazos suavemente hacia la nueva figura
+            // Capturar la postura exacta del personaje en este instante (desde currentQuats, NUNCA de bone.quaternion que sobreescribe el mixer)
             for (const key of this.keysToUpdate) {
-              const bone = this.bones[key];
-              if (bone) this.fromQuats[key].copy(bone.quaternion);
+              if (this.currentQuats[key]) {
+                this.fromQuats[key].copy(this.currentQuats[key]);
+              } else if (this.bones[key]) {
+                this.fromQuats[key].copy(this.bones[key].quaternion);
+              }
             }
             this.transitionTime = 0.0;
-            this.transitionDuration = 0.38;
+            this.transitionDuration = 0.48;
 
             if (typeof window.onChoreoFigureChanged === 'function') {
               window.onChoreoFigureChanged(currentMoveKey);
