@@ -2629,15 +2629,10 @@
 
         const keysToProcess = (effectiveMode === 'idle') ? (this.allBoneKeys || this.keysToUpdate) : this.keysToUpdate;
 
-        // Seguimiento muscular continuo y orgánico (cero congelación entre figuras y cero saltos)
-        const inTransition = (this.transitionTime < this.transitionDuration);
-        if (inTransition) {
-          this.transitionTime += delta;
-        }
-
+        // Seguimiento muscular continuo y orgánico (cero congelación y cero paradas)
         const slerpFactor = (effectiveMode === 'idle')
           ? Math.min(1.0, delta * 8.0)
-          : Math.min(1.0, delta * (inTransition ? 14.0 : 22.0) * Math.max(0.65, this.snappiness));
+          : Math.min(1.0, delta * 20.0 * Math.max(0.65, this.snappiness));
 
         for (const key of keysToProcess) {
           const bone = this.bones[key];
@@ -3449,24 +3444,9 @@
         let armBiasZ = 0;
         let extraKneeDip = 0;
 
-        // 0. BAILE VIRAL 360° CONTINUO (Encadena dinámicamente todas las figuras del repertorio cada 8 beats)
+        // 0. BAILE VIRAL CONTINUO (Coreografía continua que enlaza todas las figuras sin paradas)
         if (mode === 'combo_viral' || mode === 'auto') {
-          const totalBeats = Math.floor(t / beatDur);
-          const beatsPerMove = 8; // Cambia fluidamente de figura cada 8 beats (2 compases a tempo)
-          const cycleIdx = Math.floor(totalBeats / beatsPerMove) % this.choreoCycle.length;
-          const currentMoveKey = this.choreoCycle[cycleIdx];
-
-          if (this.currentChoreoMove !== currentMoveKey) {
-            this.currentChoreoMove = currentMoveKey;
-            this.transitionTime = 0.0;
-            this.transitionDuration = 0.28;
-
-            if (typeof window.onChoreoFigureChanged === 'function') {
-              window.onChoreoFigureChanged(currentMoveKey);
-            }
-          }
-
-          const bias = this.evaluateMove(currentMoveKey, qDelta, amp, t, beatDur, phase);
+          const bias = this.applyViralContinuousDance(qDelta, amp, t, beatDur, 0.0);
           armBiasX = bias.x || 0;
           armBiasZ = bias.z || 0;
           extraKneeDip = bias.dip || 0;
