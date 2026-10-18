@@ -1929,17 +1929,19 @@
         this.currentMode = mode;
         this.autoBeatCounter = 0;
 
-        this.transitionDuration = (mode === 'idle') ? 0.60 : 0.48;
+        this.transitionDuration = (mode === 'idle') ? 0.55 : 0.28;
         this.transitionTime = 0.0;
 
-        // Capturar la postura física real de cada articulación en este fotograma exacto desde bone.quaternion
+        // Capturar la postura física real de cada articulación (en reposo abarca cuerpo entero)
         const keysToCapture = (mode === 'idle') ? (this.allBoneKeys || this.keysToUpdate) : this.keysToUpdate;
         for (const key of keysToCapture) {
           const bone = this.bones[key];
           if (bone) {
-            this.fromQuats[key].copy(bone.quaternion);
-            if (!this.currentQuats[key]) this.currentQuats[key] = new THREE.Quaternion();
-            this.currentQuats[key].copy(bone.quaternion);
+            if (!this.currentQuats[key]) {
+              this.currentQuats[key] = bone.quaternion.clone();
+            } else if (mode === 'idle') {
+              this.currentQuats[key].copy(bone.quaternion);
+            }
           }
         }
       }
@@ -2627,46 +2629,29 @@
 
         const keysToProcess = (effectiveMode === 'idle') ? (this.allBoneKeys || this.keysToUpdate) : this.keysToUpdate;
 
-        // Transición orgánica sin saltos al cambiar de figura o entrar en reposo (Hermite Smootherstep C2 S-Curve)
-        if (this.transitionTime < this.transitionDuration) {
+        // Seguimiento muscular continuo y orgánico (cero congelación entre figuras y cero saltos)
+        const inTransition = (this.transitionTime < this.transitionDuration);
+        if (inTransition) {
           this.transitionTime += delta;
-          const progress = Math.min(1.0, this.transitionTime / this.transitionDuration);
-          // Smootherstep Hermite C2: 6p^5 - 15p^4 + 10p^3 (velocidad y aceleración cero en ambos extremos)
-          const smoothT = progress * progress * progress * (progress * (progress * 6.0 - 15.0) + 10.0);
+        }
 
-          for (const key of keysToProcess) {
-            const bone = this.bones[key];
-            if (!bone || !this.targetQuats[key] || !this.fromQuats[key]) continue;
-            const tq = this.targetQuats[key].clone();
-            if (isNaN(tq.x) || isNaN(tq.y) || isNaN(tq.z) || isNaN(tq.w)) continue;
+        const slerpFactor = (effectiveMode === 'idle')
+          ? Math.min(1.0, delta * 8.0)
+          : Math.min(1.0, delta * (inTransition ? 14.0 : 22.0) * Math.max(0.65, this.snappiness));
 
-            // Garantizar el camino geodésico más corto en S3 (evitar giros inversos de 360°)
-            if (this.fromQuats[key].dot(tq) < 0) {
-              tq.negate();
-            }
+        for (const key of keysToProcess) {
+          const bone = this.bones[key];
+          if (!bone || !this.targetQuats[key] || !this.currentQuats[key]) continue;
+          const tq = this.targetQuats[key].clone();
+          if (isNaN(tq.x) || isNaN(tq.y) || isNaN(tq.z) || isNaN(tq.w)) continue;
 
-            this.currentQuats[key].copy(this.fromQuats[key]).slerp(tq, smoothT);
-            bone.quaternion.copy(this.currentQuats[key]);
+          // Garantizar siempre el camino geodésico más corto en S3 (evitar giros inversos de 360° o saltos de imagen)
+          if (this.currentQuats[key].dot(tq) < 0) {
+            tq.negate();
           }
-        } else {
-          // Continuidad muscular fluida
-          const slerpFactor = (effectiveMode === 'idle')
-            ? Math.min(1.0, delta * 10.0)
-            : Math.min(1.0, delta * 20.0 * Math.max(0.65, this.snappiness));
 
-          for (const key of keysToProcess) {
-            const bone = this.bones[key];
-            if (!bone || !this.targetQuats[key] || !this.currentQuats[key]) continue;
-            const tq = this.targetQuats[key].clone();
-            if (isNaN(tq.x) || isNaN(tq.y) || isNaN(tq.z) || isNaN(tq.w)) continue;
-
-            if (this.currentQuats[key].dot(tq) < 0) {
-              tq.negate();
-            }
-
-            this.currentQuats[key].slerp(tq, slerpFactor);
-            bone.quaternion.copy(this.currentQuats[key]);
-          }
+          this.currentQuats[key].slerp(tq, slerpFactor);
+          bone.quaternion.copy(this.currentQuats[key]);
         }
 
         // En reposo: devolver suavemente la pelvis y cadera a su posición original centrada de pie
@@ -3473,16 +3458,8 @@
 
           if (this.currentChoreoMove !== currentMoveKey) {
             this.currentChoreoMove = currentMoveKey;
-            // Capturar la postura exacta del personaje en este instante (desde currentQuats, NUNCA de bone.quaternion que sobreescribe el mixer)
-            for (const key of this.keysToUpdate) {
-              if (this.currentQuats[key]) {
-                this.fromQuats[key].copy(this.currentQuats[key]);
-              } else if (this.bones[key]) {
-                this.fromQuats[key].copy(this.bones[key].quaternion);
-              }
-            }
             this.transitionTime = 0.0;
-            this.transitionDuration = 0.48;
+            this.transitionDuration = 0.28;
 
             if (typeof window.onChoreoFigureChanged === 'function') {
               window.onChoreoFigureChanged(currentMoveKey);
