@@ -1024,7 +1024,7 @@
       <a href="visor_original.html" class="btn-studio-link" style="background: linear-gradient(135deg, rgba(247, 37, 133, 0.4), rgba(157, 78, 221, 0.45)); border-color: #f72585; color: #fff; box-shadow: 0 0 12px rgba(247, 37, 133, 0.4);">
         <span>🎬 Ver Baile Original (Vídeo 100%)</span>
       </a>
-      <a href="index.html" class="btn-studio-link">
+      <a href="laboratorio_baile.html" class="btn-studio-link">
         <span>🛠️ Ir a Estudio</span>
       </a>
     </div>
@@ -1035,11 +1035,11 @@
 
   <!-- Floating Current Move Card -->
   <div class="current-move-card" id="move-card">
-    <div class="move-icon" id="move-icon">🎬</div>
+    <div class="move-icon" id="move-icon">🔥</div>
     <div class="move-info">
-      <div class="move-title" id="move-name">🎬 Captura Real DeepMotion (Video Original 15s)</div>
+      <div class="move-title" id="move-name">🔥 Baile Viral Continuo (Coreografía 360°)</div>
       <div class="move-meta">
-        <span id="move-phase">138 BPM • Secuencia real fotograma a fotograma con DeepMotion</span>
+        <span id="move-phase">128 BPM • Coreografía 360° en brazos + dinamismo real de cadera, cintura y footwork</span>
         <span>•</span>
         <span id="move-arm">Cuerpo Entero Activo</span>
       </div>
@@ -1145,13 +1145,13 @@
 
     <!-- Live Action Figure Pads (Bilateral Tecktonik Moves) -->
     <div class="pads-container">
-      <button class="pad-btn active" id="pad-deepmotion" onclick="window.triggerMoveNow('deepmotion')" style="border-color: rgba(247, 37, 133, 0.7); background: linear-gradient(135deg, rgba(247, 37, 133, 0.35), rgba(0, 242, 254, 0.25)); box-shadow: 0 0 12px rgba(247, 37, 133, 0.35);">
+      <button class="pad-btn" id="pad-deepmotion" onclick="window.triggerMoveNow('deepmotion')" style="border-color: rgba(247, 37, 133, 0.7); background: linear-gradient(135deg, rgba(247, 37, 133, 0.35), rgba(0, 242, 254, 0.25)); box-shadow: 0 0 12px rgba(247, 37, 133, 0.35);">
         <span>🎬 DeepMotion Real</span> <kbd>D</kbd>
       </button>
       <button class="pad-btn" id="pad-singleladies" onclick="window.triggerMoveNow('singleladies')" style="border-color: rgba(255, 110, 199, 0.7); background: linear-gradient(135deg, rgba(255, 110, 199, 0.3), rgba(123, 44, 191, 0.25)); box-shadow: 0 0 12px rgba(255, 110, 199, 0.3);">
         <span>💃 Single Ladies Real</span> <kbd>S</kbd>
       </button>
-      <button class="pad-btn" id="pad-viral" onclick="window.triggerMoveNow('combo_viral')">
+      <button class="pad-btn active" id="pad-viral" onclick="window.triggerMoveNow('combo_viral')">
         <span>🔥 Baile Viral 360°</span> <kbd>V</kbd>
       </button>
       <button class="pad-btn" id="pad-1" onclick="window.triggerMoveNow('estirados')">
@@ -1432,6 +1432,9 @@
         this.currentMode = mode;
         this.autoBeatCounter = 0;
         if (mode !== 'deepmotion' && mode !== 'singleladies') {
+          if (this.bones.pelvis && this.initPositions.pelvis) {
+            this.bones.pelvis.position.copy(this.initPositions.pelvis);
+          }
           const isProceduralGroove = (baseMocapGroove === 'combo' || baseMocapGroove === 'patadas' || baseMocapGroove === 'rodillas');
           const keysToSync = isProceduralGroove
             ? [
@@ -3341,12 +3344,8 @@
       tecktonikController.setMode(seqKey);
 
       if (seqKey === 'deepmotion') {
-        baseMocapGroove = 'tecktonik_mocap';
-        updateGrooveUI();
         playClipExclusively(danceAction);
       } else if (seqKey === 'singleladies') {
-        baseMocapGroove = 'singleladies';
-        updateGrooveUI();
         playClipExclusively(singleLadiesAction);
       } else {
         const isProceduralGroove = (baseMocapGroove === 'combo' || baseMocapGroove === 'patadas' || baseMocapGroove === 'rodillas');
@@ -3692,10 +3691,10 @@
         }
       });
 
-      // Inicializar controlador Tecktonik ANTES de reproducir el clip para capturar la pose base limpia
+      // Inicializar controlador Tecktonik (Baile Viral 360° continuo por defecto con combo de piernas)
       tecktonikController = new TecktonikController(currentModel);
-      tecktonikController.lastActiveMode = 'deepmotion';
-      tecktonikController.setMode('deepmotion');
+      tecktonikController.lastActiveMode = 'combo_viral';
+      tecktonikController.setMode('combo_viral');
 
       // Configurar AnimationMixer con ambas capturas nativas
       mixer = new THREE.AnimationMixer(currentModel);
@@ -3720,8 +3719,7 @@
 
         if (danceAction) {
           danceAction.timeScale = currentBPM / 138;
-          playClipExclusively(danceAction);
-          console.log('Tecktonik real activo en el Guerrero:', danceAction.getClip().duration.toFixed(2) + 's');
+          console.log('Tecktonik real listo en el Guerrero:', danceAction.getClip().duration.toFixed(2) + 's');
         }
         if (singleLadiesAction) {
           singleLadiesAction.timeScale = currentBPM / 138;
@@ -3729,14 +3727,17 @@
         }
       }
 
+      // Por defecto en el inicio: reproducir el Baile Viral 360° limpio (procedural con combo activo)
+      playClipExclusively(null);
+
       // Ocultar pantalla de carga
       const loaderScreen = document.getElementById('loader');
       loaderScreen.style.opacity = '0';
       setTimeout(() => loaderScreen.style.display = 'none', 400);
 
-      updateMoveDisplay(SEQ_DATA.deepmotion);
-      const padDeep = document.getElementById('pad-deepmotion');
-      if (padDeep) padDeep.classList.add('active');
+      updateMoveDisplay(SEQ_DATA.combo_viral);
+      const padViral = document.getElementById('pad-viral');
+      if (padViral) padViral.classList.add('active');
     }
 
     loader.load(
