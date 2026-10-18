@@ -1121,14 +1121,17 @@
     <!-- Base Mocap Groove Switcher (Hips, Waist & Footwork Dynamic) -->
     <div class="mocap-groove-bar">
       <div class="groove-title">
-        <span>🕺 Dinámica de Cadera & Piernas Mocap:</span>
+        <span>🕺 Dinámica de Piernas & Cadera:</span>
       </div>
       <div class="groove-options">
-        <button class="groove-btn active" id="groove-btn-tecktonik" onclick="window.setBaseGroove('tecktonik')" title="Pasos electro, patadas dinámicas y rebote Tecktonik">
-          <span>⚡ Tecktonik (Patadas & Steps)</span>
+        <button class="groove-btn active" id="groove-btn-rodillas" onclick="window.setBaseGroove('rodillas')" title="Alternar una rodilla y después la otra al compás musical (Paso 1-2 Electro)">
+          <span>🦵 Rodillas Alternas (1-2 Izq/Der)</span>
+        </button>
+        <button class="groove-btn" id="groove-btn-tecktonik" onclick="window.setBaseGroove('tecktonik')" title="Pasos electro, patadas dinámicas y rebote Tecktonik">
+          <span>⚡ Tecktonik Mocap</span>
         </button>
         <button class="groove-btn" id="groove-btn-singleladies" onclick="window.setBaseGroove('singleladies')" title="Caderas exageradas, cintura y meneo Beyoncé">
-          <span>💃 Beyoncé (Cintura & Caderas)</span>
+          <span>💃 Beyoncé Mocap</span>
         </button>
       </div>
     </div>
@@ -1422,12 +1425,21 @@
         this.currentMode = mode;
         this.autoBeatCounter = 0;
         if (mode !== 'deepmotion' && mode !== 'singleladies') {
-          const UPPER_BODY_KEYS = [
-            'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
-            'clavicle_r', 'upperarm_r', 'lowerarm_r', 'hand_r',
-            'neck', 'head'
-          ];
-          for (const key of UPPER_BODY_KEYS) {
+          const keysToSync = (baseMocapGroove === 'rodillas')
+            ? [
+                'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
+                'clavicle_r', 'upperarm_r', 'lowerarm_r', 'hand_r',
+                'neck', 'head',
+                'thigh_l', 'calf_l', 'foot_l',
+                'thigh_r', 'calf_r', 'foot_r',
+                'pelvis', 'spine'
+              ]
+            : [
+                'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
+                'clavicle_r', 'upperarm_r', 'lowerarm_r', 'hand_r',
+                'neck', 'head'
+              ];
+          for (const key of keysToSync) {
             const bone = this.bones[key];
             if (bone && this.currentQuats[key]) {
               this.currentQuats[key].copy(bone.quaternion);
@@ -2120,15 +2132,22 @@
         // Amortiguación física orgánica: fluidez natural sin tirones instantáneos ni rigidez mecánica
         const slerpFactor = Math.min(1.0, delta * 12.0 * Math.max(0.65, this.snappiness));
 
-        // En modos procedimentales, SOLO sobreescribimos los huesos de tren superior (brazos, hombros, cuello y cabeza)
-        // La cadera, cintura, pelvis y todas las piernas están 100% gobernadas por la captura de movimiento real (mocap)
-        const UPPER_BODY_KEYS = [
-          'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
-          'clavicle_r', 'upperarm_r', 'lowerarm_r', 'hand_r',
-          'neck', 'head'
-        ];
+        const keysToUpdate = (baseMocapGroove === 'rodillas')
+          ? [
+              'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
+              'clavicle_r', 'upperarm_r', 'lowerarm_r', 'hand_r',
+              'neck', 'head',
+              'thigh_l', 'calf_l', 'foot_l',
+              'thigh_r', 'calf_r', 'foot_r',
+              'pelvis', 'spine'
+            ]
+          : [
+              'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
+              'clavicle_r', 'upperarm_r', 'lowerarm_r', 'hand_r',
+              'neck', 'head'
+            ];
 
-        for (const key of UPPER_BODY_KEYS) {
+        for (const key of keysToUpdate) {
           const bone = this.bones[key];
           if (!bone || !this.targetQuats[key]) continue;
           const tq = this.targetQuats[key];
@@ -2719,6 +2738,102 @@
       }
 
       // =======================================================================
+      // PASO DE BAILE ELECTRO CON RODILLAS ALTERNAS (1-2 KNEE STEP)
+      // Alterna una rodilla y después la otra al compás de cada beat musical
+      // (Elevación rítmica, flexión de rodilla, estiramiento de empeine y rebote pélvico)
+      // =======================================================================
+      applyAlternatingKnees(t, beatDur, qDelta, amp = 1.0) {
+        // 2 beats por ciclo completo: Beat 1 = Rodilla Izquierda arriba, Beat 2 = Rodilla Derecha arriba
+        const cycleDuration = beatDur * 2.0;
+        const normPhase = ((t % cycleDuration) + cycleDuration) % cycleDuration / cycleDuration;
+        const effAmp = Math.max(0.75, Math.min(1.25, amp));
+
+        // Sub-fase de cada pierna (0 a 0.5 = Pierna Izquierda; 0.5 a 1.0 = Pierna Derecha)
+        const isLeftActive = (normPhase < 0.5);
+        const subPhase = isLeftActive ? (normPhase / 0.5) : ((normPhase - 0.5) / 0.5);
+
+        // Curva de elevación suave y elástica (S-curve con elevación marcada al beat)
+        const liftCurve = Math.pow(Math.sin(subPhase * Math.PI), 1.15) * effAmp;
+
+        // Rebote musical vertical en cada beat musical (138 BPM kick bounce)
+        const beatPhase = ((t % beatDur) + beatDur) % beatDur / beatDur;
+        const beatPulse = Math.pow(Math.sin(beatPhase * Math.PI), 1.6);
+
+        // Desplazamiento y balanceo natural de pelvis / caderas (Weight Shift):
+        // Cuando sube la rodilla izquierda, el peso del cuerpo se apoya en la pierna derecha
+        const hipShiftX = (isLeftActive ? 0.026 : -0.026) * liftCurve;
+        const hipDropY = -(0.016 * effAmp + beatPulse * 0.022 * effAmp);
+        const hipAdvanceZ = (isLeftActive ? 0.012 : -0.012) * Math.cos(normPhase * Math.PI * 2.0);
+
+        if (this.bones.pelvis && this.initPositions.pelvis) {
+          const worldPelvisDelta = new THREE.Vector3(hipShiftX, hipDropY, hipAdvanceZ);
+          worldPelvisDelta.applyQuaternion(this.pelvisParentInvQuat);
+          this.bones.pelvis.position.copy(this.initPositions.pelvis).add(worldPelvisDelta);
+        }
+
+        // Rotación de cadera:
+        // - Roll: La cadera de la rodilla activa se eleva ligeramente
+        // - Yaw: La cadera de la rodilla activa gira hacia adelante acompañando el paso
+        // - Pitch: Ligera flexión atlética al compás del rebote
+        const pelvisRoll = (isLeftActive ? -0.050 : 0.050) * liftCurve;
+        const pelvisYaw = (isLeftActive ? -0.070 : 0.070) * liftCurve;
+        const pelvisPitch = 0.02 + beatPulse * 0.025;
+
+        this.setWorldDelta('pelvis', pelvisPitch, pelvisYaw, pelvisRoll, qDelta);
+
+        // =====================================================================
+        // ARTICULACIÓN DE PIERNAS Y RODILLAS ALTERNAS (1-2 ELECTRO STEP)
+        // =====================================================================
+
+        // 1. PIERNA IZQUIERDA:
+        if (isLeftActive) {
+          // Rodilla activa: muslo sube 35°, rodilla se flexiona 60° atrás, pie marca hacia abajo
+          const lThighPitch = 0.05 + liftCurve * 0.58;
+          const lThighYaw = 0.02 + liftCurve * 0.06;
+          const lThighRoll = 0.03 + liftCurve * 0.05;
+          const lKneeBend = -(0.08 + liftCurve * 0.98);
+          const lFootPitch = liftCurve * 0.22;
+
+          this.setWorldDelta('thigh_l', lThighPitch, lThighYaw, lThighRoll, qDelta);
+          this.setWorldDelta('calf_l', lKneeBend, 0.0, 0.0, qDelta);
+          this.setWorldDelta('foot_l', lFootPitch, 0.0, -0.02, qDelta);
+        } else {
+          // Pierna de apoyo: sostiene el peso en el suelo con amortiguación en el beat
+          const lThighPitch = 0.02 + beatPulse * 0.03;
+          const lKneeBend = -(0.06 + beatPulse * 0.08);
+          this.setWorldDelta('thigh_l', lThighPitch, 0.0, 0.01, qDelta);
+          this.setWorldDelta('calf_l', lKneeBend, 0.0, 0.0, qDelta);
+          this.setWorldDelta('foot_l', 0.0, 0.0, 0.0, qDelta);
+        }
+
+        // 2. PIERNA DERECHA:
+        if (!isLeftActive) {
+          // Rodilla activa: muslo sube 35°, rodilla se flexiona 60° atrás, pie marca hacia abajo
+          const rThighPitch = 0.05 + liftCurve * 0.58;
+          const rThighYaw = -(0.02 + liftCurve * 0.06);
+          const rThighRoll = -(0.03 + liftCurve * 0.05);
+          const rKneeBend = -(0.08 + liftCurve * 0.98);
+          const rFootPitch = liftCurve * 0.22;
+
+          this.setWorldDelta('thigh_r', rThighPitch, rThighYaw, rThighRoll, qDelta);
+          this.setWorldDelta('calf_r', rKneeBend, 0.0, 0.0, qDelta);
+          this.setWorldDelta('foot_r', rFootPitch, 0.0, 0.02, qDelta);
+        } else {
+          // Pierna de apoyo: sostiene el peso en el suelo con amortiguación en el beat
+          const rThighPitch = 0.02 + beatPulse * 0.03;
+          const rKneeBend = -(0.06 + beatPulse * 0.08);
+          this.setWorldDelta('thigh_r', rThighPitch, 0.0, -0.01, qDelta);
+          this.setWorldDelta('calf_r', rKneeBend, 0.0, 0.0, qDelta);
+          this.setWorldDelta('foot_r', 0.0, 0.0, 0.0, qDelta);
+        }
+
+        // Compensación de columna / torso para mantener postura erguida y centrada
+        const spineRoll = (isLeftActive ? 0.030 : -0.030) * liftCurve;
+        const spineYaw = (isLeftActive ? 0.035 : -0.035) * liftCurve;
+        this.setWorldDelta('spine', 0.02, spineYaw, spineRoll, qDelta);
+      }
+
+      // =======================================================================
       // EVALUADOR PRINCIPAL DE OBJETIVOS CINEMÁTICOS (16 Modos)
       // =======================================================================
       computeTargets(mode, t, halfStep, beatDur, halfBeatDur) {
@@ -2837,8 +2952,6 @@
 
         // =====================================================================
         // DINÁMICA DE CADERA, CINTURA Y PIERNAS:
-        // 100% Impulsada por la captura de movimiento real (mocap) del AnimationMixer
-        // (Sin fórmulas sintéticas que deformen el esqueleto o generen piernas robóticas)
         // =====================================================================
         const UPPER_BODY_KEYS = [
           'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
@@ -2846,9 +2959,24 @@
           'neck', 'head'
         ];
 
-        for (const key of UPPER_BODY_KEYS) {
-          if (this.initQuats[key] && qDelta[key]) {
-            this.targetQuats[key] = this.initQuats[key].clone().multiply(qDelta[key]);
+        const LOWER_BODY_KEYS = [
+          'thigh_l', 'calf_l', 'foot_l',
+          'thigh_r', 'calf_r', 'foot_r',
+          'pelvis', 'spine'
+        ];
+
+        if (baseMocapGroove === 'rodillas') {
+          this.applyAlternatingKnees(t, beatDur, qDelta, amp);
+          for (const key of [...UPPER_BODY_KEYS, ...LOWER_BODY_KEYS]) {
+            if (this.initQuats[key] && qDelta[key]) {
+              this.targetQuats[key] = this.initQuats[key].clone().multiply(qDelta[key]);
+            }
+          }
+        } else {
+          for (const key of UPPER_BODY_KEYS) {
+            if (this.initQuats[key] && qDelta[key]) {
+              this.targetQuats[key] = this.initQuats[key].clone().multiply(qDelta[key]);
+            }
           }
         }
       }
@@ -3057,7 +3185,13 @@
       document.getElementById('move-phase').innerText = `${currentBPM} BPM • ${move.desc || 'Ambos Brazos Activos'}`;
     }
 
-    let baseMocapGroove = 'tecktonik'; // 'tecktonik' | 'singleladies'
+    let baseMocapGroove = 'rodillas'; // 'rodillas' | 'tecktonik' | 'singleladies'
+
+    function updateGrooveUI() {
+      document.querySelectorAll('.groove-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById(`groove-btn-${baseMocapGroove}`);
+      if (activeBtn) activeBtn.classList.add('active');
+    }
 
     // Control de clips exclusivo para los dos bailes principales 100% íntegros
     function playClipExclusively(targetAction) {
@@ -3100,14 +3234,16 @@
     // Selector en vivo de qué baile mocap gobierna la cadera y piernas
     window.setBaseGroove = function(groove) {
       baseMocapGroove = groove;
-      document.querySelectorAll('.groove-btn').forEach(b => b.classList.remove('active'));
-      const activeBtn = document.getElementById(`groove-btn-${groove}`);
-      if (activeBtn) activeBtn.classList.add('active');
+      updateGrooveUI();
 
       const currentMode = tecktonikController ? tecktonikController.currentMode : 'combo_viral';
       if (currentMode !== 'deepmotion' && currentMode !== 'singleladies') {
-        const baseAction = (baseMocapGroove === 'singleladies') ? singleLadiesAction : danceAction;
-        playBaseMocap(baseAction);
+        if (baseMocapGroove === 'rodillas') {
+          playClipExclusively(null);
+        } else {
+          const baseAction = (baseMocapGroove === 'singleladies') ? singleLadiesAction : danceAction;
+          playBaseMocap(baseAction);
+        }
       }
       onBeatDrop(1.0);
     };
@@ -3130,21 +3266,19 @@
 
       if (seqKey === 'deepmotion') {
         baseMocapGroove = 'tecktonik';
-        const btnTeck = document.getElementById('groove-btn-tecktonik');
-        const btnSingle = document.getElementById('groove-btn-singleladies');
-        if (btnTeck) btnTeck.classList.add('active');
-        if (btnSingle) btnSingle.classList.remove('active');
+        updateGrooveUI();
         playClipExclusively(danceAction);
       } else if (seqKey === 'singleladies') {
         baseMocapGroove = 'singleladies';
-        const btnTeck = document.getElementById('groove-btn-tecktonik');
-        const btnSingle = document.getElementById('groove-btn-singleladies');
-        if (btnSingle) btnSingle.classList.add('active');
-        if (btnTeck) btnTeck.classList.remove('active');
+        updateGrooveUI();
         playClipExclusively(singleLadiesAction);
       } else {
-        const baseAction = (baseMocapGroove === 'singleladies') ? singleLadiesAction : danceAction;
-        playBaseMocap(baseAction);
+        if (baseMocapGroove === 'rodillas') {
+          playClipExclusively(null);
+        } else {
+          const baseAction = (baseMocapGroove === 'singleladies') ? singleLadiesAction : danceAction;
+          playBaseMocap(baseAction);
+        }
       }
 
       const meta = SEQ_DATA[seqKey] || { name: seqKey, icon: '⚡' };
@@ -3192,8 +3326,12 @@
           } else if (resumeMode === 'singleladies') {
             playClipExclusively(singleLadiesAction);
           } else {
-            const baseAction = (baseMocapGroove === 'singleladies') ? singleLadiesAction : danceAction;
-            playBaseMocap(baseAction);
+            if (baseMocapGroove === 'rodillas') {
+              playClipExclusively(null);
+            } else {
+              const baseAction = (baseMocapGroove === 'singleladies') ? singleLadiesAction : danceAction;
+              playBaseMocap(baseAction);
+            }
           }
           updateMoveDisplay(SEQ_DATA[resumeMode] || SEQ_DATA.deepmotion);
         }
@@ -3585,14 +3723,16 @@
         } else if (tecktonikController && tecktonikController.currentMode === 'singleladies' && mixer && singleLadiesAction) {
           mixer.update(delta);
         } else if (tecktonikController) {
-          // 1. El AnimationMixer actualiza caderas, cintura y piernas con el mocap real humano
-          if (mixer) {
-            mixer.update(delta);
+          // Si el modo de piernas no es 'rodillas', el AnimationMixer evalúa la captura de movimiento real
+          if (baseMocapGroove !== 'rodillas') {
+            if (mixer) {
+              mixer.update(delta);
+            }
           }
           if (currentModel && typeof currentModel.updateMatrixWorld === 'function') {
             currentModel.updateMatrixWorld(true);
           }
-          // 2. El controlador procedimental superpone la coreografía en los brazos y cabeza
+          // El controlador procedimental superpone la coreografía en los brazos y (si baseMocapGroove === 'rodillas') las rodillas alternas
           tecktonikController.update(delta);
         }
       }
