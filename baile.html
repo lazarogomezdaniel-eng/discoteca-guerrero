@@ -1352,6 +1352,19 @@
         this.hingeR = new THREE.Vector3(0.6700, 0.0, -0.7424).normalize();
         this.pelvisParentInvQuat = new THREE.Quaternion();
 
+        // Control de transición suave sin saltos entre figuras
+        this.transitionDuration = 0.38;
+        this.transitionTime = 0.38;
+        this.fromQuats = {};
+        this.keysToUpdate = [
+          'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
+          'clavicle_r', 'upperarm_r', 'lowerarm_r', 'hand_r',
+          'neck', 'head'
+        ];
+        for (const key of this.keysToUpdate) {
+          this.fromQuats[key] = new THREE.Quaternion();
+        }
+
         this.initBones(modelOrSkeleton);
       }
 
@@ -1464,21 +1477,21 @@
       }
 
       setMode(mode) {
+        if (this.currentMode === mode && this.transitionTime >= this.transitionDuration) return;
         this.currentMode = mode;
         this.autoBeatCounter = 0;
-        if (mode !== 'deepmotion' && mode !== 'singleladies') {
-          const keysToSync = [
-            'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
-            'clavicle_r', 'upperarm_r', 'lowerarm_r', 'hand_r',
-            'neck', 'head'
-          ];
-          for (const key of keysToSync) {
-            const bone = this.bones[key];
-            if (bone && this.currentQuats[key]) {
+
+        // Capturar la postura exacta actual de cada hueso para interpolar desde ella suavemente (sin saltos bruscos)
+        for (const key of this.keysToUpdate) {
+          const bone = this.bones[key];
+          if (bone) {
+            this.fromQuats[key].copy(bone.quaternion);
+            if (this.currentQuats[key]) {
               this.currentQuats[key].copy(bone.quaternion);
             }
           }
         }
+        this.transitionTime = 0.0;
       }
 
       setBPM(bpm) {
@@ -2162,22 +2175,33 @@
 
         this.computeTargets(effectiveMode, this.time, currentHalfBeatStep, beatDuration, halfBeatDuration);
 
-        // Respuesta muscular rápida Tecktonik en brazos
-        const slerpFactorArms = Math.min(1.0, delta * 24.0 * Math.max(0.65, this.snappiness));
+        // Transición orgánica sin saltos al cambiar de figura (Smoothstep S-Curve)
+        if (this.transitionTime < this.transitionDuration) {
+          this.transitionTime += delta;
+          const progress = Math.min(1.0, this.transitionTime / this.transitionDuration);
+          const smoothT = progress * progress * (3.0 - 2.0 * progress);
 
-        const keysToUpdate = [
-          'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
-          'clavicle_r', 'upperarm_r', 'lowerarm_r', 'hand_r',
-          'neck', 'head'
-        ];
+          for (const key of this.keysToUpdate) {
+            const bone = this.bones[key];
+            if (!bone || !this.targetQuats[key]) continue;
+            const tq = this.targetQuats[key];
+            if (isNaN(tq.x) || isNaN(tq.y) || isNaN(tq.z) || isNaN(tq.w)) continue;
 
-        for (const key of keysToUpdate) {
-          const bone = this.bones[key];
-          if (!bone || !this.targetQuats[key]) continue;
-          const tq = this.targetQuats[key];
-          if (isNaN(tq.x) || isNaN(tq.y) || isNaN(tq.z) || isNaN(tq.w)) continue;
-          this.currentQuats[key].slerp(tq, slerpFactorArms);
-          bone.quaternion.copy(this.currentQuats[key]);
+            this.currentQuats[key].copy(this.fromQuats[key]).slerp(tq, smoothT);
+            bone.quaternion.copy(this.currentQuats[key]);
+          }
+        } else {
+          // Continuidad muscular fluida
+          const slerpFactorArms = Math.min(1.0, delta * 20.0 * Math.max(0.65, this.snappiness));
+          for (const key of this.keysToUpdate) {
+            const bone = this.bones[key];
+            if (!bone || !this.targetQuats[key]) continue;
+            const tq = this.targetQuats[key];
+            if (isNaN(tq.x) || isNaN(tq.y) || isNaN(tq.z) || isNaN(tq.w)) continue;
+
+            this.currentQuats[key].slerp(tq, slerpFactorArms);
+            bone.quaternion.copy(this.currentQuats[key]);
+          }
         }
       }
 
@@ -3287,42 +3311,61 @@
       if (activeBtn) activeBtn.classList.add('active');
     }
 
-    // Control de clips exclusivo para los dos bailes principales 100% íntegros
-    function playClipExclusively(targetAction) {
+    // Control de clips con transición suave (Cross-fade orgánico sin saltos bruscos)
+    let currentClipAction = null;
+
+    function crossFadeToClip(targetAction, duration = 0.38) {
+      if (!mixer) return;
       const allActions = [danceAction, singleLadiesAction].filter(Boolean);
+
+      if (!targetAction) {
+        allActions.forEach(act => {
+          if (act && act.isRunning()) act.fadeOut(duration);
+        });
+        currentClipAction = null;
+        return;
+      }
+
+      if (currentClipAction === targetAction && targetAction.isRunning()) {
+        targetAction.paused = false;
+        return;
+      }
+
+      const prevAction = currentClipAction;
+      currentClipAction = targetAction;
+
+      targetAction.enabled = true;
+      targetAction.paused = false;
+      targetAction.setEffectiveTimeScale(currentBPM / 138);
+
+      if (prevAction && prevAction !== targetAction && prevAction.isRunning()) {
+        targetAction.setEffectiveWeight(1.0);
+        if (!targetAction.isRunning()) {
+          targetAction.play();
+        }
+        prevAction.crossFadeTo(targetAction, duration, true);
+      } else {
+        targetAction.setEffectiveWeight(1.0);
+        if (!targetAction.isRunning()) {
+          targetAction.fadeIn(duration);
+          targetAction.play();
+        }
+      }
+
       allActions.forEach(act => {
-        if (act !== targetAction) {
-          act.stop();
-          act.setEffectiveWeight(0);
-          act.enabled = false;
+        if (act !== targetAction && act !== prevAction && act.isRunning()) {
+          act.fadeOut(duration);
         }
       });
-      if (targetAction) {
-        targetAction.reset();
-        targetAction.enabled = true;
-        targetAction.setEffectiveWeight(1.0);
-        targetAction.paused = false;
-        targetAction.play();
-      }
     }
 
-    // Reproducción continua de la base mocap para cadera, cintura y piernas en los modos procedimentales
+    // Funciones retrocompatibles con transición suave
+    function playClipExclusively(targetAction) {
+      crossFadeToClip(targetAction, 0.40);
+    }
+
     function playBaseMocap(targetAction) {
-      if (!targetAction) return;
-      const allActions = [danceAction, singleLadiesAction].filter(Boolean);
-      allActions.forEach(act => {
-        if (act !== targetAction) {
-          act.stop();
-          act.setEffectiveWeight(0);
-          act.enabled = false;
-        }
-      });
-      targetAction.enabled = true;
-      targetAction.setEffectiveWeight(1.0);
-      targetAction.paused = false;
-      if (!targetAction.isRunning()) {
-        targetAction.play();
-      }
+      crossFadeToClip(targetAction, 0.40);
     }
 
     // Selector en vivo de qué baile mocap gobierna la cadera y piernas
@@ -3888,25 +3931,85 @@
       }
     }
 
+    let audioKickPulse = 0;
+    let audioBassEnergy = 0;
+    let audioMidHighEnergy = 0;
+    let prevBassSample = 0;
+
     function animate() {
       requestAnimationFrame(animate);
       const delta = clock.getDelta();
 
+      // Extracción de datos de audio en tiempo real para reactividad orgánica
+      if (analyserNode && freqData && isDancing && activeBeatTrack !== 'none') {
+        analyserNode.getByteFrequencyData(freqData);
+
+        // Sub-bass & Bass (Bins 0 a 4: ~0 - 180 Hz)
+        const rawBass = (freqData[0] + freqData[1] + freqData[2] + freqData[3]) / (4 * 255);
+
+        // Mids & Highs (Bins 5 a 45: ~200 - 4000 Hz)
+        let midHighSum = 0;
+        for (let i = 5; i < 45; i++) midHighSum += freqData[i];
+        const rawMidHigh = (midHighSum / 40) / 255;
+
+        // Detección de impacto de bombo / caída de beat (transiente de ataque)
+        const bassImpulse = rawBass - prevBassSample;
+        if (bassImpulse > 0.06) {
+          audioKickPulse = Math.min(1.0, audioKickPulse + bassImpulse * 2.8);
+        }
+        prevBassSample = rawBass;
+
+        audioKickPulse = Math.max(0, audioKickPulse - delta * 5.0);
+        audioBassEnergy = THREE.MathUtils.lerp(audioBassEnergy, rawBass, delta * 9.0);
+        audioMidHighEnergy = THREE.MathUtils.lerp(audioMidHighEnergy, rawMidHigh, delta * 6.0);
+      } else {
+        audioKickPulse = Math.max(0, audioKickPulse - delta * 6.0);
+        audioBassEnergy = THREE.MathUtils.lerp(audioBassEnergy, 0, delta * 6.0);
+        audioMidHighEnergy = THREE.MathUtils.lerp(audioMidHighEnergy, 0, delta * 6.0);
+      }
+
       if (isDancing) {
-        if (tecktonikController && tecktonikController.currentMode === 'deepmotion' && mixer && danceAction) {
+        // Actualizar mixer para TODOS los clips activos (permite transiciones y cross-fades suaves simultáneos)
+        if (mixer) {
           mixer.update(delta);
-        } else if (tecktonikController && tecktonikController.currentMode === 'singleladies' && mixer && singleLadiesAction) {
-          mixer.update(delta);
-        } else if (tecktonikController) {
-          // Para Baile 360 y todas las figuras: la captura real de Tecktonik anima las piernas y la cadera
-          if (mixer && danceAction) {
-            mixer.update(delta);
-          }
-          if (currentModel && typeof currentModel.updateMatrixWorld === 'function') {
-            currentModel.updateMatrixWorld(true);
-          }
-          // El controlador actualiza los brazos con la figura seleccionada
+        }
+
+        if (currentModel && typeof currentModel.updateMatrixWorld === 'function') {
+          currentModel.updateMatrixWorld(true);
+        }
+
+        // Modulación procedural de brazos en los modos de figuras Tecktonik
+        if (tecktonikController && tecktonikController.currentMode !== 'deepmotion' && tecktonikController.currentMode !== 'singleladies') {
+          // Modulación de amplitud orgánica según energía musical en tiempo real
+          tecktonikController.amplitude = 0.85 + audioMidHighEnergy * 0.45;
           tecktonikController.update(delta);
+        }
+
+        // =====================================================================
+        // REACCIÓN DIRECTA Y ORGÁNICA AL RITMO DE LA MÚSICA
+        // =====================================================================
+        // 1. Rebote elástico del centro de masa con los bombos y graves (Groove Bounce)
+        if (currentModel) {
+          const naturalGrooveDip = (audioKickPulse * 0.038 + audioBassEnergy * 0.015);
+          currentModel.position.y = -naturalGrooveDip;
+        }
+
+        // 2. Acentuación elástica de cabeza y pecho al compás del bombo (Groove Nod)
+        if (tecktonikController && tecktonikController.bones) {
+          const nodAngle = audioKickPulse * 0.045; // ~2.5 grados naturales
+          if (tecktonikController.bones.head) {
+            tecktonikController.bones.head.rotation.x += nodAngle;
+          }
+          if (tecktonikController.bones.neck) {
+            tecktonikController.bones.neck.rotation.x += nodAngle * 0.5;
+          }
+          if (tecktonikController.bones.chest) {
+            tecktonikController.bones.chest.rotation.x += nodAngle * 0.3;
+          }
+        }
+      } else {
+        if (currentModel) {
+          currentModel.position.y = THREE.MathUtils.lerp(currentModel.position.y, 0, delta * 8.0);
         }
       }
 
