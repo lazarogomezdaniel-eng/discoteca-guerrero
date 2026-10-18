@@ -2108,8 +2108,28 @@
         };
       }
 
-      update(delta) {
-        this.time += delta;
+      updateWithAudio(delta, audio = null, isFrozen = false) {
+        if (!audio || audio.isSilent || isFrozen) {
+          // SILENCIO O PAUSA: Freno inmediato y mantenimiento tenso de la pose (Freeze Lock)
+          const slerpFactorHold = Math.min(1.0, delta * 6.0);
+          const keysToUpdate = [
+            'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
+            'clavicle_r', 'upperarm_r', 'lowerarm_r', 'hand_r',
+            'neck', 'head'
+          ];
+          for (const key of keysToUpdate) {
+            const bone = this.bones[key];
+            if (!bone || !this.targetQuats[key]) continue;
+            this.currentQuats[key].slerp(this.targetQuats[key], slerpFactorHold);
+            bone.quaternion.copy(this.currentQuats[key]);
+          }
+          return;
+        }
+
+        // AVANCE IMPULSADO POR LA ENERGÍA DEL AUDIO:
+        // Más volumen / golpe = el tiempo de coreografía fluye con más intensidad; partes suaves = avance lento
+        const advanceFactor = 0.65 + audio.energy * 0.70 + (audio.kickPulse || 0) * 0.35;
+        this.time += delta * advanceFactor;
 
         const beatDuration = 60 / this.bpm;
         const halfBeatDuration = beatDuration / 2;
@@ -2125,10 +2145,17 @@
           ? 'combo_viral'
           : this.currentMode;
 
-        this.computeTargets(effectiveMode, this.time, currentHalfBeatStep, beatDuration, halfBeatDuration);
+        // AMPLITUD REACTIVA:
+        // Si el sonido es suave, los brazos se mantienen contenidos (~0.7).
+        // Si entra el drop o sube el volumen, los brazos alcanzan extensión máxima (~1.5).
+        const reactiveAmp = Math.max(0.65, Math.min(1.5, this.amplitude * (0.65 + audio.energy * 0.75 + audio.bass * 0.35)));
 
-        // Respuesta muscular rápida Tecktonik en brazos
-        const slerpFactorArms = Math.min(1.0, delta * 24.0 * Math.max(0.65, this.snappiness));
+        this.computeTargets(effectiveMode, this.time, currentHalfBeatStep, beatDuration, halfBeatDuration, reactiveAmp);
+
+        // ACENTO MUSCULAR INSTANTÁNEO EN EL BOMBO (Electro Lock / Snap):
+        // En el golpe del bombo el factor de slerp salta de 22 a 85+, trabando la articulación en el impacto
+        const kickSnapBonus = (audio.kickPulse || 0) * 65.0;
+        const slerpFactorArms = Math.min(1.0, delta * (22.0 + kickSnapBonus) * Math.max(0.65, this.snappiness));
 
         const keysToUpdate = [
           'clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l',
@@ -2144,6 +2171,17 @@
           this.currentQuats[key].slerp(tq, slerpFactorArms);
           bone.quaternion.copy(this.currentQuats[key]);
         }
+
+        // CABECEO Y COMPRESIÓN TORÁCICA AL GOLPE DE GRAVES:
+        if ((audio.kickPulse || 0) > 0.05 && this.bones.spine && this.bones.neck) {
+          const nod = audio.kickPulse * 0.06;
+          this.bones.spine.rotation.x += nod * 0.5;
+          this.bones.neck.rotation.x += nod;
+        }
+      }
+
+      update(delta) {
+        this.updateWithAudio(delta, audioMetrics, false);
       }
 
       // =======================================================================
@@ -2886,8 +2924,8 @@
       // =======================================================================
       // EVALUADOR PRINCIPAL DE OBJETIVOS CINEMÁTICOS (16 Modos)
       // =======================================================================
-      computeTargets(mode, t, halfStep, beatDur, halfBeatDur) {
-        const amp = this.amplitude;
+      computeTargets(mode, t, halfStep, beatDur, halfBeatDur, customAmp = null) {
+        const amp = (customAmp !== null) ? customAmp : this.amplitude;
         const phase = t * (Math.PI * 2 / beatDur);
 
         const qDelta = {
@@ -3030,18 +3068,97 @@
     const html5Audio = document.getElementById('html5-audio');
     let customAudioSource = null;
 
+    // =========================================================================
+    // MOTOR DE ANÁLISIS DE AUDIO REACTIVO EN TIEMPO REAL (FFT & Transitorios)
+    // =========================================================================
+    const audioMetrics = {
+      bass: 0,
+      mid: 0,
+      high: 0,
+      energy: 0,
+      kickPulse: 0,
+      isSilent: true
+    };
+
+    let smoothedBass = 0.0;
+    let lastKickTime = 0;
+
+    function updateAudioAnalysis(delta) {
+      if (!analyserNode || !freqData) {
+        audioMetrics.isSilent = true;
+        audioMetrics.kickPulse = 0;
+        return audioMetrics;
+      }
+
+      analyserNode.getByteFrequencyData(freqData);
+
+      // 1. Energía en graves (bins 0 a 3: 0Hz a ~350Hz)
+      let bassSum = 0;
+      for (let i = 0; i < 4; i++) bassSum += freqData[i];
+      const currentBass = (bassSum / 4) / 255.0;
+
+      // 2. Energía en medios (bins 4 a 15)
+      let midSum = 0;
+      for (let i = 4; i < 16; i++) midSum += freqData[i];
+      const currentMid = (midSum / 12) / 255.0;
+
+      // 3. Energía en agudos (bins 16 a 45)
+      let highSum = 0;
+      for (let i = 16; i < 46; i++) highSum += freqData[i];
+      const currentHigh = (highSum / 30) / 255.0;
+
+      // 4. Energía total (RMS)
+      let totalSum = 0;
+      for (let i = 0; i < 64; i++) totalSum += freqData[i];
+      const currentEnergy = (totalSum / 64) / 255.0;
+
+      // 5. Detección de silencio real
+      const isSilent = (currentEnergy < 0.025);
+
+      // 6. Detección de ataque de bombo / transitorio de graves (Kick Onset)
+      const now = performance.now();
+      const bassAttack = currentBass - smoothedBass;
+
+      if (!isSilent && bassAttack > 0.12 && currentBass > 0.35 && (now - lastKickTime > 180)) {
+        audioMetrics.kickPulse = 1.0;
+        lastKickTime = now;
+        onBeatDrop(1.0 + currentBass * 0.4);
+      } else {
+        audioMetrics.kickPulse = Math.max(0, audioMetrics.kickPulse - delta * 7.5);
+      }
+
+      smoothedBass += (currentBass - smoothedBass) * Math.min(1.0, delta * 6.0);
+
+      audioMetrics.bass = currentBass;
+      audioMetrics.mid = currentMid;
+      audioMetrics.high = currentHigh;
+      audioMetrics.energy = currentEnergy;
+      audioMetrics.isSilent = isSilent;
+
+      return audioMetrics;
+    }
+
     function initAudio() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyserNode = audioCtx.createAnalyser();
         analyserNode.fftSize = 256;
-        analyserNode.smoothingTimeConstant = 0.4;
+        analyserNode.smoothingTimeConstant = 0.25;
         freqData = new Uint8Array(analyserNode.frequencyBinCount);
 
         masterGain = audioCtx.createGain();
         masterGain.gain.value = 0.9;
         masterGain.connect(analyserNode);
         analyserNode.connect(audioCtx.destination);
+
+        if (!customAudioSource && html5Audio) {
+          try {
+            customAudioSource = audioCtx.createMediaElementSource(html5Audio);
+            customAudioSource.connect(masterGain);
+          } catch (e) {
+            console.log('Audio element source setup note:', e);
+          }
+        }
       }
       if (audioCtx.state === 'suspended') {
         audioCtx.resume();
@@ -3719,20 +3836,21 @@
     const clock = new THREE.Clock();
 
     function renderVisualizer() {
-      if (!analyserNode || !freqData) {
-        visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
-        return;
-      }
-      analyserNode.getByteFrequencyData(freqData);
-
       visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
+      if (!analyserNode || !freqData) return;
+
       const barWidth = (visCanvas.width / 16) - 1.5;
       for (let i = 0; i < 16; i++) {
         const val = freqData[i * 4] || 0;
         const h = (val / 255) * visCanvas.height;
         const grad = visCtx.createLinearGradient(0, visCanvas.height, 0, 0);
-        grad.addColorStop(0, '#00f2fe');
-        grad.addColorStop(1, '#f72585');
+        if (audioMetrics.kickPulse > 0.2 && i < 4) {
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(1, '#00f2fe');
+        } else {
+          grad.addColorStop(0, '#00f2fe');
+          grad.addColorStop(1, '#f72585');
+        }
         visCtx.fillStyle = grad;
         visCtx.fillRect(i * (barWidth + 1.5), visCanvas.height - h, barWidth, h);
       }
@@ -3742,21 +3860,49 @@
       requestAnimationFrame(animate);
       const delta = clock.getDelta();
 
+      // Extraer en cada fotograma exacto el análisis de frecuencias y transitorios de audio
+      const audio = updateAudioAnalysis(delta);
+
       if (isDancing) {
-        if (tecktonikController && tecktonikController.currentMode === 'deepmotion' && mixer && danceAction) {
-          mixer.update(delta);
-        } else if (tecktonikController && tecktonikController.currentMode === 'singleladies' && mixer && singleLadiesAction) {
-          mixer.update(delta);
-        } else if (tecktonikController) {
-          // Para Baile 360 y todas las figuras: la captura real de Tecktonik anima las piernas y la cadera
-          if (mixer && danceAction) {
+        // REACCIÓN AL SILENCIO REAL:
+        // Si no hay música o hay un silencio en la pista, el avatar se frena en tensión muscular
+        if (audio.isSilent) {
+          if (danceAction && danceAction.isRunning()) {
+            danceAction.timeScale = 0.0;
+          }
+          if (singleLadiesAction && singleLadiesAction.isRunning()) {
+            singleLadiesAction.timeScale = 0.0;
+          }
+          if (tecktonikController) {
+            tecktonikController.updateWithAudio(delta, audio, true);
+          }
+        } else {
+          // REACCIÓN AL SONIDO EN VIVO:
+          // La velocidad de las piernas y el cuerpo responde directamente a la energía de la música
+          const reactiveSpeed = (currentBPM / 138) * (0.60 + audio.energy * 0.70 + audio.kickPulse * 0.30);
+
+          if (danceAction && danceAction.isRunning()) {
+            danceAction.timeScale = reactiveSpeed;
+          }
+          if (singleLadiesAction && singleLadiesAction.isRunning()) {
+            singleLadiesAction.timeScale = reactiveSpeed;
+          }
+
+          if (tecktonikController && tecktonikController.currentMode === 'deepmotion' && mixer && danceAction) {
             mixer.update(delta);
+          } else if (tecktonikController && tecktonikController.currentMode === 'singleladies' && mixer && singleLadiesAction) {
+            mixer.update(delta);
+          } else if (tecktonikController) {
+            // Piernas con mocap real de Tecktonik evaluado por el mixer
+            if (mixer && danceAction) {
+              mixer.update(delta);
+            }
+            if (currentModel && typeof currentModel.updateMatrixWorld === 'function') {
+              currentModel.updateMatrixWorld(true);
+            }
+            // Brazos y torso reaccionando instantáneamente a las frecuencias y al impacto del bombo
+            tecktonikController.updateWithAudio(delta, audio, false);
           }
-          if (currentModel && typeof currentModel.updateMatrixWorld === 'function') {
-            currentModel.updateMatrixWorld(true);
-          }
-          // El controlador actualiza los brazos con la figura seleccionada
-          tecktonikController.update(delta);
         }
       }
 
