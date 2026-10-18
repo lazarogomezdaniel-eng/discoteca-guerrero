@@ -1519,7 +1519,7 @@
         qDelta[handKey].setFromEuler(handEuler);
       }
 
-      // Evaluador Hermite/Cardinal C1 con curva "Whip & Lock" (latigazo rápido + bloqueo nítido en el beat)
+      // Evaluador Hermite/Cardinal C1 continuo con aceleración y desaceleración orgánica de baile
       sampleClosedSpline3D(points, normPhase, snapAccent = 0.0) {
         const n = points.length;
         const p = ((normPhase % 1.0) + 1.0) % 1.0;
@@ -1530,19 +1530,11 @@
         const i2 = (i1 + 1) % n;
         const i3 = (i1 + 2) % n;
 
-        const snap = Math.max(0.0, Math.min(0.85, snapAccent));
-        const holdStart = Math.max(0.20, 1.0 - snap * 0.52);
-        let t;
-        if (rawU < holdStart) {
-          const s = Math.max(0.0, Math.min(1.0, rawU / holdStart));
-          const smoothS = s * s * (3.0 - 2.0 * s);
-          const whipS = 1.0 - Math.pow(Math.max(0.0, 1.0 - s), 2.3);
-          t = smoothS * (1.0 - snap * 0.55) + whipS * (snap * 0.55);
-        } else {
-          t = 1.0;
-        }
+        // Curva suave continua orgánica (S-curve cúbica Hermite sin cortes bruscos)
+        const s = Math.max(0.0, Math.min(1.0, rawU));
+        const t = s * s * (3.0 - 2.0 * s);
 
-        const tau = 0.5 * (1.0 - snap * 0.82);
+        const tau = 0.45;
         const t2 = t * t;
         const t3 = t2 * t;
         const h00 = 2.0 * t3 - 3.0 * t2 + 1.0;
@@ -1563,7 +1555,7 @@
         return out;
       }
 
-      // Evaluador maestro de coreografía continua con "Whip & Lock" musical al medio beat
+      // Evaluador maestro de coreografía continua con flujo musical fluido entre poses
       sampleChoreoSpline(keyframes, normPhase) {
         const n = keyframes.length;
         const p = ((normPhase % 1.0) + 1.0) % 1.0;
@@ -1579,21 +1571,12 @@
         const kf2 = keyframes[i2];
         const kf3 = keyframes[i3];
 
-        // Curva Whip-and-Lock: latigazo rápido en la primera mitad del sub-beat y lectura clara en el beat
-        const snap = Math.max(0.05, Math.min(0.85, kf2.snap || 0.25));
-        const holdStart = Math.max(0.20, 1.0 - snap * 0.54);
-        let t;
-        if (rawU < holdStart) {
-          const s = Math.max(0.0, Math.min(1.0, rawU / holdStart));
-          const smoothS = s * s * (3.0 - 2.0 * s);
-          const whipS = 1.0 - Math.pow(Math.max(0.0, 1.0 - s), 2.4);
-          t = smoothS * (1.0 - snap * 0.6) + whipS * (snap * 0.6);
-        } else {
-          t = 1.0;
-        }
+        // Transición continua con S-curve cúbica (aceleración y frenado natural de brazos sin paradas congeladas)
+        const s = Math.max(0.0, Math.min(1.0, rawU));
+        const t = s * s * (3.0 - 2.0 * s);
 
-        const tau1 = 0.5 * (1.0 - (kf1.snap || 0.25) * 0.82);
-        const tau2 = 0.5 * (1.0 - snap * 0.82);
+        const tau1 = 0.45;
+        const tau2 = 0.45;
         const t2 = t * t;
         const t3 = t2 * t;
         const h00 = 2.0 * t3 - 3.0 * t2 + 1.0;
@@ -1953,19 +1936,19 @@
 
       applyViralContinuousDance(qDelta, amp = 1.0, t = 0, beatDur = 0.435, phaseOffset = 0.0) {
         const keyframes = this.getViralFlowKeyframes();
-        // Sincronización musical exacta a corcheas (0.5 beats por paso = 2 golpes por cada beat de la música)
-        const stepDuration = beatDur * 0.5;
+        // Sincronización musical a compás completo (1.0 beat por cada figura para lectura clara, fluida y coherente)
+        const stepDuration = beatDur * 1.0;
         const totalCycleDuration = keyframes.length * stepDuration;
         const normPhase = ((t / totalCycleDuration) + phaseOffset) % 1.0;
 
         const pose = this.sampleChoreoSpline(keyframes, normPhase);
 
-        // Micro-groove armónico en muñecas al ritmo del beat (reducido durante extensiones puras)
+        // Micro-groove armónico sutil en muñecas al ritmo del beat
         const beatOmega = (t / beatDur) * Math.PI * 2.0;
-        const microOrbX = Math.cos(beatOmega) * 0.008;
-        const microOrbY = Math.sin(beatOmega) * 0.010;
-        const microOrbZ = Math.cos(beatOmega * 0.5) * 0.008;
-        const microWave = Math.sin(beatOmega) * 0.09;
+        const microOrbX = Math.cos(beatOmega) * 0.005;
+        const microOrbY = Math.sin(beatOmega) * 0.006;
+        const microOrbZ = Math.cos(beatOmega * 0.5) * 0.005;
+        const microWave = Math.sin(beatOmega) * 0.04;
 
         const wR = [
           pose.wR[0] + microOrbX,
@@ -1978,22 +1961,23 @@
           pose.wL[2] + microOrbZ
         ];
 
-        this.solveArmIK(true, wR, pose.pR, pose.flexR + microWave, pose.twistR + microWave * 0.7, qDelta, amp);
-        this.solveArmIK(false, wL, pose.pL, pose.flexL - microWave, pose.twistL - microWave * 0.7, qDelta, amp);
+        this.solveArmIK(true, wR, pose.pR, pose.flexR + microWave, pose.twistR + microWave * 0.5, qDelta, amp);
+        this.solveArmIK(false, wL, pose.pL, pose.flexL - microWave, pose.twistL - microWave * 0.5, qDelta, amp);
 
         const sp = pose.spine;
         const hd = pose.head;
-        const breath = Math.sin(beatOmega) * 0.022;
+        const breath = Math.sin(beatOmega) * 0.018;
 
-        this.setWorldDelta('spine', (sp[0] + breath) * amp, sp[1] * amp, sp[2] * amp, qDelta);
-        this.setWorldDelta('chest', (sp[0] * 0.65 + breath) * amp, sp[1] * 0.65 * amp, sp[2] * 0.55 * amp, qDelta);
-        this.setWorldDelta('neck', hd[0] * 0.45 * amp, hd[1] * 0.45 * amp, hd[2] * 0.45 * amp, qDelta);
-        this.setWorldDelta('head', hd[0] * 0.75 * amp, hd[1] * 0.75 * amp, hd[2] * 0.75 * amp, qDelta);
+        // Torso atlético y erguido (alineado con la cadera para evitar cabeceo o balanceo lateral parásito)
+        this.setWorldDelta('spine', (sp[0] * 0.4 + breath) * amp, sp[1] * 0.25 * amp, 0.0, qDelta);
+        this.setWorldDelta('chest', (sp[0] * 0.3 + breath) * amp, sp[1] * 0.20 * amp, 0.0, qDelta);
+        this.setWorldDelta('neck', hd[0] * 0.35 * amp, hd[1] * 0.35 * amp, hd[2] * 0.25 * amp, qDelta);
+        this.setWorldDelta('head', hd[0] * 0.55 * amp, hd[1] * 0.55 * amp, hd[2] * 0.40 * amp, qDelta);
 
         return {
-          x: pose.hip[0],
-          z: pose.hip[1],
-          dip: pose.hip[2] || 0.0
+          x: pose.hip[0] * 0.25,
+          z: pose.hip[1] * 0.25,
+          dip: (pose.hip[2] || 0.0) * 0.35
         };
       }
 
@@ -2016,8 +2000,8 @@
 
         this.computeTargets(effectiveMode, this.time, currentHalfBeatStep, beatDuration, halfBeatDuration);
 
-        // Respuesta muscular rápida de Tecktonik (alcanza el 100% de las extensiones y locks en el beat)
-        const slerpFactor = Math.min(1.0, delta * 45 * Math.max(0.35, this.snappiness));
+        // Amortiguación física orgánica: fluidez natural sin tirones instantáneos ni rigidez mecánica
+        const slerpFactor = Math.min(1.0, delta * 12.0 * Math.max(0.65, this.snappiness));
 
         for (const [key, bone] of Object.entries(this.bones)) {
           if (!bone || !this.targetQuats[key]) continue;
@@ -2034,64 +2018,62 @@
 
       // 2. EXTENSIÓN HORIZONTAL 100% ESTIRADA & CRUCE FRONTAL MÁXIMO
       applyDeepCross(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
-        // 4 pasos a 0.5 beats por paso (2.0 beats por ciclo completo) -> rápido y percusivo al beat
-        const normPhase = ((t / (beatDur * 2.0)) % 1.0);
+        // 4 pasos a 1.0 beat por paso (4.0 beats por ciclo completo) -> fluido, amplio y coherente
+        const normPhase = ((t / (beatDur * 4.0)) % 1.0);
         const wR = this.sampleClosedSpline3D([
           [-0.76, 1.47, 0.03], // Paso 0: Extensión horizontal 100% estirada
           [0.25, 1.27, 0.21],  // Paso 1: Cruce profundo X (Izquierda por arriba, Derecha por abajo)
           [-0.76, 1.48, 0.04], // Paso 2: Extensión horizontal 100% estirada
           [0.25, 1.41, 0.26]   // Paso 3: Cruce profundo X inverso (Derecha por arriba)
-        ], normPhase, 0.72);
+        ], normPhase, 0.20);
         const wL = this.sampleClosedSpline3D([
           [0.76, 1.47, 0.03],
           [-0.25, 1.40, 0.26],
           [0.76, 1.48, 0.04],
           [-0.25, 1.27, 0.21]
-        ], normPhase, 0.72);
+        ], normPhase, 0.20);
         const pR = this.sampleClosedSpline3D([
           [-0.20, -0.55, -0.80],
           [-0.52, -0.45, 0.72],
           [-0.20, -0.55, -0.80],
           [-0.52, -0.38, 0.72]
-        ], normPhase, 0.55);
+        ], normPhase, 0.20);
         const pL = this.sampleClosedSpline3D([
           [0.20, -0.55, -0.80],
           [0.52, -0.38, 0.72],
           [0.20, -0.55, -0.80],
           [0.52, -0.45, 0.72]
-        ], normPhase, 0.55);
+        ], normPhase, 0.20);
 
         const crossWave = 0.5 - 0.5 * Math.cos(normPhase * Math.PI * 4.0);
-        const sideWave = Math.sin(normPhase * Math.PI * 2.0) * 0.45;
 
-        this.solveArmIK(true, wR, pR, crossWave * 0.22, crossWave * 0.32, qDelta, amp);
-        this.solveArmIK(false, wL, pL, crossWave * 0.22, -crossWave * 0.32, qDelta, amp);
+        this.solveArmIK(true, wR, pR, crossWave * 0.18, crossWave * 0.22, qDelta, amp);
+        this.solveArmIK(false, wL, pL, crossWave * 0.18, -crossWave * 0.22, qDelta, amp);
 
-        const torsoPitch = (-0.08 + crossWave * 0.20) * amp;
-        this.setWorldDelta('spine', torsoPitch * 0.6, sideWave * 0.16 * amp, 0.0, qDelta);
-        this.setWorldDelta('chest', torsoPitch * 0.5, sideWave * 0.14 * amp, 0.0, qDelta);
-        this.setWorldDelta('head', torsoPitch * 0.7, -sideWave * 0.14 * amp, 0.0, qDelta);
+        const torsoPitch = (-0.04 + crossWave * 0.08) * amp;
+        this.setWorldDelta('spine', torsoPitch * 0.5, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', torsoPitch * 0.4, 0.0, 0.0, qDelta);
+        this.setWorldDelta('head', torsoPitch * 0.6, 0.0, 0.0, qDelta);
 
-        return { x: sideWave, z: -0.10 + crossWave * 0.40, dip: crossWave * 0.03 };
+        return { x: 0.0, z: -0.05 + crossWave * 0.12, dip: crossWave * 0.02 };
       }
 
-      // 3. BRAZOS CRUZADOS (Freeze Lock con rebote rápido al beat)
+      // 3. BRAZOS CRUZADOS (Freeze Lock con rebote sutil al beat)
       applyFoldedArms(qDelta, amp = 1.0, phase = 0) {
-        const beatBounce = Math.sin(phase) * 0.025;
-        const sway = Math.sin(phase * 0.5) * 0.04;
-        this.solveArmIK(false, [-0.16 + sway, 1.35 + beatBounce, 0.25], [0.85, -0.35, 0.40], 0.18, -0.28, qDelta, amp);
-        this.solveArmIK(true, [0.16 + sway, 1.27 + beatBounce, 0.22], [-0.85, -0.40, 0.35], 0.18, 0.28, qDelta, amp);
+        const beatBounce = Math.sin(phase) * 0.015;
+        this.solveArmIK(false, [-0.16, 1.35 + beatBounce, 0.25], [0.85, -0.35, 0.40], 0.18, -0.28, qDelta, amp);
+        this.solveArmIK(true, [0.16, 1.27 + beatBounce, 0.22], [-0.85, -0.40, 0.35], 0.18, 0.28, qDelta, amp);
 
-        const grooveNod = Math.sin(phase) * 0.07 * amp;
-        this.setWorldDelta('spine', -0.06 * amp + grooveNod * 0.5, -sway * 1.4 * amp, sway * 1.6 * amp, qDelta);
-        this.setWorldDelta('chest', -0.05 * amp + grooveNod * 0.5, 0.0, 0.0, qDelta);
-        this.setWorldDelta('head', 0.09 * amp + grooveNod, 0.10 * Math.sin(phase * 0.5) * amp, 0.0, qDelta);
+        const grooveNod = Math.sin(phase) * 0.04 * amp;
+        this.setWorldDelta('spine', -0.04 * amp + grooveNod * 0.4, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', -0.03 * amp + grooveNod * 0.3, 0.0, 0.0, qDelta);
+        this.setWorldDelta('head', 0.06 * amp + grooveNod * 0.8, 0.0, 0.0, qDelta);
       }
 
-      // 4. ENTRELAZADO RÁPIDO (Pot de Colle / Bicycle Arm Wrap + Lock '+')
+      // 4. ENTRELAZADO (Pot de Colle / Bicycle Arm Wrap + Lock '+')
       applyBicycleArmWrap(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
-        // 8 nodos en 3.2 beats (giro eléctrico rápido + Lock en '+' + apertura lateral)
-        const normPhase = ((t / (beatDur * 3.2)) % 1.0);
+        // 8 nodos en 6.0 beats (giro continuo fluido, circular y sin prisas)
+        const normPhase = ((t / (beatDur * 6.0)) % 1.0);
         const wR = this.sampleClosedSpline3D([
           [-0.04, 1.46, 0.31], // Giro 1 arriba-frente
           [0.05, 1.28, 0.20],  // Giro 1 abajo-interior
@@ -2099,9 +2081,9 @@
           [0.05, 1.28, 0.20],  // Giro 2 abajo-interior
           [-0.02, 1.56, 0.28], // Lock '+' vertical
           [-0.02, 1.56, 0.28], // Hold nítido '+'
-          [-0.46, 1.46, 0.18], // Apertura lateral rápida
+          [-0.46, 1.46, 0.18], // Apertura lateral
           [-0.14, 1.38, 0.27]  // Retorno al rodillo
-        ], normPhase, 0.38);
+        ], normPhase, 0.20);
 
         const wL = this.sampleClosedSpline3D([
           [0.05, 1.28, 0.20],
@@ -2112,7 +2094,7 @@
           [-0.12, 1.34, 0.21],
           [0.46, 1.46, 0.18],
           [0.14, 1.34, 0.24]
-        ], normPhase, 0.38);
+        ], normPhase, 0.20);
 
         const pR = this.sampleClosedSpline3D([
           [-0.72, -0.34, 0.55],
@@ -2123,7 +2105,7 @@
           [-0.45, -0.75, 0.45],
           [-0.80, -0.42, 0.35],
           [-0.74, -0.40, 0.50]
-        ], normPhase, 0.30);
+        ], normPhase, 0.20);
 
         const pL = this.sampleClosedSpline3D([
           [0.72, -0.50, 0.45],
@@ -2134,45 +2116,44 @@
           [0.75, -0.35, 0.55],
           [0.80, -0.42, 0.35],
           [0.74, -0.40, 0.50]
-        ], normPhase, 0.30);
+        ], normPhase, 0.20);
 
         const omega = normPhase * Math.PI * 4.0;
-        this.solveArmIK(true, wR, pR, Math.cos(omega) * 0.24, Math.sin(omega) * 0.28, qDelta, amp);
-        this.solveArmIK(false, wL, pL, -Math.cos(omega) * 0.24, -Math.sin(omega) * 0.28, qDelta, amp);
+        this.solveArmIK(true, wR, pR, Math.cos(omega) * 0.18, Math.sin(omega) * 0.22, qDelta, amp);
+        this.solveArmIK(false, wL, pL, -Math.cos(omega) * 0.18, -Math.sin(omega) * 0.22, qDelta, amp);
 
-        const sway = Math.sin(normPhase * Math.PI * 2.0) * 0.07 * amp;
-        this.setWorldDelta('spine', 0.05 * amp, -sway * 0.6, sway, qDelta);
-        this.setWorldDelta('chest', 0.04 * amp, 0.0, sway * 0.6, qDelta);
-        this.setWorldDelta('head', 0.08 * amp, -sway, 0.0, qDelta);
+        this.setWorldDelta('spine', 0.03 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', 0.02 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('head', 0.05 * amp, 0.0, 0.0, qDelta);
 
-        return { x: Math.sin(normPhase * Math.PI * 2.0) * 0.34, z: 0.26 };
+        return { x: 0.0, z: 0.08 };
       }
 
-      // 5. EL ENHEBRADO (Window Threading rápido a medio beat)
+      // 5. EL ENHEBRADO (Window Threading armónico)
       applyThreading(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
-        const normPhase = ((t / (beatDur * 1.8)) % 1.0);
+        const normPhase = ((t / (beatDur * 4.0)) % 1.0);
         const wR = this.sampleClosedSpline3D([
           [-0.08, 1.32, 0.22],
           [0.06, 1.58, 0.27],
           [0.04, 1.36, 0.26],
           [-0.38, 1.48, 0.18]
-        ], normPhase, 0.60);
+        ], normPhase, 0.20);
         const wL = this.sampleClosedSpline3D([
           [-0.04, 1.36, 0.26],
           [-0.38, 1.48, 0.18],
           [0.08, 1.32, 0.22],
           [-0.06, 1.58, 0.27]
-        ], normPhase, 0.60);
+        ], normPhase, 0.20);
 
-        this.solveArmIK(true, wR, [-0.76, -0.35, 0.50], 0.20, 0.22, qDelta, amp);
-        this.solveArmIK(false, wL, [0.76, -0.35, 0.50], 0.20, -0.22, qDelta, amp);
+        this.solveArmIK(true, wR, [-0.76, -0.35, 0.50], 0.18, 0.18, qDelta, amp);
+        this.solveArmIK(false, wL, [0.76, -0.35, 0.50], 0.18, -0.18, qDelta, amp);
 
-        const sway = Math.sin(normPhase * Math.PI * 2.0);
-        this.setWorldDelta('spine', 0.05 * amp, sway * 0.08 * amp, sway * 0.07 * amp, qDelta);
-        this.setWorldDelta('head', 0.08 * amp, -sway * 0.10 * amp, 0.0, qDelta);
+        this.setWorldDelta('spine', 0.03 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', 0.02 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('head', 0.05 * amp, 0.0, 0.0, qDelta);
       }
 
-      // 6. LA PEINADA REAL (360° Head Wrap rápido a 1.6 beats por vuelta con relevo y esquiva)
+      // 6. LA PEINADA REAL (360° Head Wrap a 4.0 beats por vuelta, cadencia elegante)
       apply360HeadWrapSingleArm(isRight, phaseAngle, qDelta, amp = 1.0) {
         const TWO_PI = Math.PI * 2;
         const normPhase = (((phaseAngle % TWO_PI) + TWO_PI) % TWO_PI) / TWO_PI;
@@ -2201,16 +2182,16 @@
           [0.90, -0.38, 0.20]
         ];
 
-        const wristPos = this.sampleClosedSpline3D(wristWaypoints, normPhase, 0.20);
-        const poleDir = this.sampleClosedSpline3D(poleWaypoints, normPhase, 0.20);
+        const wristPos = this.sampleClosedSpline3D(wristWaypoints, normPhase, 0.15);
+        const poleDir = this.sampleClosedSpline3D(poleWaypoints, normPhase, 0.15);
 
         const crownWave = Math.sin(normPhase * TWO_PI);
-        this.solveArmIK(isRight, wristPos, poleDir, 0.30 * crownWave, isRight ? 0.22 * crownWave : -0.22 * crownWave, qDelta, amp);
+        this.solveArmIK(isRight, wristPos, poleDir, 0.25 * crownWave, isRight ? 0.18 * crownWave : -0.18 * crownWave, qDelta, amp);
       }
 
       apply360HeadWrap(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
         const TWO_PI = Math.PI * 2;
-        const cycleSpeed = TWO_PI / (beatDur * 1.6);
+        const cycleSpeed = TWO_PI / (beatDur * 4.0);
         const thetaR = (t * cycleSpeed) % TWO_PI;
         const thetaL = (thetaR + Math.PI) % TWO_PI;
 
@@ -2220,137 +2201,135 @@
         const dodgeR = Math.max(0.0, Math.sin(thetaR));
         const dodgeL = Math.max(0.0, Math.sin(thetaL));
 
-        const headTiltZ = (dodgeR * 0.22 - dodgeL * 0.22) * amp;
-        const headNodX = ((dodgeR + dodgeL) * 0.12) * amp;
-        const headTurnY = (dodgeR * 0.15 - dodgeL * 0.15) * amp;
+        const headTiltZ = (dodgeR * 0.12 - dodgeL * 0.12) * amp;
+        const headNodX = ((dodgeR + dodgeL) * 0.08) * amp;
+        const headTurnY = (dodgeR * 0.10 - dodgeL * 0.10) * amp;
 
-        this.setWorldDelta('neck', headNodX * 0.45, headTurnY * 0.4, headTiltZ * 0.45, qDelta);
-        this.setWorldDelta('head', headNodX * 0.65, headTurnY * 0.6, headTiltZ * 0.65, qDelta);
+        this.setWorldDelta('neck', headNodX * 0.35, headTurnY * 0.3, headTiltZ * 0.35, qDelta);
+        this.setWorldDelta('head', headNodX * 0.5, headTurnY * 0.4, headTiltZ * 0.5, qDelta);
 
-        const torsoSway = Math.cos(thetaR) * 0.10 * amp;
-        this.setWorldDelta('spine', 0.04 * amp, -torsoSway * 0.5, torsoSway, qDelta);
-        this.setWorldDelta('chest', 0.03 * amp, -torsoSway * 0.5, torsoSway * 0.6, qDelta);
+        this.setWorldDelta('spine', 0.03 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', 0.02 * amp, 0.0, 0.0, qDelta);
 
-        return { x: Math.cos(thetaR) * 0.44, z: 0.18 };
+        return { x: 0.0, z: 0.06 };
       }
 
-      // 7. NUDO TECKTONIK (Wrap & Lock explosivo)
+      // 7. NUDO TECKTONIK (Wrap & Lock fluido)
       applyKnot(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
-        const normPhase = ((t / (beatDur * 1.8)) % 1.0);
+        const normPhase = ((t / (beatDur * 4.0)) % 1.0);
         const wR = this.sampleClosedSpline3D([
           [0.18, 1.52, 0.26],  // Nudo alto cruzado
           [0.18, 1.32, 0.23],  // Torsión de codos
-          [-0.56, 1.24, 0.18], // Desenlace explosivo abajo-lados
-          [-0.24, 1.44, 0.24]  // Recogida rápida
-        ], normPhase, 0.65);
+          [-0.56, 1.24, 0.18], // Desenlace abajo-lados
+          [-0.24, 1.44, 0.24]  // Recogida
+        ], normPhase, 0.20);
         const wL = this.sampleClosedSpline3D([
           [-0.18, 1.38, 0.23],
           [-0.18, 1.52, 0.26],
           [0.56, 1.24, 0.18],
           [0.24, 1.44, 0.24]
-        ], normPhase, 0.65);
+        ], normPhase, 0.20);
 
-        this.solveArmIK(true, wR, [-0.65, -0.35, 0.65], 0.22, 0.30, qDelta, amp);
-        this.solveArmIK(false, wL, [0.65, -0.35, 0.65], 0.22, -0.30, qDelta, amp);
+        this.solveArmIK(true, wR, [-0.65, -0.35, 0.65], 0.18, 0.22, qDelta, amp);
+        this.solveArmIK(false, wL, [0.65, -0.35, 0.65], 0.18, -0.22, qDelta, amp);
 
         const wave = Math.cos(normPhase * Math.PI * 2.0);
-        this.setWorldDelta('spine', 0.08 * wave * amp, 0.0, 0.0, qDelta);
-        this.setWorldDelta('head', 0.10 * wave * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('spine', 0.04 * wave * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', 0.03 * wave * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('head', 0.05 * wave * amp, 0.0, 0.0, qDelta);
       }
 
-      // 8. GEOMETRÍA NEÓN (L-Shapes / Tutting con bloqueo nítido)
+      // 8. GEOMETRÍA NEÓN (L-Shapes / Tutting con bloqueo nítido a 4 beats)
       applyLShapes(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
-        const normPhase = ((t / (beatDur * 2.0)) % 1.0);
+        const normPhase = ((t / (beatDur * 4.0)) % 1.0);
         const wR = this.sampleClosedSpline3D([
           [-0.44, 1.65, 0.14], // L derecha alta
           [-0.40, 1.66, 0.16], // Marco Faraón
           [-0.02, 1.35, 0.27], // Barra horizontal pecho
           [0.10, 1.50, 0.27]   // Caja paralela alta
-        ], normPhase, 0.72);
+        ], normPhase, 0.25);
         const wL = this.sampleClosedSpline3D([
           [0.02, 1.35, 0.27],
           [0.40, 1.66, 0.16],
           [0.44, 1.65, 0.14],
           [-0.10, 1.32, 0.25]
-        ], normPhase, 0.72);
+        ], normPhase, 0.25);
         const pR = this.sampleClosedSpline3D([
           [-0.88, -0.35, 0.24],
           [-0.82, -0.45, 0.36],
           [-0.75, -0.30, 0.58],
           [-0.70, -0.25, 0.65]
-        ], normPhase, 0.55);
+        ], normPhase, 0.20);
         const pL = this.sampleClosedSpline3D([
           [0.75, -0.30, 0.58],
           [0.82, -0.45, 0.36],
           [0.88, -0.35, 0.24],
           [0.70, -0.45, 0.55]
-        ], normPhase, 0.55);
+        ], normPhase, 0.20);
 
-        this.solveArmIK(true, wR, pR, 0.20, 0.18, qDelta, amp);
-        this.solveArmIK(false, wL, pL, 0.20, -0.18, qDelta, amp);
+        this.solveArmIK(true, wR, pR, 0.18, 0.15, qDelta, amp);
+        this.solveArmIK(false, wL, pL, 0.18, -0.15, qDelta, amp);
 
-        const sway = Math.cos(normPhase * Math.PI * 2.0) * 0.09 * amp;
-        this.setWorldDelta('spine', 0.04 * amp, -sway * 0.5, sway, qDelta);
-        this.setWorldDelta('head', 0.08 * amp, -sway * 1.4, -sway * 0.6, qDelta);
+        this.setWorldDelta('spine', 0.03 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', 0.02 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('head', 0.05 * amp, 0.0, 0.0, qDelta);
       }
 
-      // 9. FRENESÍ ELECTRO (Bombeo rápido de alto alcance)
+      // 9. FRENESÍ ELECTRO (Bombeo rítmico y amplio)
       applyFrenesi(qDelta, amp = 1.0, phase = 0) {
-        const fastPhase = phase * 1.25;
-        const sway = Math.sin(phase * 0.5) * 0.22 * amp;
+        const fastPhase = phase * 0.75;
         const pumpR = Math.sin(fastPhase);
         const pumpL = Math.sin(fastPhase + Math.PI);
 
         const wR = [
-          -0.30 - 0.16 * Math.cos(fastPhase),
-          1.52 + 0.32 * pumpR,
-          0.18 + 0.10 * Math.sin(fastPhase)
+          -0.30 - 0.12 * Math.cos(fastPhase),
+          1.52 + 0.24 * pumpR,
+          0.18 + 0.08 * Math.sin(fastPhase)
         ];
         const wL = [
-          0.30 + 0.16 * Math.cos(fastPhase),
-          1.52 + 0.32 * pumpL,
-          0.18 - 0.10 * Math.sin(fastPhase)
+          0.30 + 0.12 * Math.cos(fastPhase),
+          1.52 + 0.24 * pumpL,
+          0.18 - 0.08 * Math.sin(fastPhase)
         ];
 
-        this.solveArmIK(true, wR, [-0.85, -0.20 + 0.28 * pumpR, 0.40], 0.35 * pumpR, 0.45 * pumpR, qDelta, amp);
-        this.solveArmIK(false, wL, [0.85, -0.20 + 0.28 * pumpL, 0.40], 0.35 * pumpL, -0.45 * pumpL, qDelta, amp);
+        this.solveArmIK(true, wR, [-0.85, -0.20 + 0.20 * pumpR, 0.40], 0.25 * pumpR, 0.30 * pumpR, qDelta, amp);
+        this.solveArmIK(false, wL, [0.85, -0.20 + 0.20 * pumpL, 0.40], 0.25 * pumpL, -0.30 * pumpL, qDelta, amp);
 
-        this.setWorldDelta('spine', 0.06 * amp, -sway * 0.4, sway, qDelta);
-        this.setWorldDelta('chest', 0.04 * amp, 0.0, -sway * 0.4, qDelta);
-        this.setWorldDelta('head', (0.08 + Math.abs(pumpR) * 0.08) * amp, sway * 0.5, -sway * 0.3, qDelta);
+        this.setWorldDelta('spine', 0.03 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', 0.02 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('head', (0.05 + Math.abs(pumpR) * 0.04) * amp, 0.0, 0.0, qDelta);
       }
 
-      // 0. EL MOLINO (Windmills 360° rápidos en Figura-8)
+      // 10. EL MOLINO (Windmills 360° en Figura-8 con fluidez continua)
       applyMolino(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
-        const omega = (t / beatDur) * Math.PI * 2.4;
+        const omega = (t / beatDur) * Math.PI * 1.0;
         const sinR = Math.sin(omega);
         const cosR = Math.cos(omega);
         const sinL = Math.sin(omega + Math.PI);
         const cosL = Math.cos(omega + Math.PI);
 
         const wR = [
-          -0.20 + 0.18 * cosR,
-          1.44 + 0.22 * sinR,
-          0.24 + 0.09 * cosR
+          -0.20 + 0.16 * cosR,
+          1.44 + 0.18 * sinR,
+          0.24 + 0.07 * cosR
         ];
         const wL = [
-          0.20 - 0.18 * cosL,
-          1.44 + 0.22 * sinL,
-          0.24 + 0.09 * cosL
+          0.20 - 0.16 * cosL,
+          1.44 + 0.18 * sinL,
+          0.24 + 0.07 * cosL
         ];
 
-        this.solveArmIK(true, wR, [-0.82, -0.28 + 0.22 * sinR, 0.45], 0.28 * cosR, 0.38 * sinR, qDelta, amp);
-        this.solveArmIK(false, wL, [0.82, -0.28 + 0.22 * sinL, 0.45], 0.28 * cosL, -0.38 * sinL, qDelta, amp);
+        this.solveArmIK(true, wR, [-0.82, -0.28 + 0.18 * sinR, 0.45], 0.20 * cosR, 0.25 * sinR, qDelta, amp);
+        this.solveArmIK(false, wL, [0.82, -0.28 + 0.18 * sinL, 0.45], 0.20 * cosL, -0.25 * sinL, qDelta, amp);
 
-        const sway = Math.sin(omega * 0.5) * 0.14 * amp;
-        this.setWorldDelta('spine', 0.05 * amp, -sway * 0.5, sway, qDelta);
-        this.setWorldDelta('chest', 0.04 * amp, 0.0, sway * 0.5, qDelta);
-        this.setWorldDelta('head', 0.07 * amp, sway * 0.6, -sway * 0.4, qDelta);
+        this.setWorldDelta('spine', 0.03 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', 0.02 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('head', 0.04 * amp, 0.0, 0.0, qDelta);
       }
 
-      // 10. SEÑALAR ARRIBA AL CIELO (Sky Point: Dos brazos extendidos arriba + Cruce aéreo + Punteros alternos)
+      // 11. SEÑALAR ARRIBA AL CIELO (Sky Point a 6.0 beats)
       applySkyPoint(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
-        const normPhase = ((t / (beatDur * 3.0)) % 1.0);
+        const normPhase = ((t / (beatDur * 6.0)) % 1.0);
         const wR = this.sampleClosedSpline3D([
           [-0.22, 2.01, 0.05], // 0: Doble extensión vertical al cielo
           [0.10, 1.97, 0.09],  // 1: Cruce aéreo en X arriba
@@ -2358,7 +2337,7 @@
           [-0.20, 2.02, 0.05], // 3: Puntero derecho al cielo
           [-0.04, 1.35, 0.27], // 4: Baja derecho al pecho mientras izquierdo apunta al cielo
           [-0.22, 2.01, 0.05]  // 5: Doble disparo final al cielo
-        ], normPhase, 0.72);
+        ], normPhase, 0.20);
 
         const wL = this.sampleClosedSpline3D([
           [0.22, 2.01, 0.05],  // 0: Doble extensión vertical al cielo
@@ -2367,7 +2346,7 @@
           [0.04, 1.35, 0.27],  // 3: Escuadra izquierda en pecho
           [0.20, 2.02, 0.05],  // 4: Puntero izquierdo al cielo
           [0.22, 2.01, 0.05]   // 5: Doble disparo final al cielo
-        ], normPhase, 0.72);
+        ], normPhase, 0.20);
 
         const pR = this.sampleClosedSpline3D([
           [-0.70, 0.0, 0.70],
@@ -2376,7 +2355,7 @@
           [-0.70, 0.0, 0.70],
           [-0.78, -0.32, 0.54],
           [-0.70, 0.0, 0.70]
-        ], normPhase, 0.50);
+        ], normPhase, 0.20);
 
         const pL = this.sampleClosedSpline3D([
           [0.70, 0.0, 0.70],
@@ -2385,41 +2364,40 @@
           [0.78, -0.32, 0.54],
           [0.70, 0.0, 0.70],
           [0.70, 0.0, 0.70]
-        ], normPhase, 0.50);
+        ], normPhase, 0.20);
 
-        this.solveArmIK(true, wR, pR, -0.12, 0.0, qDelta, amp);
-        this.solveArmIK(false, wL, pL, -0.12, 0.0, qDelta, amp);
+        this.solveArmIK(true, wR, pR, -0.10, 0.0, qDelta, amp);
+        this.solveArmIK(false, wL, pL, -0.10, 0.0, qDelta, amp);
 
-        const sway = Math.sin(normPhase * Math.PI * 2.0) * 0.08 * amp;
-        const lookUp = -0.14 * amp;
-        this.setWorldDelta('spine', -0.07 * amp, -sway * 0.5, sway, qDelta);
-        this.setWorldDelta('chest', -0.05 * amp, 0.0, sway * 0.5, qDelta);
-        this.setWorldDelta('neck', lookUp * 0.45, sway * 0.5, 0.0, qDelta);
-        this.setWorldDelta('head', lookUp * 0.75, -sway * 0.5, 0.0, qDelta);
+        const lookUp = -0.10 * amp;
+        this.setWorldDelta('spine', -0.04 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', -0.03 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('neck', lookUp * 0.40, 0.0, 0.0, qDelta);
+        this.setWorldDelta('head', lookUp * 0.60, 0.0, 0.0, qDelta);
 
-        return { x: sway * 3.5, z: -0.10, dip: -0.03 };
+        return { x: 0.0, z: -0.05, dip: -0.02 };
       }
 
-      // 11. CUADRADO EN CABEZA (Muñeca flexionada a 90°) & AGUJAS DE RELOJ
+      // 12. CUADRADO EN CABEZA & AGUJAS DE RELOJ (a 6.0 beats)
       applyCrownSquareClock(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
-        const normPhase = ((t / (beatDur * 3.0)) % 1.0);
+        const normPhase = ((t / (beatDur * 6.0)) % 1.0);
         const wR = this.sampleClosedSpline3D([
-          [0.12, 1.94, 0.12],  // 0: Brazo derecho hace cuadrado sobre la cabeza (muñeca a 90°)
+          [0.12, 1.94, 0.12],  // 0: Brazo derecho hace cuadrado sobre la cabeza
           [0.12, 1.94, 0.12],  // 1: Mantiene cuadrado craneal mientras izquierda hace tic-tac
           [-0.42, 1.66, 0.15], // 2: Abre a escuadra lateral
           [-0.04, 1.35, 0.27], // 3: Derecha marca aguja horizontal en pecho
           [-0.24, 1.60, 0.24], // 4: Derecha gira 90° a aguja vertical en pecho
           [0.10, 1.50, 0.27]   // 5: Cierre de caja frontal
-        ], normPhase, 0.72);
+        ], normPhase, 0.20);
 
         const wL = this.sampleClosedSpline3D([
           [0.04, 1.35, 0.27],  // 0: Izquierda marca aguja horizontal en pecho
           [0.24, 1.60, 0.24],  // 1: Izquierda gira 90° a aguja vertical
           [0.42, 1.66, 0.15],  // 2: Abre a escuadra lateral
-          [-0.12, 1.94, 0.12], // 3: Brazo izquierdo hace cuadrado sobre la cabeza (muñeca a 90°)
+          [-0.12, 1.94, 0.12], // 3: Brazo izquierdo hace cuadrado sobre la cabeza
           [-0.12, 1.94, 0.12], // 4: Mantiene cuadrado craneal mientras derecha hace tic-tac
           [-0.10, 1.32, 0.25]  // 5: Cierre de caja frontal
-        ], normPhase, 0.72);
+        ], normPhase, 0.20);
 
         const pR = this.sampleClosedSpline3D([
           [-0.85, 0.58, 0.20],
@@ -2428,7 +2406,7 @@
           [-0.78, -0.32, 0.54],
           [-0.72, -0.65, 0.42],
           [-0.72, -0.25, 0.65]
-        ], normPhase, 0.55);
+        ], normPhase, 0.20);
 
         const pL = this.sampleClosedSpline3D([
           [0.78, -0.32, 0.54],
@@ -2437,24 +2415,24 @@
           [0.85, 0.58, 0.20],
           [0.85, 0.58, 0.20],
           [0.72, -0.45, 0.55]
-        ], normPhase, 0.55);
+        ], normPhase, 0.20);
 
-        const isRightCrown = (normPhase < 0.38) ? 0.95 : 0.22;
-        const isLeftCrown = (normPhase >= 0.48 && normPhase < 0.85) ? 0.95 : 0.22;
+        const isRightCrown = (normPhase < 0.38) ? 0.90 : 0.20;
+        const isLeftCrown = (normPhase >= 0.48 && normPhase < 0.85) ? 0.90 : 0.20;
 
-        this.solveArmIK(true, wR, pR, isRightCrown, 0.30, qDelta, amp);
-        this.solveArmIK(false, wL, pL, isLeftCrown, -0.30, qDelta, amp);
+        this.solveArmIK(true, wR, pR, isRightCrown, 0.25, qDelta, amp);
+        this.solveArmIK(false, wL, pL, isLeftCrown, -0.25, qDelta, amp);
 
-        const sway = Math.cos(normPhase * Math.PI * 2.0) * 0.09 * amp;
-        this.setWorldDelta('spine', 0.04 * amp, -sway * 0.5, sway, qDelta);
-        this.setWorldDelta('head', 0.08 * amp, -sway * 0.8, sway * 0.9, qDelta);
+        this.setWorldDelta('spine', 0.03 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', 0.02 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('head', 0.05 * amp, 0.0, 0.0, qDelta);
 
-        return { x: sway * 3.8, z: 0.18 };
+        return { x: 0.0, z: 0.06 };
       }
 
-      // 12. ARCO AÉREO VÉRTIGO (Barrido 180° por encima de la cabeza) & SLASH DIAGONAL 45°
+      // 13. ARCO AÉREO VÉRTIGO & SLASH DIAGONAL (a 6.0 beats)
       applyVertigoRainbow(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
-        const normPhase = ((t / (beatDur * 3.0)) % 1.0);
+        const normPhase = ((t / (beatDur * 6.0)) % 1.0);
         const wR = this.sampleClosedSpline3D([
           [-0.66, 1.78, 0.08], // 0: Arco aéreo a la derecha
           [-0.18, 2.01, 0.06], // 1: Cénit arriba
@@ -2462,7 +2440,7 @@
           [-0.64, 1.88, 0.06], // 3: Slash diagonal derecho arriba 45°
           [0.22, 1.15, 0.24],  // 4: Slash diagonal inverso (derecha abajo cruzada)
           [-0.64, 1.88, 0.06]  // 5: Estrella abierta diagonal alta
-        ], normPhase, 0.55);
+        ], normPhase, 0.20);
 
         const wL = this.sampleClosedSpline3D([
           [-0.16, 1.96, 0.12], // 0: Arco aéreo a la derecha
@@ -2471,7 +2449,7 @@
           [-0.22, 1.15, 0.24], // 3: Slash diagonal (izquierda abajo cruzada)
           [0.64, 1.88, 0.06],  // 4: Slash diagonal izquierdo arriba 45°
           [0.64, 1.88, 0.06]   // 5: Estrella abierta diagonal alta
-        ], normPhase, 0.55);
+        ], normPhase, 0.20);
 
         const pR = this.sampleClosedSpline3D([
           [-0.55, -0.35, -0.55],
@@ -2480,7 +2458,7 @@
           [-0.55, -0.30, -0.60],
           [-0.65, -0.45, 0.60],
           [-0.55, -0.30, -0.60]
-        ], normPhase, 0.40);
+        ], normPhase, 0.20);
 
         const pL = this.sampleClosedSpline3D([
           [0.65, 0.15, 0.65],
@@ -2489,22 +2467,21 @@
           [0.65, -0.45, 0.60],
           [0.55, -0.30, -0.60],
           [0.55, -0.30, -0.60]
-        ], normPhase, 0.40);
+        ], normPhase, 0.20);
 
-        this.solveArmIK(true, wR, pR, 0.0, -0.10, qDelta, amp);
-        this.solveArmIK(false, wL, pL, 0.0, 0.10, qDelta, amp);
+        this.solveArmIK(true, wR, pR, 0.0, -0.08, qDelta, amp);
+        this.solveArmIK(false, wL, pL, 0.0, 0.08, qDelta, amp);
 
-        const sway = Math.cos(normPhase * Math.PI * 2.0) * 0.14 * amp;
-        this.setWorldDelta('spine', -0.04 * amp, -sway * 0.6, sway, qDelta);
-        this.setWorldDelta('chest', -0.03 * amp, 0.0, sway * 0.6, qDelta);
-        this.setWorldDelta('head', -0.06 * amp, sway * 0.7, 0.0, qDelta);
+        this.setWorldDelta('spine', -0.03 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', -0.02 * amp, 0.0, 0.0, qDelta);
+        this.setWorldDelta('head', -0.04 * amp, 0.0, 0.0, qDelta);
 
-        return { x: sway * 3.2, z: 0.08 };
+        return { x: 0.0, z: 0.04 };
       }
 
-      // 13. DISPARO FRONTAL LÁSER & ELECTRO DROP BAJO
+      // 14. DISPARO FRONTAL LÁSER & ELECTRO DROP (a 6.0 beats)
       applyLaserFrontDrop(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
-        const normPhase = ((t / (beatDur * 3.0)) % 1.0);
+        const normPhase = ((t / (beatDur * 6.0)) % 1.0);
         const wR = this.sampleClosedSpline3D([
           [-0.18, 1.47, 0.50], // 0: Disparo láser derecho al frente
           [-0.26, 1.44, 0.18], // 1: Recoge derecho mientras dispara izquierdo
@@ -2512,7 +2489,7 @@
           [0.14, 1.10, 0.26],  // 3: Electro Drop bajo hacia las rodillas
           [-0.26, 2.01, 0.06], // 4: Explosión vertical al cielo
           [-0.74, 1.47, 0.04]  // 5: Apertura horizontal amplia
-        ], normPhase, 0.70);
+        ], normPhase, 0.20);
 
         const wL = this.sampleClosedSpline3D([
           [0.26, 1.44, 0.18],  // 0: Izquierdo armado en hombro
@@ -2521,7 +2498,7 @@
           [-0.14, 1.12, 0.28], // 3: Electro Drop bajo hacia las rodillas
           [0.26, 2.01, 0.06],  // 4: Explosión vertical al cielo
           [0.74, 1.47, 0.04]   // 5: Apertura horizontal amplia
-        ], normPhase, 0.70);
+        ], normPhase, 0.20);
 
         const pR = this.sampleClosedSpline3D([
           [-0.80, -0.45, 0.20],
@@ -2530,7 +2507,7 @@
           [-0.75, -0.35, 0.55],
           [-0.72, 0.0, 0.68],
           [-0.20, -0.55, -0.80]
-        ], normPhase, 0.50);
+        ], normPhase, 0.20);
 
         const pL = this.sampleClosedSpline3D([
           [0.80, -0.45, 0.40],
@@ -2539,20 +2516,20 @@
           [0.75, -0.35, 0.55],
           [0.72, 0.0, 0.68],
           [0.20, -0.55, -0.80]
-        ], normPhase, 0.50);
+        ], normPhase, 0.20);
 
-        this.solveArmIK(true, wR, pR, -0.10, 0.0, qDelta, amp);
-        this.solveArmIK(false, wL, pL, -0.10, 0.0, qDelta, amp);
+        this.solveArmIK(true, wR, pR, -0.08, 0.0, qDelta, amp);
+        this.solveArmIK(false, wL, pL, -0.08, 0.0, qDelta, amp);
 
         const isDrop = (normPhase >= 0.45 && normPhase < 0.68) ? 1.0 : 0.0;
         const isSky = (normPhase >= 0.68 && normPhase < 0.85) ? 1.0 : 0.0;
-        const pitch = (0.06 + isDrop * 0.14 - isSky * 0.16) * amp;
+        const pitch = (0.04 + isDrop * 0.10 - isSky * 0.12) * amp;
 
-        this.setWorldDelta('spine', pitch * 0.6, 0.0, 0.0, qDelta);
-        this.setWorldDelta('chest', pitch * 0.5, 0.0, 0.0, qDelta);
-        this.setWorldDelta('head', pitch * 0.8, 0.0, 0.0, qDelta);
+        this.setWorldDelta('spine', pitch * 0.5, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', pitch * 0.4, 0.0, 0.0, qDelta);
+        this.setWorldDelta('head', pitch * 0.6, 0.0, 0.0, qDelta);
 
-        return { x: Math.sin(normPhase * Math.PI * 2.0) * 0.25, z: 0.24, dip: isDrop * 0.07 - isSky * 0.03 };
+        return { x: 0.0, z: 0.08, dip: isDrop * 0.05 - isSky * 0.02 };
       }
 
       // =======================================================================
@@ -2609,8 +2586,8 @@
         this.setWorldDelta('head', headPitch * amp, headYaw * amp, headRoll * amp, qDelta);
 
         return {
-          x: s.hip[0] * 2.2 * amp,
-          z: s.hip[2] * 2.2 * amp,
+          x: s.hip[0] * 0.4 * amp,
+          z: s.hip[2] * 0.4 * amp,
           dip: s.hip[1] * amp
         };
       }
@@ -2648,7 +2625,7 @@
         let armBiasZ = 0;
         let extraKneeDip = 0;
 
-        // 0. BAILE VIRAL CONTINUO (Coreografía continua que enlaza las 10 figuras)
+        // 0. BAILE VIRAL CONTINUO (Coreografía continua que enlaza las figuras)
         if (mode === 'combo_viral' || mode === 'auto') {
           const bias = this.applyViralContinuousDance(qDelta, amp, t, beatDur, 0.0);
           armBiasX = bias.x;
@@ -2677,20 +2654,20 @@
         // 4. EL ENHEBRADO (Window Threading)
         } else if (mode === 'enhebrado') {
           this.applyThreading(qDelta, amp, t, beatDur);
-          armBiasX = Math.sin(phase * 0.5) * 0.35;
-          armBiasZ = 0.25;
+          armBiasX = 0;
+          armBiasZ = 0.05;
 
         // 5. GEOMETRÍA NEÓN (L-Shapes / Tutting)
         } else if (mode === 'l_shapes') {
           this.applyLShapes(qDelta, amp, t, beatDur);
-          armBiasX = Math.cos(phase * 0.5) * 0.38;
-          armBiasZ = 0.15;
+          armBiasX = 0;
+          armBiasZ = 0.05;
 
         // 6. EL MOLINO (Windmills 360° Figura-8)
         } else if (mode === 'molino') {
           this.applyMolino(qDelta, amp, t, beatDur);
-          armBiasX = Math.sin(phase * 0.5) * 0.38;
-          armBiasZ = 0.15;
+          armBiasX = 0;
+          armBiasZ = 0.05;
 
         // 7. SEÑALAR ARRIBA AL CIELO (Sky Point con los dos brazos extendidos)
         } else if (mode === 'cielo') {
@@ -2721,8 +2698,8 @@
         // 11. BRAZOS CRUZADOS (Freeze Attitude Lock con rebote al beat)
         } else if (mode === 'brazos_cruzados') {
           this.applyFoldedArms(qDelta, amp, phase);
-          armBiasX = Math.sin(phase * 0.5) * 0.18;
-          armBiasZ = 0.14;
+          armBiasX = 0;
+          armBiasZ = 0.05;
 
         // CAPTURA REAL DEEPMOTION (Video Original 15s - 100% Intacta)
         } else if (mode === 'deepmotion') {
@@ -2732,27 +2709,25 @@
           extraKneeDip = bias.dip || 0.0;
         }
 
-
-
         // =====================================================================
-        // FLOW DINÁMICO TECKTONIK: CADERA Y PATADAS ELECTRO AL RITMO DEL BEAT
-        // (Basado en la cinemática del baile original con rebote, patadas y balanceo pélvico)
+        // FLOW DINÁMICO TECKTONIK: PASOS Y PISADAS REALES CON REBOTE MUSICAL
+        // (Footwork alternante natural: pierna de apoyo firme + pierna activa que da el paso/kick)
         // =====================================================================
-        const effLegAmp = Math.max(0.6, Math.min(1.35, amp));
+        const effLegAmp = Math.max(0.6, Math.min(1.2, amp));
         const grooveDip = extraKneeDip * effLegAmp;
 
-        // Rebote elástico percusivo en cada beat (138 BPM electro kick drum)
+        // Rebote elástico vertical en cada beat musical (138 BPM kick bounce)
         const beatPulse = Math.pow(Math.abs(Math.sin(phase)), 2.0);
 
-        // Ciclo alternante de patadas (1 compás por pierna = 2 beats por ciclo)
+        // Ciclo alternante de pasos (1 compás por pierna = 2 beats por ciclo completo)
         const stepPhase = phase * 0.5;
         const stepCycle = Math.sin(stepPhase);
         const stepCos = Math.cos(stepPhase);
 
-        // 1. Desplazamiento pélvico (Hip Swivel & Pelvic Sway con actitud electro real)
-        const hipSwayX = (stepCycle * 0.125 + armBiasX * 0.14) * effLegAmp;
-        const hipDropY = -(0.038 * effLegAmp + beatPulse * 0.046 * effLegAmp + grooveDip * 0.65);
-        const hipShiftZ = (stepCos * 0.055 + armBiasZ * 0.10) * effLegAmp;
+        // 1. Centro de gravedad compacto y centrado (Groove natural de cadera: max 3-4 cm, CERO bamboleo)
+        const hipSwayX = (stepCycle * 0.032 + armBiasX * 0.020) * effLegAmp;
+        const hipDropY = -(0.016 * effLegAmp + beatPulse * 0.026 * effLegAmp + grooveDip * 0.4);
+        const hipShiftZ = (stepCos * 0.020 + armBiasZ * 0.015) * effLegAmp;
 
         if (this.bones.pelvis && this.initPositions.pelvis) {
           const worldPelvisDelta = new THREE.Vector3(hipSwayX, hipDropY, hipShiftZ);
@@ -2763,10 +2738,10 @@
           this.bones.pelvis.position.copy(this.initPositions.pelvis).add(worldPelvisDelta);
         }
 
-        // 2. Torsión y rotación de cadera (Pelvic Yaw & Roll en 8 electro)
-        const pelvisYaw = (stepCycle * 0.28 + armBiasX * 0.20) * effLegAmp;
-        const pelvisRoll = (stepCycle * 0.16 + armBiasX * 0.14) * effLegAmp;
-        const pelvisPitch = (0.04 * effLegAmp + beatPulse * 0.05 + grooveDip * 0.65);
+        // 2. Micro-rotación natural de cadera (Giro sutil que acompaña el paso, sin descolgarse)
+        const pelvisYaw = (stepCycle * 0.07) * effLegAmp;
+        const pelvisRoll = (stepCycle * 0.04) * effLegAmp;
+        const pelvisPitch = (0.02 * effLegAmp + beatPulse * 0.02 + grooveDip * 0.3);
 
         this.setWorldDelta(
           'pelvis',
@@ -2776,35 +2751,55 @@
           qDelta
         );
 
-        // 3. Patadas Electro (Electro Kick / Tap Kick Tecktonik bajo y diagonal):
-        // Pierna activa: eleva el muslo hacia delante (+X), estira la rodilla en latigazo y proyecta la punta del pie.
-        // Pierna de apoyo: flexiona elásticamente para absorber el golpe del beat y mantener la estabilidad.
-        const kickPulseL = Math.pow(Math.max(0.0, stepCycle), 1.8) * effLegAmp;
-        const kickPulseR = Math.pow(Math.max(0.0, -stepCycle), 1.8) * effLegAmp;
-        const kickSnapL = Math.sin(kickPulseL * Math.PI);
-        const kickSnapR = Math.sin(kickPulseR * Math.PI);
+        // 3. Pasos y Pisadas Reales Electro (Alternating Stepping & Footwork):
+        // En cada compás, una pierna actúa como soporte firme mientras la otra da el paso/tap rítmico.
+        const isLeftActive = (stepCycle >= 0);
+        const stepPowerL = Math.pow(Math.max(0.0, stepCycle), 1.6) * effLegAmp;
+        const stepPowerR = Math.pow(Math.max(0.0, -stepCycle), 1.6) * effLegAmp;
 
-        // Pierna izquierda (activa cuando stepCycle > 0, de apoyo cuando stepCycle < 0)
-        const lThighPitch = 0.14 + kickPulseL * 0.46; // Elevación limpia del muslo al frente hasta ~35°
-        const lThighYaw = 0.08 + kickPulseL * 0.16;   // Apertura angular diagonal
-        const lThighRoll = 0.06 + kickPulseL * 0.08;
-        const lKnee = 0.26 + (1.0 - kickPulseL) * 0.20 + kickSnapL * 0.52; // Flexión y latigazo hacia delante
-        const lFoot = -0.10 + kickPulseL * 0.32;      // Punta del pie extendida hacia el kick
+        // Pierna Izquierda:
+        let lThighPitch, lThighYaw, lThighRoll, lKnee, lFoot;
+        if (isLeftActive) {
+          // Pierna activa: despega con elevación de muslo, flexión de rodilla y marca el paso al frente
+          lThighPitch = 0.04 + stepPowerL * 0.28;
+          lThighYaw = 0.03 + stepPowerL * 0.06;
+          lThighRoll = 0.02;
+          lKnee = 0.08 + stepPowerL * 0.36; // Rodilla se dobla para levantar el pie y se extiende al pisar
+          lFoot = -0.06 + stepPowerL * 0.18; // El pie acompaña dinámicamente el contacto
+        } else {
+          // Pierna de apoyo: recta y firme para sostener el cuerpo, con rebote elástico en el beat
+          lThighPitch = 0.02 + beatPulse * 0.03;
+          lThighYaw = 0.03;
+          lThighRoll = 0.01;
+          lKnee = 0.06 + beatPulse * 0.07;
+          lFoot = 0.0;
+        }
+
+        // Pierna Derecha:
+        let rThighPitch, rThighYaw, rThighRoll, rKnee, rFoot;
+        if (!isLeftActive) {
+          // Pierna activa: despega con elevación de muslo, flexión de rodilla y marca el paso al frente
+          rThighPitch = 0.04 + stepPowerR * 0.28;
+          rThighYaw = -0.03 - stepPowerR * 0.06;
+          rThighRoll = -0.02;
+          rKnee = 0.08 + stepPowerR * 0.36;
+          rFoot = -0.06 + stepPowerR * 0.18;
+        } else {
+          // Pierna de apoyo: recta y firme para sostener el cuerpo, con rebote elástico en el beat
+          rThighPitch = 0.02 + beatPulse * 0.03;
+          rThighYaw = -0.03;
+          rThighRoll = -0.01;
+          rKnee = 0.06 + beatPulse * 0.07;
+          rFoot = 0.0;
+        }
 
         this.setWorldDelta('thigh_l', lThighPitch, lThighYaw, lThighRoll, qDelta);
         this.setWorldDelta('calf_l', -lKnee, 0.0, 0.0, qDelta);
-        this.setWorldDelta('foot_l', lFoot, 0.0, -0.06, qDelta);
-
-        // Pierna derecha (activa cuando stepCycle < 0, de apoyo cuando stepCycle > 0)
-        const rThighPitch = 0.14 + kickPulseR * 0.46; // Elevación limpia del muslo al frente hasta ~35°
-        const rThighYaw = -0.08 - kickPulseR * 0.16;  // Apertura angular diagonal
-        const rThighRoll = -0.06 - kickPulseR * 0.08;
-        const rKnee = 0.26 + (1.0 - kickPulseR) * 0.20 + kickSnapR * 0.52; // Flexión y latigazo hacia delante
-        const rFoot = -0.10 + kickPulseR * 0.32;      // Punta del pie extendida hacia el kick
+        this.setWorldDelta('foot_l', lFoot, 0.0, -0.03, qDelta);
 
         this.setWorldDelta('thigh_r', rThighPitch, rThighYaw, rThighRoll, qDelta);
         this.setWorldDelta('calf_r', -rKnee, 0.0, 0.0, qDelta);
-        this.setWorldDelta('foot_r', rFoot, 0.0, 0.06, qDelta);
+        this.setWorldDelta('foot_r', rFoot, 0.0, 0.03, qDelta);
 
         for (const [key, deltaQ] of Object.entries(qDelta)) {
           if (this.initQuats[key]) {
