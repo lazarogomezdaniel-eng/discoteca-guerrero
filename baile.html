@@ -2630,18 +2630,13 @@
         // Seguimiento muscular continuo y orgánico (cero congelación y cero paradas)
         const slerpFactor = (effectiveMode === 'idle')
           ? Math.min(1.0, delta * 8.0)
-          : Math.min(1.0, delta * 20.0 * Math.max(0.65, this.snappiness));
+          : Math.min(1.0, delta * 24.0 * Math.max(0.65, this.snappiness));
 
         for (const key of keysToProcess) {
           const bone = this.bones[key];
           if (!bone || !this.targetQuats[key] || !this.currentQuats[key]) continue;
-          const tq = this.targetQuats[key].clone();
+          const tq = this.targetQuats[key];
           if (isNaN(tq.x) || isNaN(tq.y) || isNaN(tq.z) || isNaN(tq.w)) continue;
-
-          // Garantizar siempre el camino geodésico más corto en S3 (evitar giros inversos de 360° o saltos de imagen)
-          if (this.currentQuats[key].dot(tq) < 0) {
-            tq.negate();
-          }
 
           this.currentQuats[key].slerp(tq, slerpFactor);
           bone.quaternion.copy(this.currentQuats[key]);
@@ -3822,6 +3817,11 @@
     }
 
     function playBaseMocap(targetAction) {
+      if (!targetAction) return;
+      if (currentClipAction === targetAction && targetAction.isRunning()) {
+        targetAction.paused = false;
+        return;
+      }
       crossFadeToClip(targetAction, 0.40);
     }
 
@@ -4477,11 +4477,6 @@
       }
     }
 
-    let audioKickPulse = 0;
-    let audioBassEnergy = 0;
-    let audioMidHighEnergy = 0;
-    let prevBassSample = 0;
-
     function animate() {
       requestAnimationFrame(animate);
       const rawDelta = clock.getDelta();
@@ -4496,36 +4491,7 @@
         mainSpot.intensity = THREE.MathUtils.lerp(mainSpot.intensity, baseSpot, delta * 10.0);
       }
 
-      // Extracción de datos de audio en tiempo real para reactividad orgánica
-      if (analyserNode && freqData && isDancing && activeBeatTrack !== 'none') {
-        analyserNode.getByteFrequencyData(freqData);
-
-        // Sub-bass & Bass (Bins 0 a 4: ~0 - 180 Hz)
-        const rawBass = (freqData[0] + freqData[1] + freqData[2] + freqData[3]) / (4 * 255);
-
-        // Mids & Highs (Bins 5 a 45: ~200 - 4000 Hz)
-        let midHighSum = 0;
-        for (let i = 5; i < 45; i++) midHighSum += freqData[i];
-        const rawMidHigh = (midHighSum / 40) / 255;
-
-        // Detección de impacto de bombo / caída de beat (transiente de ataque)
-        const bassImpulse = rawBass - prevBassSample;
-        if (bassImpulse > 0.06) {
-          audioKickPulse = Math.min(1.0, audioKickPulse + bassImpulse * 2.8);
-        }
-        prevBassSample = rawBass;
-
-        audioKickPulse = Math.max(0, audioKickPulse - delta * 5.0);
-        audioBassEnergy = THREE.MathUtils.lerp(audioBassEnergy, rawBass, delta * 9.0);
-        audioMidHighEnergy = THREE.MathUtils.lerp(audioMidHighEnergy, rawMidHigh, delta * 6.0);
-      } else {
-        audioKickPulse = Math.max(0, audioKickPulse - delta * 6.0);
-        audioBassEnergy = THREE.MathUtils.lerp(audioBassEnergy, 0, delta * 6.0);
-        audioMidHighEnergy = THREE.MathUtils.lerp(audioMidHighEnergy, 0, delta * 6.0);
-      }
-
       if (isDancing) {
-        // Actualizar mixer para TODOS los clips activos (permite transiciones y cross-fades suaves simultáneos)
         if (mixer) {
           mixer.update(delta);
         }
@@ -4534,34 +4500,9 @@
           currentModel.updateMatrixWorld(true);
         }
 
-        // Modulación procedural de brazos en los modos de figuras Tecktonik
         if (tecktonikController && tecktonikController.currentMode !== 'deepmotion' && tecktonikController.currentMode !== 'singleladies') {
-          // Modulación de amplitud orgánica según energía musical en tiempo real
-          tecktonikController.amplitude = 0.85 + audioMidHighEnergy * 0.45;
+          tecktonikController.amplitude = 1.0;
           tecktonikController.update(delta);
-        }
-
-        // =====================================================================
-        // REACCIÓN DIRECTA Y ORGÁNICA AL RITMO DE LA MÚSICA
-        // =====================================================================
-        // 1. Rebote elástico del centro de masa con los bombos y graves (Groove Bounce)
-        if (currentModel) {
-          const naturalGrooveDip = (audioKickPulse * 0.038 + audioBassEnergy * 0.015);
-          currentModel.position.y = -naturalGrooveDip;
-        }
-
-        // 2. Acentuación elástica de cabeza y pecho al compás del bombo (Groove Nod)
-        if (tecktonikController && tecktonikController.bones) {
-          const nodAngle = audioKickPulse * 0.045; // ~2.5 grados naturales
-          if (tecktonikController.bones.head) {
-            tecktonikController.bones.head.rotation.x += nodAngle;
-          }
-          if (tecktonikController.bones.neck) {
-            tecktonikController.bones.neck.rotation.x += nodAngle * 0.5;
-          }
-          if (tecktonikController.bones.chest) {
-            tecktonikController.bones.chest.rotation.x += nodAngle * 0.3;
-          }
         }
       } else {
         // En reposo: completar cualquier fade-out del mixer y mantener el personaje en descanso natural
