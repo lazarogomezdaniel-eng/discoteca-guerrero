@@ -351,6 +351,10 @@
 
     /* Custom File Input Upload Button */
     .upload-btn-label {
+      -webkit-appearance: none;
+      appearance: none;
+      font-family: inherit;
+      line-height: normal;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--panel-border);
       color: #cbd5e1;
@@ -359,10 +363,16 @@
       padding: 8px 14px;
       border-radius: 12px;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       transition: all 0.2s ease;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      outline: none;
     }
     .upload-btn-label:hover {
       background: rgba(255, 255, 255, 0.12);
@@ -1113,10 +1123,10 @@
       </div>
 
       <!-- Upload Custom Song -->
-      <label class="upload-btn-label">
+      <button type="button" class="upload-btn-label" id="btn-upload-audio" onclick="window.triggerAudioUpload ? window.triggerAudioUpload() : document.getElementById('audio-file-input').click()">
         <span>📂 Cargar MP3/WAV</span>
-        <input type="file" id="audio-file-input" accept="audio/*" style="display:none;" onchange="loadUserAudioFile(event)">
-      </label>
+      </button>
+      <input type="file" id="audio-file-input" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/m4a,audio/x-m4a,audio/aac,audio/flac" style="position:fixed; top:-9999px; left:-9999px; opacity:0; pointer-events:none; width:1px; height:1px;" onchange="window.loadUserAudioFile(event)">
     </div>
 
     <!-- Base Mocap Groove Switcher (Hips, Waist & Footwork Dynamic) -->
@@ -1190,7 +1200,7 @@
     </div>
   </div>
 
-  <audio id="html5-audio" preload="auto" style="display:none;"></audio>
+  <audio id="html5-audio" preload="auto" playsinline webkit-playsinline style="display:none;"></audio>
 
   <!-- Main JavaScript Engine -->
   <script type="module">
@@ -3340,7 +3350,7 @@
         statusText.innerText = `Bailando Tecktonik (${currentBPM} BPM)`;
         statusDot.innerText = '🟢';
 
-        if (activeBeatTrack === 'sample') {
+        if (activeBeatTrack === 'sample' || activeBeatTrack === 'custom') {
           html5Audio.play().catch(e => console.log('Audio wait user gesture'));
         } else {
           startBeatClock();
@@ -3495,6 +3505,7 @@
 
     // Control de Pista de Sonido
     window.setBeatTrack = function(track) {
+      initAudio();
       activeBeatTrack = track;
       document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
       const activeBtn = document.getElementById(`trk-${track}`);
@@ -3503,8 +3514,17 @@
       if (track === 'sample') {
         stopBeatClock();
         html5Audio.src = 'beat_baile.wav';
+        html5Audio.load();
         html5Audio.loop = true;
-        if (isDancing) html5Audio.play();
+        if (!customAudioSource && audioCtx) {
+          try {
+            customAudioSource = audioCtx.createMediaElementSource(html5Audio);
+            customAudioSource.connect(masterGain);
+          } catch (err) {
+            console.warn('AudioSource connection error:', err);
+          }
+        }
+        if (isDancing) html5Audio.play().catch(e => console.log('Audio wait user gesture'));
       } else {
         html5Audio.pause();
         if (isDancing) startBeatClock();
@@ -3524,24 +3544,38 @@
       if (singleLadiesAction) {
         singleLadiesAction.timeScale = currentBPM / 138;
       }
-      if (isDancing && activeBeatTrack !== 'sample') {
+      if (isDancing && activeBeatTrack !== 'sample' && activeBeatTrack !== 'custom') {
         startBeatClock();
+      }
+    };
+
+    // Disparador de selector de archivos compatible con iOS Safari y Android
+    window.triggerAudioUpload = function() {
+      initAudio();
+      const input = document.getElementById('audio-file-input');
+      if (input) {
+        input.click();
       }
     };
 
     // Subir archivo MP3/WAV propio del usuario
     window.loadUserAudioFile = function(e) {
-      const file = e.target.files[0];
+      const file = e.target.files && e.target.files[0];
       if (!file) return;
       initAudio();
 
       const objectUrl = URL.createObjectURL(file);
       html5Audio.src = objectUrl;
+      html5Audio.load();
       html5Audio.loop = true;
 
       if (!customAudioSource && audioCtx) {
-        customAudioSource = audioCtx.createMediaElementSource(html5Audio);
-        customAudioSource.connect(masterGain);
+        try {
+          customAudioSource = audioCtx.createMediaElementSource(html5Audio);
+          customAudioSource.connect(masterGain);
+        } catch (err) {
+          console.warn('AudioSource connection error:', err);
+        }
       }
 
       stopBeatClock();
@@ -3549,8 +3583,18 @@
       document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
 
       toggleDance(true);
-      html5Audio.play();
-      document.getElementById('status-text').innerText = `Reproduciendo: ${file.name.substring(0, 18)}...`;
+
+      const playPromise = html5Audio.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          const shortName = file.name.length > 20 ? file.name.substring(0, 18) + '...' : file.name;
+          document.getElementById('status-text').innerText = `🎵 ${shortName}`;
+        }).catch(err => {
+          console.warn('Mobile autoplay policy prevented audio playback:', err);
+          document.getElementById('status-text').innerText = 'Toca ▶️ Play para iniciar la canción';
+        });
+      }
+      e.target.value = '';
     };
 
     // =========================================================================
