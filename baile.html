@@ -289,12 +289,34 @@
       border-radius: 10px;
       cursor: pointer;
       transition: all 0.2s ease;
+      white-space: nowrap;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .track-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
     }
     .track-btn.active {
       background: rgba(0, 242, 254, 0.18);
       color: #fff;
       border-color: rgba(0, 242, 254, 0.45);
       box-shadow: 0 0 10px rgba(0, 242, 254, 0.25);
+    }
+    .track-btn.custom-track {
+      border: 1px dashed rgba(0, 242, 254, 0.45);
+      color: #38bdf8;
+    }
+    .track-btn.custom-track:hover {
+      border-color: #00f2fe;
+      background: rgba(56, 189, 248, 0.12);
+    }
+    .track-btn.custom-track.active {
+      border-style: solid;
+      background: rgba(56, 189, 248, 0.22);
+      color: #fff;
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
     }
 
     /* BPM & Tempo display */
@@ -1104,10 +1126,11 @@
 
       <!-- Sound Track Selectors -->
       <div class="track-selector">
-        <button class="track-btn active" id="trk-cyber" onclick="setBeatTrack('cyber')">⚡ Electro House</button>
-        <button class="track-btn" id="trk-rave" onclick="setBeatTrack('rave')">🔥 Cyber Rave</button>
-        <button class="track-btn" id="trk-lofi" onclick="setBeatTrack('lofi')">☕ Lofi Groove</button>
-        <button class="track-btn" id="trk-sample" onclick="setBeatTrack('sample')">🎵 Beat WAV</button>
+        <button class="track-btn active" id="trk-cyber" onclick="setBeatTrack('cyber')" title="Conectar / Desconectar Electro House">⚡ Electro House</button>
+        <button class="track-btn" id="trk-rave" onclick="setBeatTrack('rave')" title="Conectar / Desconectar Cyber Rave">🔥 Cyber Rave</button>
+        <button class="track-btn" id="trk-lofi" onclick="setBeatTrack('lofi')" title="Conectar / Desconectar Lofi Groove">☕ Lofi Groove</button>
+        <button class="track-btn" id="trk-sample" onclick="setBeatTrack('sample')" title="Conectar / Desconectar Beat WAV">🎵 Beat WAV</button>
+        <button class="track-btn custom-track" id="trk-custom" onclick="setBeatTrack('custom')" style="display:none;" title="Conectar / Desconectar tu canción subida">🎵 <span id="custom-track-name">Mi Canción</span></button>
       </div>
 
       <!-- BPM Display & Controls -->
@@ -1123,8 +1146,8 @@
       </div>
 
       <!-- Upload Custom Song -->
-      <button type="button" class="upload-btn-label" id="btn-upload-audio" onclick="window.triggerAudioUpload ? window.triggerAudioUpload() : document.getElementById('audio-file-input').click()">
-        <span>📂 Cargar MP3/WAV</span>
+      <button type="button" class="upload-btn-label" id="btn-upload-audio" onclick="window.triggerAudioUpload ? window.triggerAudioUpload() : document.getElementById('audio-file-input').click()" title="Cargar archivo de audio (MP3, WAV, M4A, etc.)">
+        <span id="upload-btn-text">📂 Cargar MP3/WAV</span>
       </button>
       <input type="file" id="audio-file-input" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/m4a,audio/x-m4a,audio/aac,audio/flac" style="position:fixed; top:-9999px; left:-9999px; opacity:0; pointer-events:none; width:1px; height:1px;" onchange="window.loadUserAudioFile(event)">
     </div>
@@ -1200,7 +1223,9 @@
     </div>
   </div>
 
-  <audio id="html5-audio" preload="auto" playsinline webkit-playsinline style="display:none;"></audio>
+  <!-- Dedicated Audio Elements: Sample track & User uploaded track -->
+  <audio id="sample-audio" src="beat_baile.wav" preload="auto" playsinline webkit-playsinline style="display:none;"></audio>
+  <audio id="user-audio" preload="auto" playsinline webkit-playsinline style="display:none;"></audio>
 
   <!-- Main JavaScript Engine -->
   <script type="module">
@@ -3034,11 +3059,15 @@
     let masterGain = null;
     let analyserNode = null;
     let freqData = null;
-    let activeBeatTrack = 'cyber'; // 'cyber' | 'rave' | 'lofi' | 'sample' | 'custom'
+    let activeBeatTrack = 'cyber'; // 'cyber' | 'rave' | 'lofi' | 'sample' | 'custom' | 'none'
     let stepCount = 0;
     let beatInterval = null;
-    const html5Audio = document.getElementById('html5-audio');
-    let customAudioSource = null;
+    const sampleAudio = document.getElementById('sample-audio');
+    const userAudio = document.getElementById('user-audio');
+    let sampleAudioSource = null;
+    let userAudioSource = null;
+    let customAudioLoaded = false;
+    let customAudioFileName = '';
 
     function initAudio() {
       if (!audioCtx) {
@@ -3055,6 +3084,26 @@
       }
       if (audioCtx.state === 'suspended') {
         audioCtx.resume();
+      }
+    }
+
+    function ensureSampleAudioConnected() {
+      if (!audioCtx || !masterGain || sampleAudioSource || !sampleAudio) return;
+      try {
+        sampleAudioSource = audioCtx.createMediaElementSource(sampleAudio);
+        sampleAudioSource.connect(masterGain);
+      } catch (err) {
+        console.warn('sampleAudioSource connection error:', err);
+      }
+    }
+
+    function ensureUserAudioConnected() {
+      if (!audioCtx || !masterGain || userAudioSource || !userAudio) return;
+      try {
+        userAudioSource = audioCtx.createMediaElementSource(userAudio);
+        userAudioSource.connect(masterGain);
+      } catch (err) {
+        console.warn('userAudioSource connection error:', err);
       }
     }
 
@@ -3347,12 +3396,24 @@
         iconPlay.style.display = 'none';
         iconPause.style.display = 'block';
         playBtn.classList.remove('paused');
-        statusText.innerText = `Bailando Tecktonik (${currentBPM} BPM)`;
         statusDot.innerText = '🟢';
 
-        if (activeBeatTrack === 'sample' || activeBeatTrack === 'custom') {
-          html5Audio.play().catch(e => console.log('Audio wait user gesture'));
+        if (activeBeatTrack === 'custom' && customAudioFileName) {
+          const shortName = customAudioFileName.length > 20 ? customAudioFileName.substring(0, 18) + '...' : customAudioFileName;
+          statusText.innerText = `🎵 ${shortName}`;
+        } else if (activeBeatTrack === 'none') {
+          statusText.innerText = `Bailando en silencio (${currentBPM} BPM)`;
         } else {
+          statusText.innerText = `Bailando Tecktonik (${currentBPM} BPM)`;
+        }
+
+        if (activeBeatTrack === 'sample') {
+          ensureSampleAudioConnected();
+          if (sampleAudio) sampleAudio.play().catch(e => console.log('Audio wait user gesture'));
+        } else if (activeBeatTrack === 'custom') {
+          ensureUserAudioConnected();
+          if (userAudio) userAudio.play().catch(e => console.log('Audio wait user gesture'));
+        } else if (activeBeatTrack === 'cyber' || activeBeatTrack === 'rave' || activeBeatTrack === 'lofi') {
           startBeatClock();
         }
 
@@ -3376,7 +3437,8 @@
         statusDot.innerText = '⏸️';
 
         stopBeatClock();
-        html5Audio.pause();
+        if (sampleAudio) sampleAudio.pause();
+        if (userAudio) userAudio.pause();
 
         if (danceAction && danceAction.isRunning()) danceAction.paused = true;
         if (singleLadiesAction && singleLadiesAction.isRunning()) singleLadiesAction.paused = true;
@@ -3503,31 +3565,60 @@
       }
     });
 
-    // Control de Pista de Sonido
+    // Control de Pista de Sonido (Conectar / Desconectar ritmos)
     window.setBeatTrack = function(track) {
       initAudio();
+
+      // Si se pulsa la pista que YA está activa, desconectarla (toggle off)
+      if (activeBeatTrack === track) {
+        stopBeatClock();
+        if (sampleAudio) sampleAudio.pause();
+        if (userAudio) userAudio.pause();
+        activeBeatTrack = 'none';
+        document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('status-text').innerText = 'Ritmo desconectado (Sin sonido)';
+        return;
+      }
+
+      // Desconectar cualquier sonido anterior antes de activar la nueva pista
+      stopBeatClock();
+      if (sampleAudio) sampleAudio.pause();
+      if (userAudio) userAudio.pause();
+
       activeBeatTrack = track;
       document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
       const activeBtn = document.getElementById(`trk-${track}`);
       if (activeBtn) activeBtn.classList.add('active');
 
       if (track === 'sample') {
-        stopBeatClock();
-        html5Audio.src = 'beat_baile.wav';
-        html5Audio.load();
-        html5Audio.loop = true;
-        if (!customAudioSource && audioCtx) {
-          try {
-            customAudioSource = audioCtx.createMediaElementSource(html5Audio);
-            customAudioSource.connect(masterGain);
-          } catch (err) {
-            console.warn('AudioSource connection error:', err);
-          }
+        sampleAudio.loop = true;
+        ensureSampleAudioConnected();
+        if (isDancing) {
+          sampleAudio.play().catch(e => console.log('Audio wait user gesture'));
         }
-        if (isDancing) html5Audio.play().catch(e => console.log('Audio wait user gesture'));
-      } else {
-        html5Audio.pause();
-        if (isDancing) startBeatClock();
+        document.getElementById('status-text').innerText = 'Pista: Beat WAV (Muestra)';
+      } else if (track === 'custom') {
+        if (!customAudioLoaded) {
+          window.triggerAudioUpload();
+          return;
+        }
+        userAudio.loop = true;
+        ensureUserAudioConnected();
+        if (isDancing) {
+          userAudio.play().catch(e => console.log('Audio wait user gesture'));
+        }
+        const shortName = customAudioFileName.length > 20 ? customAudioFileName.substring(0, 18) + '...' : customAudioFileName;
+        document.getElementById('status-text').innerText = `🎵 ${shortName}`;
+      } else if (track === 'cyber' || track === 'rave' || track === 'lofi') {
+        if (isDancing) {
+          startBeatClock();
+        }
+        const trackNames = {
+          cyber: `Electro House (${currentBPM} BPM)`,
+          rave: `Cyber Rave (${currentBPM} BPM)`,
+          lofi: `Lofi Groove (${currentBPM} BPM)`
+        };
+        document.getElementById('status-text').innerText = `Ritmo: ${trackNames[track] || track}`;
       }
     };
 
@@ -3544,7 +3635,7 @@
       if (singleLadiesAction) {
         singleLadiesAction.timeScale = currentBPM / 138;
       }
-      if (isDancing && activeBeatTrack !== 'sample' && activeBeatTrack !== 'custom') {
+      if (isDancing && (activeBeatTrack === 'cyber' || activeBeatTrack === 'rave' || activeBeatTrack === 'lofi')) {
         startBeatClock();
       }
     };
@@ -3558,33 +3649,48 @@
       }
     };
 
-    // Subir archivo MP3/WAV propio del usuario
+    // Subir archivo MP3/WAV propio del usuario (se mantiene en memoria aunque cambies de ritmo)
     window.loadUserAudioFile = function(e) {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
       initAudio();
 
       const objectUrl = URL.createObjectURL(file);
-      html5Audio.src = objectUrl;
-      html5Audio.load();
-      html5Audio.loop = true;
+      userAudio.src = objectUrl;
+      userAudio.load();
+      userAudio.loop = true;
+      ensureUserAudioConnected();
 
-      if (!customAudioSource && audioCtx) {
-        try {
-          customAudioSource = audioCtx.createMediaElementSource(html5Audio);
-          customAudioSource.connect(masterGain);
-        } catch (err) {
-          console.warn('AudioSource connection error:', err);
-        }
+      customAudioLoaded = true;
+      customAudioFileName = file.name;
+
+      // Mostrar el botón de la canción subida en la barra de pistas
+      const trkCustomBtn = document.getElementById('trk-custom');
+      const trkCustomName = document.getElementById('custom-track-name');
+      if (trkCustomBtn && trkCustomName) {
+        const shortName = file.name.length > 15 ? file.name.substring(0, 13) + '..' : file.name;
+        trkCustomName.innerText = shortName;
+        trkCustomBtn.title = `Conectar / Desconectar: ${file.name}`;
+        trkCustomBtn.style.display = 'inline-flex';
       }
 
+      // Actualizar texto del botón de carga a "Cambiar MP3"
+      const uploadText = document.getElementById('upload-btn-text');
+      if (uploadText) {
+        uploadText.innerText = '🔄 Cambiar MP3';
+      }
+
+      // Detener cualquier otra pista
       stopBeatClock();
+      if (sampleAudio) sampleAudio.pause();
+
       activeBeatTrack = 'custom';
       document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('active'));
+      if (trkCustomBtn) trkCustomBtn.classList.add('active');
 
       toggleDance(true);
 
-      const playPromise = html5Audio.play();
+      const playPromise = userAudio.play();
       if (playPromise !== undefined) {
         playPromise.then(() => {
           const shortName = file.name.length > 20 ? file.name.substring(0, 18) + '...' : file.name;
