@@ -2137,8 +2137,9 @@
 
         this.computeTargets(effectiveMode, this.time, currentHalfBeatStep, beatDuration, halfBeatDuration);
 
-        // Amortiguación física orgánica: fluidez natural sin tirones instantáneos ni rigidez mecánica
-        const slerpFactor = Math.min(1.0, delta * 12.0 * Math.max(0.65, this.snappiness));
+        // Respuesta muscular rápida Tecktonik: fluidez en brazos y máxima velocidad de impacto en piernas
+        const slerpFactorArms = Math.min(1.0, delta * 24.0 * Math.max(0.65, this.snappiness));
+        const slerpFactorLegs = Math.min(1.0, delta * 42.0 * Math.max(0.65, this.snappiness));
 
         const isProceduralGroove = (baseMocapGroove === 'combo' || baseMocapGroove === 'patadas' || baseMocapGroove === 'rodillas');
         const keysToUpdate = isProceduralGroove
@@ -2156,12 +2157,14 @@
               'neck', 'head'
             ];
 
+        const LOWER_KEYS_SET = new Set(['thigh_l', 'calf_l', 'foot_l', 'thigh_r', 'calf_r', 'foot_r', 'pelvis', 'spine']);
         for (const key of keysToUpdate) {
           const bone = this.bones[key];
           if (!bone || !this.targetQuats[key]) continue;
           const tq = this.targetQuats[key];
           if (isNaN(tq.x) || isNaN(tq.y) || isNaN(tq.z) || isNaN(tq.w)) continue;
-          this.currentQuats[key].slerp(tq, slerpFactor);
+          const factor = LOWER_KEYS_SET.has(key) ? slerpFactorLegs : slerpFactorArms;
+          this.currentQuats[key].slerp(tq, factor);
           bone.quaternion.copy(this.currentQuats[key]);
         }
       }
@@ -2754,45 +2757,95 @@
       //  - 'rodillas': Paso continuo de rodillas alternas 1-2
       // =======================================================================
       applyAlternatingRoutine(t, beatDur, qDelta, amp = 1.0, subGroove = 'combo') {
-        const effAmp = Math.max(0.7, Math.min(1.3, amp));
-
-        let isKickPhase = false;
-        let barBeat = 0; // 0.0 a 4.0 dentro del compás musical de 4 beats
-
-        if (subGroove === 'patadas') {
-          isKickPhase = true;
-          barBeat = ((t / beatDur) % 4.0 + 4.0) % 4.0;
-        } else if (subGroove === 'rodillas') {
-          isKickPhase = false;
-          barBeat = ((t / beatDur) % 4.0 + 4.0) % 4.0;
-        } else {
-          // 'combo' (por defecto): Frase musical de 8 beats (2 compases completos de 4/4)
-          // Beats 0.0 a 4.0: Compás 1 -> PASO DE RODILLAS ALTERNAS (1-2)
-          // Beats 4.0 a 8.0: Compás 2 -> PATADAS ELECTRO & GIROS DE CADERA TECKTONIK
-          const routineBeat = ((t / beatDur) % 8.0 + 8.0) % 8.0;
-          isKickPhase = (routineBeat >= 4.0);
-          barBeat = isKickPhase ? (routineBeat - 4.0) : routineBeat;
-        }
-
-        // Rebote elástico percusivo en cada beat (138 BPM kick drum)
+        const effLegAmp = Math.max(0.65, Math.min(1.35, amp));
         const beatPhase = ((t % beatDur) + beatDur) % beatDur / beatDur;
         const beatPulse = Math.pow(Math.sin(beatPhase * Math.PI), 1.6);
 
-        if (!isKickPhase) {
-          // ===================================================================
-          // 1. FASE DE RODILLAS ALTERNAS (1-2 KNEE STEP)
-          // 2 beats por ciclo (Beat 0..1: Izq, Beat 1..2: Der, Beat 2..3: Izq, Beat 3..4: Der)
-          // ===================================================================
-          const stepCycle = (barBeat % 2.0);
-          const isLeftActive = (stepCycle < 1.0);
-          const subPhase = isLeftActive ? stepCycle : (stepCycle - 1.0);
+        let isKickPhase = false;
+        let kickTime = t;
 
-          // Curva de elevación elástica y fluida
-          const liftCurve = Math.pow(Math.sin(subPhase * Math.PI), 1.15) * effAmp;
+        if (subGroove === 'patadas') {
+          isKickPhase = true;
+          kickTime = t;
+        } else if (subGroove === 'rodillas') {
+          isKickPhase = false;
+        } else {
+          // 'combo': Ciclo de 4 beats (1 compás musical de 4/4)
+          // Beat 0 a 2: Rodillas alternas (Beat 0 = Rodilla Izq, Beat 1 = Rodilla Der)
+          // Beat 2 a 4: Patadas Tecktonik con cadera (Beat 2 = Patada Izq, Beat 3 = Patada Der)
+          const comboBeat = ((t / beatDur) % 4.0 + 4.0) % 4.0;
+          isKickPhase = (comboBeat >= 2.0);
+          kickTime = t - 2.0 * beatDur;
+        }
 
-          // Desplazamiento pélvico natural y traslado de peso lateral (Weight Shift)
-          const hipShiftX = (isLeftActive ? 0.028 : -0.028) * liftCurve;
-          const hipDropY = -(0.016 * effAmp + beatPulse * 0.024 * effAmp);
+        if (isKickPhase) {
+          // ===================================================================
+          // PATADAS ELECTRO TECKTONIK CON GIRO DE CADERA REAL (3cb3bd7)
+          // ===================================================================
+          const stepPhase = (kickTime * Math.PI) / beatDur;
+          const stepCycle = Math.sin(stepPhase);
+          const stepCos = Math.cos(stepPhase);
+
+          // 1. Desplazamiento pélvico centrado (sin bamboleo lateral excesivo)
+          const hipSwayX = (stepCycle * 0.065) * effLegAmp;
+          const hipDropY = -(0.032 * effLegAmp + beatPulse * 0.042 * effLegAmp);
+          const hipShiftZ = (stepCos * 0.040) * effLegAmp;
+
+          if (this.bones.pelvis && this.initPositions.pelvis) {
+            const worldPelvisDelta = new THREE.Vector3(hipSwayX, hipDropY, hipShiftZ);
+            worldPelvisDelta.applyQuaternion(this.pelvisParentInvQuat);
+            this.bones.pelvis.position.copy(this.initPositions.pelvis).add(worldPelvisDelta);
+          }
+
+          // 2. Torsión y rotación de cadera (Pelvic Yaw & Roll enérgico Tecktonik)
+          const pelvisYaw = (stepCycle * 0.35) * effLegAmp;
+          const pelvisRoll = (stepCycle * 0.14) * effLegAmp;
+          const pelvisPitch = 0.04 * effLegAmp + beatPulse * 0.04;
+
+          this.setWorldDelta('pelvis', pelvisPitch, -pelvisYaw, pelvisRoll, qDelta);
+
+          // 3. Patadas Electro:
+          const kickPulseL = Math.pow(Math.max(0.0, stepCycle), 1.8) * effLegAmp;
+          const kickPulseR = Math.pow(Math.max(0.0, -stepCycle), 1.8) * effLegAmp;
+          const kickSnapL = Math.sin(kickPulseL * Math.PI);
+          const kickSnapR = Math.sin(kickPulseR * Math.PI);
+
+          // Pierna izquierda (activa cuando stepCycle > 0, de apoyo cuando stepCycle < 0)
+          const lThighPitch = 0.16 + kickPulseL * 0.52; // Elevación limpia del muslo al frente
+          const lThighYaw = 0.08 + kickPulseL * 0.16;   // Apertura angular diagonal
+          const lThighRoll = 0.06 + kickPulseL * 0.08;
+          const lKnee = 0.26 + (1.0 - kickPulseL) * 0.20 + kickSnapL * 0.56; // Flexión y latigazo hacia delante
+          const lFoot = -0.10 + kickPulseL * 0.34;      // Punta del pie extendida hacia el kick
+
+          this.setWorldDelta('thigh_l', lThighPitch, lThighYaw, lThighRoll, qDelta);
+          this.setWorldDelta('calf_l', -lKnee, 0.0, 0.0, qDelta);
+          this.setWorldDelta('foot_l', lFoot, 0.0, -0.06, qDelta);
+
+          // Pierna derecha (activa cuando stepCycle < 0, de apoyo cuando stepCycle > 0)
+          const rThighPitch = 0.16 + kickPulseR * 0.52; // Elevación limpia del muslo al frente
+          const rThighYaw = -0.08 - kickPulseR * 0.16;  // Apertura angular diagonal
+          const rThighRoll = -0.06 - kickPulseR * 0.08;
+          const rKnee = 0.26 + (1.0 - kickPulseR) * 0.20 + kickSnapR * 0.56; // Flexión y latigazo hacia delante
+          const rFoot = -0.10 + kickPulseR * 0.34;      // Punta del pie extendida hacia el kick
+
+          this.setWorldDelta('thigh_r', rThighPitch, rThighYaw, rThighRoll, qDelta);
+          this.setWorldDelta('calf_r', -rKnee, 0.0, 0.0, qDelta);
+          this.setWorldDelta('foot_r', rFoot, 0.0, 0.06, qDelta);
+
+          // Compensación de torso erguido
+          this.setWorldDelta('spine', 0.02, pelvisYaw * 0.35, -pelvisRoll * 0.35, qDelta);
+        } else {
+          // ===================================================================
+          // RODILLAS ALTERNAS (1-2 HIGH KNEE STEP)
+          // ===================================================================
+          const kneeCycle = ((t / beatDur) % 2.0 + 2.0) % 2.0;
+          const isLeftActive = (kneeCycle < 1.0);
+          const subPhase = isLeftActive ? kneeCycle : (kneeCycle - 1.0);
+          const liftCurve = Math.pow(Math.sin(subPhase * Math.PI), 1.15) * effLegAmp;
+
+          // Desplazamiento pélvico natural
+          const hipShiftX = (isLeftActive ? 0.026 : -0.026) * liftCurve;
+          const hipDropY = -(0.016 * effLegAmp + beatPulse * 0.022 * effLegAmp);
           const hipAdvanceZ = (isLeftActive ? 0.012 : -0.012) * Math.cos(subPhase * Math.PI);
 
           if (this.bones.pelvis && this.initPositions.pelvis) {
@@ -2801,25 +2854,44 @@
             this.bones.pelvis.position.copy(this.initPositions.pelvis).add(worldPelvisDelta);
           }
 
-          // Rotación de cadera: elevación y giro ligero
-          const pelvisRoll = (isLeftActive ? -0.055 : 0.055) * liftCurve;
-          const pelvisYaw = (isLeftActive ? -0.075 : 0.075) * liftCurve;
+          // Rotación de cadera:
+          const pelvisRoll = (isLeftActive ? -0.050 : 0.050) * liftCurve;
+          const pelvisYaw = (isLeftActive ? -0.070 : 0.070) * liftCurve;
           const pelvisPitch = 0.02 + beatPulse * 0.025;
           this.setWorldDelta('pelvis', pelvisPitch, pelvisYaw, pelvisRoll, qDelta);
 
           // Articulación de piernas:
           if (isLeftActive) {
-            // Rodilla izquierda activa: muslo arriba, rodilla doblada atrás, pie apunta abajo
-            const lThighPitch = 0.05 + liftCurve * 0.60;
+            // Rodilla izquierda activa: muslo sube 45°, rodilla flexionada 75° ATRÁS, pie abajo
+            const lThighPitch = 0.08 + liftCurve * 0.65;
             const lThighYaw = 0.02 + liftCurve * 0.06;
             const lThighRoll = 0.03 + liftCurve * 0.05;
-            const lKneeBend = -(0.08 + liftCurve * 1.05);
-            const lFootPitch = liftCurve * 0.22;
+            const lKneeBend = -(0.12 + liftCurve * 1.15);
+            const lFootPitch = liftCurve * 0.25;
+
             this.setWorldDelta('thigh_l', lThighPitch, lThighYaw, lThighRoll, qDelta);
             this.setWorldDelta('calf_l', lKneeBend, 0.0, 0.0, qDelta);
             this.setWorldDelta('foot_l', lFootPitch, 0.0, -0.02, qDelta);
+
+            // Pierna de apoyo derecha
+            const rThighPitch = 0.02 + beatPulse * 0.03;
+            const rKneeBend = -(0.06 + beatPulse * 0.08);
+            this.setWorldDelta('thigh_r', rThighPitch, 0.0, -0.01, qDelta);
+            this.setWorldDelta('calf_r', rKneeBend, 0.0, 0.0, qDelta);
+            this.setWorldDelta('foot_r', 0.0, 0.0, 0.0, qDelta);
           } else {
-            // Pierna de apoyo izquierda: amortigua el peso
+            // Rodilla derecha activa: muslo sube 45°, rodilla flexionada 75° ATRÁS, pie abajo
+            const rThighPitch = 0.08 + liftCurve * 0.65;
+            const rThighYaw = -(0.02 + liftCurve * 0.06);
+            const rThighRoll = -(0.03 + liftCurve * 0.05);
+            const rKneeBend = -(0.12 + liftCurve * 1.15);
+            const rFootPitch = liftCurve * 0.25;
+
+            this.setWorldDelta('thigh_r', rThighPitch, rThighYaw, rThighRoll, qDelta);
+            this.setWorldDelta('calf_r', rKneeBend, 0.0, 0.0, qDelta);
+            this.setWorldDelta('foot_r', rFootPitch, 0.0, 0.02, qDelta);
+
+            // Pierna de apoyo izquierda
             const lThighPitch = 0.02 + beatPulse * 0.03;
             const lKneeBend = -(0.06 + beatPulse * 0.08);
             this.setWorldDelta('thigh_l', lThighPitch, 0.0, 0.01, qDelta);
@@ -2827,103 +2899,9 @@
             this.setWorldDelta('foot_l', 0.0, 0.0, 0.0, qDelta);
           }
 
-          if (!isLeftActive) {
-            // Rodilla derecha activa: muslo arriba, rodilla doblada atrás, pie apunta abajo
-            const rThighPitch = 0.05 + liftCurve * 0.60;
-            const rThighYaw = -(0.02 + liftCurve * 0.06);
-            const rThighRoll = -(0.03 + liftCurve * 0.05);
-            const rKneeBend = -(0.08 + liftCurve * 1.05);
-            const rFootPitch = liftCurve * 0.22;
-            this.setWorldDelta('thigh_r', rThighPitch, rThighYaw, rThighRoll, qDelta);
-            this.setWorldDelta('calf_r', rKneeBend, 0.0, 0.0, qDelta);
-            this.setWorldDelta('foot_r', rFootPitch, 0.0, 0.02, qDelta);
-          } else {
-            // Pierna de apoyo derecha: amortigua el peso
-            const rThighPitch = 0.02 + beatPulse * 0.03;
-            const rKneeBend = -(0.06 + beatPulse * 0.08);
-            this.setWorldDelta('thigh_r', rThighPitch, 0.0, -0.01, qDelta);
-            this.setWorldDelta('calf_r', rKneeBend, 0.0, 0.0, qDelta);
-            this.setWorldDelta('foot_r', 0.0, 0.0, 0.0, qDelta);
-          }
-
           // Compensación de torso erguido
           const spineRoll = (isLeftActive ? 0.030 : -0.030) * liftCurve;
           const spineYaw = (isLeftActive ? 0.035 : -0.035) * liftCurve;
-          this.setWorldDelta('spine', 0.02, spineYaw, spineRoll, qDelta);
-        } else {
-          // ===================================================================
-          // 2. FASE DE PATADAS ELECTRO TECKTONIK CON GIROS DE CADERA
-          // Beat 0 = Kick Izq, Beat 1 = Kick Der, Beat 2 = Kick Izq, Beat 3 = Kick Der
-          // ===================================================================
-          const kickIndex = Math.floor(barBeat);
-          const isLeftKick = (kickIndex % 2 === 0);
-          const kickBeatPhase = barBeat % 1.0;
-
-          // Curva de lanzamiento y latigazo (snap) de la patada
-          const kickPulse = Math.pow(Math.sin(kickBeatPhase * Math.PI), 1.25) * effAmp;
-          const kickSnap = Math.sin(Math.pow(kickBeatPhase, 0.8) * Math.PI);
-
-          // Desplazamiento pélvico: el peso se traslada hacia el pie de apoyo
-          const hipSwayX = (isLeftKick ? -0.042 : 0.042) * kickPulse;
-          const hipDropY = -(0.026 * effAmp + beatPulse * 0.038 * effAmp);
-          const hipShiftZ = Math.sin(kickBeatPhase * Math.PI) * 0.025 * effAmp;
-
-          if (this.bones.pelvis && this.initPositions.pelvis) {
-            const worldPelvisDelta = new THREE.Vector3(hipSwayX, hipDropY, hipShiftZ);
-            worldPelvisDelta.applyQuaternion(this.pelvisParentInvQuat);
-            this.bones.pelvis.position.copy(this.initPositions.pelvis).add(worldPelvisDelta);
-          }
-
-          // Torsión y rotación de cadera (Pelvic Yaw & Roll enérgico Tecktonik):
-          // La cadera gira con fuerza hacia el lado de la pierna activa
-          const pelvisYaw = (isLeftKick ? -0.28 : 0.28) * kickPulse * effAmp;
-          const pelvisRoll = (isLeftKick ? -0.14 : 0.14) * kickPulse * effAmp;
-          const pelvisPitch = 0.035 + beatPulse * 0.035;
-          this.setWorldDelta('pelvis', pelvisPitch, pelvisYaw, pelvisRoll, qDelta);
-
-          // Articulación de piernas:
-          if (isLeftKick) {
-            // Pierna Izquierda activa: lanza la patada electro hacia adelante/diagonal con latigazo
-            const lThighPitch = 0.12 + kickPulse * 0.44;  // Elevación frontal del muslo
-            const lThighYaw = 0.06 + kickPulse * 0.14;    // Apertura angular diagonal
-            const lThighRoll = 0.04 + kickPulse * 0.08;
-            // Rodilla: inicia con flexión y se proyecta en latigazo hacia adelante
-            const lKnee = -(0.28 * (1.0 - kickSnap) + 0.04);
-            const lFoot = kickPulse * 0.28;               // Punta del pie extendida hacia el kick
-
-            this.setWorldDelta('thigh_l', lThighPitch, lThighYaw, lThighRoll, qDelta);
-            this.setWorldDelta('calf_l', lKnee, 0.0, 0.0, qDelta);
-            this.setWorldDelta('foot_l', lFoot, 0.0, -0.04, qDelta);
-
-            // Pierna Derecha de apoyo: flexiona elásticamente en el suelo
-            const rThighPitch = 0.03 + beatPulse * 0.04;
-            const rKnee = -(0.12 + beatPulse * 0.10);
-            this.setWorldDelta('thigh_r', rThighPitch, 0.0, -0.02, qDelta);
-            this.setWorldDelta('calf_r', rKnee, 0.0, 0.0, qDelta);
-            this.setWorldDelta('foot_r', 0.0, 0.0, 0.0, qDelta);
-          } else {
-            // Pierna Derecha activa: lanza la patada electro hacia adelante/diagonal con latigazo
-            const rThighPitch = 0.12 + kickPulse * 0.44;  // Elevación frontal del muslo
-            const rThighYaw = -(0.06 + kickPulse * 0.14); // Apertura angular diagonal
-            const rThighRoll = -(0.04 + kickPulse * 0.08);
-            const rKnee = -(0.28 * (1.0 - kickSnap) + 0.04);
-            const rFoot = kickPulse * 0.28;               // Punta del pie extendida hacia el kick
-
-            this.setWorldDelta('thigh_r', rThighPitch, rThighYaw, rThighRoll, qDelta);
-            this.setWorldDelta('calf_r', rKnee, 0.0, 0.0, qDelta);
-            this.setWorldDelta('foot_r', rFoot, 0.0, 0.04, qDelta);
-
-            // Pierna Izquierda de apoyo: flexiona elásticamente en el suelo
-            const lThighPitch = 0.03 + beatPulse * 0.04;
-            const lKnee = -(0.12 + beatPulse * 0.10);
-            this.setWorldDelta('thigh_l', lThighPitch, 0.0, 0.02, qDelta);
-            this.setWorldDelta('calf_l', lKnee, 0.0, 0.0, qDelta);
-            this.setWorldDelta('foot_l', 0.0, 0.0, 0.0, qDelta);
-          }
-
-          // Compensación enérgica de torso / columna:
-          const spineYaw = -pelvisYaw * 0.45;
-          const spineRoll = -pelvisRoll * 0.40;
           this.setWorldDelta('spine', 0.02, spineYaw, spineRoll, qDelta);
         }
       }
