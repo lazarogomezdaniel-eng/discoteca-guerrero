@@ -720,7 +720,9 @@
     body.ui-hidden .top-bar,
     body.ui-hidden .current-move-card,
     body.ui-hidden .stage-tools,
-    body.ui-hidden .dj-dock {
+    body.ui-hidden .dj-dock,
+    body.ui-hidden .mobile-main-menu,
+    body.ui-hidden .mobile-menu-backdrop {
       opacity: 0 !important;
       pointer-events: none !important;
       visibility: hidden !important;
@@ -737,6 +739,9 @@
     }
     body.ui-hidden .dj-dock {
       transform: translate(-50%, 60px);
+    }
+    body.ui-hidden .mobile-main-menu {
+      transform: translateY(110%) !important;
     }
     body.ui-hidden .btn-restore-ui {
       opacity: 0.88;
@@ -811,7 +816,228 @@
       pointer-events: auto;
     }
 
-    body.ui-hidden .btn-mobile-stage {
+    /* Mobile Main Menu Drawer & Backdrop */
+    .mobile-menu-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 2999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s ease;
+    }
+    .mobile-menu-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .mobile-main-menu {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-height: 84vh;
+      background: rgba(10, 14, 26, 0.98);
+      border-top: 1px solid rgba(0, 242, 254, 0.45);
+      border-radius: 24px 24px 0 0;
+      z-index: 3000;
+      padding: 16px 18px max(20px, env(safe-area-inset-bottom)) 18px;
+      box-shadow: 0 -12px 45px rgba(0, 0, 0, 0.9), 0 0 35px rgba(0, 242, 254, 0.25);
+      transform: translateY(115%);
+      transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+    }
+    .mobile-main-menu.show {
+      transform: translateY(0);
+    }
+
+    .mobile-menu-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 14px;
+    }
+    .mobile-menu-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .menu-title-icon {
+      font-size: 18px;
+    }
+    .btn-close-menu {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .menu-section-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .menu-cards-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .menu-nav-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--panel-border);
+      color: #fff;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .menu-nav-card.featured {
+      background: linear-gradient(135deg, rgba(247, 37, 133, 0.25), rgba(157, 78, 221, 0.25));
+      border-color: rgba(247, 37, 133, 0.5);
+      box-shadow: 0 4px 16px rgba(247, 37, 133, 0.2);
+    }
+    .card-icon {
+      font-size: 22px;
+    }
+    .card-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .card-text strong {
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .card-text small {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .card-arrow {
+      font-size: 14px;
+      color: var(--accent-cyan);
+    }
+
+    .menu-action-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--panel-border);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+    }
+    .menu-action-btn.highlight-upload {
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(56, 189, 248, 0.15));
+      border-color: rgba(0, 242, 254, 0.5);
+      color: #fff;
+    }
+    .menu-badge {
+      font-size: 10px;
+      font-weight: 800;
+      background: rgba(0, 242, 254, 0.2);
+      color: var(--accent-cyan);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(0, 242, 254, 0.4);
+    }
+
+    .menu-chips-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .menu-chip-btn {
+      flex: 1 1 calc(50% - 4px);
+      padding: 9px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      color: #cbd5e1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .menu-chip-btn.active {
+      background: rgba(0, 242, 254, 0.22);
+      border-color: var(--accent-cyan);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+    }
+
+    /* Botón Menú Principal en la Barra Superior */
+    .btn-mobile-menu {
+      display: none;
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(157, 78, 221, 0.3));
+      border: 1px solid var(--accent-cyan);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 0 14px rgba(0, 242, 254, 0.3);
+      touch-action: manipulation;
+    }
+    .btn-mobile-menu:active {
+      transform: scale(0.96);
+    }
+
+    /* Player structural containers (desktop = contents) */
+    .player-top-row,
+    .player-controls-row {
+      display: contents;
+    }
+    .btn-toggle-pads-mobile {
+      display: none;
+    }
+
+    body.ui-hidden .btn-mobile-stage,
+    body.ui-hidden .btn-mobile-menu {
       opacity: 0 !important;
       pointer-events: none !important;
       visibility: hidden !important;
@@ -821,6 +1047,14 @@
     @media (max-width: 768px) {
       .btn-mobile-stage {
         display: inline-flex;
+        padding: 6px 10px;
+        font-size: 11px;
+      }
+      .btn-mobile-menu {
+        display: inline-flex;
+      }
+      .studio-link-desktop {
+        display: none !important;
       }
       .stage-tools-header-mobile {
         display: flex;
@@ -828,54 +1062,70 @@
       .mobile-stage-backdrop {
         display: block;
       }
+      .mobile-menu-backdrop,
+      .mobile-main-menu {
+        display: block;
+      }
 
       /* Compact Top Bar */
       .top-bar {
-        padding: max(8px, env(safe-area-inset-top)) 12px 8px 12px;
+        top: 8px;
+        left: 8px;
+        right: 8px;
+        padding: max(4px, env(safe-area-inset-top)) 4px 4px 4px;
         gap: 6px;
       }
       .brand-logo {
+        padding: 6px 10px;
         gap: 6px;
+        border-radius: 12px;
       }
       .brand-text {
         font-size: 13px;
         letter-spacing: -0.2px;
+        white-space: nowrap;
       }
       .badge-teck {
         display: none;
       }
       .status-badge {
         font-size: 10px;
-        padding: 3px 7px;
+        padding: 3px 6px;
       }
       .top-bar-actions {
-        gap: 6px;
+        gap: 5px;
       }
-      .btn-immersive-toggle, .btn-studio-link {
-        padding: 5px 9px;
+      .btn-immersive-toggle {
+        padding: 6px 10px;
         font-size: 11px;
       }
-      .btn-immersive-toggle kbd {
-        display: none;
+      .btn-immersive-toggle kbd,
+      .toggle-ui-label {
+        display: none !important;
       }
 
       /* Compact Move Card */
       .current-move-card {
-        top: 56px;
-        padding: 6px 12px;
-        max-width: calc(100vw - 24px);
-        width: 360px;
-        border-radius: 12px;
-        gap: 8px;
+        top: 52px;
+        padding: 5px 12px;
+        max-width: calc(100vw - 16px);
+        width: auto;
+        border-radius: 999px;
+        gap: 6px;
       }
       .move-icon {
-        font-size: 18px;
+        font-size: 16px;
       }
       .move-title {
-        font-size: 12px;
+        font-size: 11px;
+        font-weight: 800;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 250px;
       }
       .move-meta {
-        font-size: 10px;
+        display: none;
       }
 
       /* Full Stage Tools Drawer on Mobile */
@@ -912,48 +1162,109 @@
         border-radius: 12px;
       }
 
-      /* DJ Dock on Mobile */
+      /* DJ Dock on Mobile: Organizado en 2 filas limpias para que nada quede oculto */
       .dj-dock {
-        width: calc(100% - 16px);
-        bottom: 8px;
-        padding: 10px 12px max(10px, env(safe-area-inset-bottom)) 12px;
-        border-radius: 18px;
-        gap: 8px;
+        width: calc(100% - 12px);
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: max(6px, env(safe-area-inset-bottom));
+        padding: 8px 10px;
+        border-radius: 20px;
+        gap: 6px;
       }
       .dj-player-bar {
-        flex-wrap: nowrap;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 6px;
+        padding: 8px 10px;
+        border-radius: 16px;
+      }
+      .player-top-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+      }
+      .big-play-btn {
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+        border-radius: 12px;
+        flex-shrink: 0;
+      }
+      .track-selector {
+        flex: 1;
+        min-width: 0;
+        display: flex;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
-        gap: 8px;
-        padding-bottom: 2px;
-      }
-      .dj-player-bar::-webkit-scrollbar {
-        display: none;
-      }
-      .big-play-btn {
-        min-width: 44px;
-        height: 44px;
-        border-radius: 12px;
-      }
-      .track-selector {
-        flex-shrink: 0;
         gap: 5px;
+        padding: 2px 0;
+      }
+      .track-selector::-webkit-scrollbar {
+        display: none;
       }
       .track-btn {
         padding: 6px 10px;
         font-size: 11px;
+        flex-shrink: 0;
+        white-space: nowrap;
+      }
+
+      .player-controls-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        width: 100%;
       }
       .bpm-box {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+        border-radius: 10px;
         flex-shrink: 0;
+      }
+      .bpm-display {
+        font-size: 12px;
+        min-width: 52px;
+      }
+      .bpm-ctrl-btn {
+        width: 22px;
+        height: 22px;
+        font-size: 13px;
+        border-radius: 5px;
       }
       .vis-box {
         display: none;
       }
       .upload-btn-label {
-        flex-shrink: 0;
+        flex: 1;
+        min-width: 0;
+        padding: 6px 8px;
+        font-size: 11px;
+        justify-content: center;
+        border-radius: 10px;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+      .btn-toggle-pads-mobile {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         padding: 6px 10px;
         font-size: 11px;
+        font-weight: 700;
+        background: rgba(0, 242, 254, 0.15);
+        border: 1px solid rgba(0, 242, 254, 0.35);
+        color: #fff;
+        border-radius: 10px;
+        cursor: pointer;
+        flex-shrink: 0;
         white-space: nowrap;
       }
 
@@ -975,20 +1286,41 @@
         padding: 6px 8px;
       }
 
-      /* Pads Container: 2-column touch grid with smooth scrolling */
+      /* Pads Container en Móvil: tira horizontal fluida con acceso instantáneo con el pulgar */
       .pads-container {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        max-height: 135px;
-        overflow-y: auto;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
         gap: 6px;
         padding: 2px;
+        width: 100%;
+        max-width: 100%;
+        transition: all 0.25s ease;
       }
-      .pad-btn {
-        padding: 7px 9px;
+      .pads-container::-webkit-scrollbar {
+        display: none;
+      }
+      .pads-container .pad-btn {
+        flex-shrink: 0;
+        padding: 6px 11px;
         font-size: 11px;
+        border-radius: 999px;
+        white-space: nowrap;
+        justify-content: center;
+      }
+      .pads-container.expanded {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        max-height: 200px;
+        overflow-y: auto;
+        gap: 6px;
+      }
+      .pads-container.expanded .pad-btn {
         border-radius: 10px;
+        padding: 8px 10px;
         justify-content: space-between;
       }
       .pad-btn span {
@@ -1047,18 +1379,87 @@
     </div>
     <div class="top-bar-actions">
       <button class="btn-mobile-stage" id="btn-mobile-stage" onclick="window.toggleMobileStageTools()" title="Cámaras y Luces de Pista">
-        <span>🎛️ Pista & Luces</span>
+        <span>🎛️ Pista</span>
       </button>
       <button class="btn-immersive-toggle" id="btn-toggle-ui" onclick="window.toggleImmersiveMode()" title="Ocultar interfaz / Pantalla limpia (Tecla H o doble tap)">
-        <span>👁️ Pantalla Limpia</span>
+        <span>👁️</span>
+        <span class="toggle-ui-label">Pantalla Limpia</span>
         <kbd>H</kbd>
       </button>
-      <a href="visor_original.html" class="btn-studio-link" style="background: linear-gradient(135deg, rgba(247, 37, 133, 0.4), rgba(157, 78, 221, 0.45)); border-color: #f72585; color: #fff; box-shadow: 0 0 12px rgba(247, 37, 133, 0.4);">
+      <a href="visor_original.html" class="btn-studio-link studio-link-desktop" style="background: linear-gradient(135deg, rgba(247, 37, 133, 0.4), rgba(157, 78, 221, 0.45)); border-color: #f72585; color: #fff; box-shadow: 0 0 12px rgba(247, 37, 133, 0.4);">
         <span>🎬 Ver Baile Original (Vídeo 100%)</span>
       </a>
-      <a href="laboratorio_baile.html" class="btn-studio-link">
+      <a href="laboratorio_baile.html" class="btn-studio-link studio-link-desktop">
         <span>🛠️ Ir a Estudio</span>
       </a>
+      <button class="btn-mobile-menu" id="btn-mobile-menu" onclick="window.toggleMobileMainMenu()" aria-label="Abrir Menú Principal" title="Menú Principal">
+        <span>☰ Menú</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Main Menu Drawer & Backdrop -->
+  <div class="mobile-menu-backdrop" id="mobile-menu-backdrop" onclick="window.toggleMobileMainMenu(false)"></div>
+  <div class="mobile-main-menu" id="mobile-main-menu">
+    <div class="mobile-menu-header">
+      <div class="mobile-menu-title">
+        <span class="menu-title-icon">⚡</span>
+        <span>Menú Electro Dance</span>
+      </div>
+      <button class="btn-close-menu" onclick="window.toggleMobileMainMenu(false)" aria-label="Cerrar Menú">✕</button>
+    </div>
+
+    <div class="mobile-menu-content">
+      <!-- Section: Experiencias & Vídeo -->
+      <div class="menu-section-label">🎬 Experiencias de Baile</div>
+      <div class="menu-cards-grid">
+        <a href="visor_original.html" class="menu-nav-card featured">
+          <span class="card-icon">🎬</span>
+          <div class="card-text">
+            <strong>Ver Baile Original (Vídeo 100%)</strong>
+            <small>Vídeo original Tecktonik sincronizado</small>
+          </div>
+          <span class="card-arrow">→</span>
+        </a>
+        <a href="laboratorio_baile.html" class="menu-nav-card">
+          <span class="card-icon">🛠️</span>
+          <div class="card-text">
+            <strong>Estudio / Laboratorio 3D</strong>
+            <small>Panel completo de edición y análisis</small>
+          </div>
+          <span class="card-arrow">→</span>
+        </a>
+      </div>
+
+      <!-- Section: Tu Música & Audio -->
+      <div class="menu-section-label" style="margin-top: 14px;">🎵 Tu Música & Ritmo</div>
+      <button type="button" class="menu-action-btn highlight-upload" onclick="window.triggerAudioUpload(); window.toggleMobileMainMenu(false);">
+        <span>📂 Cargar canción MP3/WAV del teléfono</span>
+        <span class="menu-badge">Subir</span>
+      </button>
+
+      <!-- Section: Cámaras & Iluminación -->
+      <div class="menu-section-label" style="margin-top: 14px;">🎛️ Cámaras de Pista</div>
+      <div class="menu-chips-row">
+        <button class="menu-chip-btn active" id="m-cam-dynamic" onclick="setCameraMode('dynamic'); window.toggleMobileMainMenu(false);">🎥 Beat Cam</button>
+        <button class="menu-chip-btn" id="m-cam-stage" onclick="setCameraMode('stage'); window.toggleMobileMainMenu(false);">🏟️ Escenario</button>
+        <button class="menu-chip-btn" id="m-cam-close" onclick="setCameraMode('close'); window.toggleMobileMainMenu(false);">🔍 Primer Plano</button>
+        <button class="menu-chip-btn" id="m-cam-orbit" onclick="setCameraMode('orbit'); window.toggleMobileMainMenu(false);">🔄 Orbital</button>
+      </div>
+
+      <div class="menu-section-label" style="margin-top: 14px;">✨ Iluminación</div>
+      <div class="menu-chips-row">
+        <button class="menu-chip-btn active" id="m-light-cyber" onclick="setLightingTheme('cyber'); window.toggleMobileMainMenu(false);">⚡ Cyber Neon</button>
+        <button class="menu-chip-btn" id="m-light-laser" onclick="setLightingTheme('laser'); window.toggleMobileMainMenu(false);">🔴 Láser</button>
+        <button class="menu-chip-btn" id="m-light-gold" onclick="setLightingTheme('gold'); window.toggleMobileMainMenu(false);">✨ Festival</button>
+      </div>
+
+      <!-- Section: Modo Inmersivo -->
+      <div class="menu-section-label" style="margin-top: 14px;">👁️ Visualización</div>
+      <button type="button" class="menu-action-btn" onclick="window.toggleImmersiveMode(true); window.toggleMobileMainMenu(false);">
+        <span>👁️ Pantalla Limpia (Ocultar Interfaz)</span>
+        <small style="color:var(--text-muted)">Doble tap para volver</small>
+      </button>
     </div>
   </div>
 
@@ -1114,41 +1515,53 @@
   <div class="dj-dock">
     <!-- Main Player Bar -->
     <div class="dj-player-bar">
-      <!-- Big Play / Stop Button -->
-      <button class="big-play-btn" id="btn-play-toggle" title="Play / Pausar Baile y Música (Espacio)">
-        <svg id="icon-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
-        <svg id="icon-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
-          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-        </svg>
-      </button>
+      <!-- Fila 1 en móvil / Inline en desktop: Play + Selector de pistas -->
+      <div class="player-top-row">
+        <!-- Big Play / Stop Button -->
+        <button class="big-play-btn" id="btn-play-toggle" title="Play / Pausar Baile y Música (Espacio)">
+          <svg id="icon-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          <svg id="icon-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+          </svg>
+        </button>
 
-      <!-- Sound Track Selectors -->
-      <div class="track-selector">
-        <button class="track-btn active" id="trk-cyber" onclick="setBeatTrack('cyber')" title="Conectar / Desconectar Electro House">⚡ Electro House</button>
-        <button class="track-btn" id="trk-rave" onclick="setBeatTrack('rave')" title="Conectar / Desconectar Cyber Rave">🔥 Cyber Rave</button>
-        <button class="track-btn" id="trk-lofi" onclick="setBeatTrack('lofi')" title="Conectar / Desconectar Lofi Groove">☕ Lofi Groove</button>
-        <button class="track-btn" id="trk-sample" onclick="setBeatTrack('sample')" title="Conectar / Desconectar Beat WAV">🎵 Beat WAV</button>
-        <button class="track-btn custom-track" id="trk-custom" onclick="setBeatTrack('custom')" style="display:none;" title="Conectar / Desconectar tu canción subida">🎵 <span id="custom-track-name">Mi Canción</span></button>
+        <!-- Sound Track Selectors -->
+        <div class="track-selector">
+          <button class="track-btn active" id="trk-cyber" onclick="setBeatTrack('cyber')" title="Conectar / Desconectar Electro House">⚡ Electro House</button>
+          <button class="track-btn" id="trk-rave" onclick="setBeatTrack('rave')" title="Conectar / Desconectar Cyber Rave">🔥 Cyber Rave</button>
+          <button class="track-btn" id="trk-lofi" onclick="setBeatTrack('lofi')" title="Conectar / Desconectar Lofi Groove">☕ Lofi Groove</button>
+          <button class="track-btn" id="trk-sample" onclick="setBeatTrack('sample')" title="Conectar / Desconectar Beat WAV">🎵 Beat WAV</button>
+          <button class="track-btn custom-track" id="trk-custom" onclick="setBeatTrack('custom')" style="display:none;" title="Conectar / Desconectar tu canción subida">🎵 <span id="custom-track-name">Mi Canción</span></button>
+        </div>
       </div>
 
-      <!-- BPM Display & Controls -->
-      <div class="bpm-box">
-        <button class="bpm-ctrl-btn" onclick="changeBPM(-2)">−</button>
-        <div class="bpm-display" id="bpm-val">128 BPM</div>
-        <button class="bpm-ctrl-btn" onclick="changeBPM(2)">+</button>
+      <!-- Fila 2 en móvil / Inline en desktop: BPM + Cargar MP3 + Toggle Figuras -->
+      <div class="player-controls-row">
+        <!-- BPM Display & Controls -->
+        <div class="bpm-box">
+          <button class="bpm-ctrl-btn" onclick="changeBPM(-2)">−</button>
+          <div class="bpm-display" id="bpm-val">128 BPM</div>
+          <button class="bpm-ctrl-btn" onclick="changeBPM(2)">+</button>
+        </div>
+
+        <!-- Realtime Audio Visualizer -->
+        <div class="vis-box">
+          <canvas id="visualizer-canvas" width="110" height="34"></canvas>
+        </div>
+
+        <!-- Upload Custom Song -->
+        <button type="button" class="upload-btn-label" id="btn-upload-audio" onclick="window.triggerAudioUpload ? window.triggerAudioUpload() : document.getElementById('audio-file-input').click()" title="Cargar archivo de audio (MP3, WAV, M4A, etc.)">
+          <span id="upload-btn-text">📂 Cargar MP3/WAV</span>
+        </button>
+
+        <!-- Botón para alternar vista de figuras en móvil -->
+        <button type="button" class="btn-toggle-pads-mobile" id="btn-toggle-pads" onclick="window.togglePadsView()" title="Expandir / Plegar figuras de baile">
+          <span id="toggle-pads-text">💃 Figuras ▾</span>
+        </button>
       </div>
 
-      <!-- Realtime Audio Visualizer -->
-      <div class="vis-box">
-        <canvas id="visualizer-canvas" width="110" height="34"></canvas>
-      </div>
-
-      <!-- Upload Custom Song -->
-      <button type="button" class="upload-btn-label" id="btn-upload-audio" onclick="window.triggerAudioUpload ? window.triggerAudioUpload() : document.getElementById('audio-file-input').click()" title="Cargar archivo de audio (MP3, WAV, M4A, etc.)">
-        <span id="upload-btn-text">📂 Cargar MP3/WAV</span>
-      </button>
       <input type="file" id="audio-file-input" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/m4a,audio/x-m4a,audio/aac,audio/flac" style="position:fixed; top:-9999px; left:-9999px; opacity:0; pointer-events:none; width:1px; height:1px;" onchange="window.loadUserAudioFile(event)">
     </div>
 
@@ -3551,10 +3964,39 @@
       }
       if (!window.isUIVisible) {
         document.body.classList.add('ui-hidden');
+        window.toggleMobileMainMenu(false);
+        window.toggleMobileStageTools(false);
         showImmersiveToast('✨ Modo Inmersivo: Pantalla limpia • Toca 👁️ o pulsa H para ver controles');
       } else {
         document.body.classList.remove('ui-hidden');
         showImmersiveToast('📋 Controles visibles');
+      }
+    };
+
+    // Control del menú principal deslizable en móvil
+    window.toggleMobileMainMenu = function(forceState = null) {
+      const menu = document.getElementById('mobile-main-menu');
+      const backdrop = document.getElementById('mobile-menu-backdrop');
+      if (!menu) return;
+      const isOpen = menu.classList.contains('show');
+      const next = (forceState !== null) ? forceState : !isOpen;
+      if (next) {
+        menu.classList.add('show');
+        if (backdrop) backdrop.classList.add('show');
+      } else {
+        menu.classList.remove('show');
+        if (backdrop) backdrop.classList.remove('show');
+      }
+    };
+
+    // Alternar vista de figuras (Tira horizontal o Cuadrícula expandida) en móvil
+    window.togglePadsView = function() {
+      const pads = document.querySelector('.pads-container');
+      const btnText = document.getElementById('toggle-pads-text');
+      if (!pads) return;
+      const isExp = pads.classList.toggle('expanded');
+      if (btnText) {
+        btnText.innerText = isExp ? '💃 Figuras ▴' : '💃 Figuras ▾';
       }
     };
 
@@ -3781,11 +4223,13 @@
 
     window.setCameraMode = function(mode) {
       cameraMode = mode;
-      document.querySelectorAll('.stage-tools .tool-btn').forEach(b => {
-        if (b.id && b.id.startsWith('cam-')) b.classList.remove('active');
+      document.querySelectorAll('.stage-tools .tool-btn, .menu-chips-row .menu-chip-btn').forEach(b => {
+        if (b.id && (b.id.startsWith('cam-') || b.id.startsWith('m-cam-'))) b.classList.remove('active');
       });
       const btn = document.getElementById(`cam-${mode}`);
       if (btn) btn.classList.add('active');
+      const mBtn = document.getElementById(`m-cam-${mode}`);
+      if (mBtn) mBtn.classList.add('active');
 
       if (mode === 'stage') {
         camera.position.set(0, 1.4, 4.0);
@@ -3798,18 +4242,23 @@
         controls.target.set(0, 0.95, 0);
       }
 
-      // En móviles, cerrar el cajón tras seleccionar la cámara para ver la pista
+      // En móviles, cerrar los cajones tras seleccionar la cámara para ver la pista
       if (window.innerWidth <= 768) {
-        setTimeout(() => window.toggleMobileStageTools(false), 260);
+        setTimeout(() => {
+          window.toggleMobileStageTools(false);
+          window.toggleMobileMainMenu(false);
+        }, 260);
       }
     };
 
     window.setLightingTheme = function(theme) {
-      document.querySelectorAll('.stage-tools .tool-btn').forEach(b => {
-        if (b.id && b.id.startsWith('light-')) b.classList.remove('active');
+      document.querySelectorAll('.stage-tools .tool-btn, .menu-chips-row .menu-chip-btn').forEach(b => {
+        if (b.id && (b.id.startsWith('light-') || b.id.startsWith('m-light-'))) b.classList.remove('active');
       });
       const btn = document.getElementById(`light-${theme}`);
       if (btn) btn.classList.add('active');
+      const mBtn = document.getElementById(`m-light-${theme}`);
+      if (mBtn) mBtn.classList.add('active');
 
       if (theme === 'cyber') {
         mainSpot.color.setHex(0x00f2fe);
@@ -3828,9 +4277,12 @@
         grid.material.color.setHex(0xffb703);
       }
 
-      // En móviles, cerrar el cajón tras seleccionar iluminación
+      // En móviles, cerrar los cajones tras seleccionar iluminación
       if (window.innerWidth <= 768) {
-        setTimeout(() => window.toggleMobileStageTools(false), 260);
+        setTimeout(() => {
+          window.toggleMobileStageTools(false);
+          window.toggleMobileMainMenu(false);
+        }, 260);
       }
     };
 
