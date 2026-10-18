@@ -809,11 +809,14 @@
       z-index: 1999;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s ease;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
     }
     .mobile-stage-backdrop.show {
-      opacity: 1;
-      pointer-events: auto;
+      display: block !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      visibility: visible !important;
     }
 
     /* Mobile Main Menu Drawer & Backdrop */
@@ -830,11 +833,14 @@
       z-index: 2999;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.28s ease;
+      visibility: hidden;
+      transition: opacity 0.28s ease, visibility 0.28s ease;
     }
     .mobile-menu-backdrop.show {
-      opacity: 1;
-      pointer-events: auto;
+      display: block !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      visibility: visible !important;
     }
 
     .mobile-main-menu {
@@ -851,13 +857,18 @@
       padding: 16px 18px max(20px, env(safe-area-inset-bottom)) 18px;
       box-shadow: 0 -12px 45px rgba(0, 0, 0, 0.9), 0 0 35px rgba(0, 242, 254, 0.25);
       transform: translateY(115%);
-      transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0.32s ease;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
+      pointer-events: none;
+      visibility: hidden;
     }
     .mobile-main-menu.show {
-      transform: translateY(0);
+      display: block !important;
+      transform: translateY(0) !important;
+      pointer-events: auto !important;
+      visibility: visible !important;
     }
 
     .mobile-menu-header {
@@ -1059,12 +1070,12 @@
       .stage-tools-header-mobile {
         display: flex;
       }
-      .mobile-stage-backdrop {
-        display: block;
-      }
-      .mobile-menu-backdrop,
-      .mobile-main-menu {
-        display: block;
+      .mobile-stage-backdrop.show,
+      .mobile-menu-backdrop.show,
+      .mobile-main-menu.show {
+        display: block !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
       }
 
       /* Compact Top Bar */
@@ -1433,10 +1444,10 @@
 
       <!-- Section: Tu Música & Audio -->
       <div class="menu-section-label" style="margin-top: 14px;">🎵 Tu Música & Ritmo</div>
-      <button type="button" class="menu-action-btn highlight-upload" onclick="window.triggerAudioUpload(); window.toggleMobileMainMenu(false);">
+      <label for="audio-file-input" class="menu-action-btn highlight-upload" onclick="window.toggleMobileMainMenu(false);">
         <span>📂 Cargar canción MP3/WAV del teléfono</span>
         <span class="menu-badge">Subir</span>
-      </button>
+      </label>
 
       <!-- Section: Cámaras & Iluminación -->
       <div class="menu-section-label" style="margin-top: 14px;">🎛️ Cámaras de Pista</div>
@@ -1552,9 +1563,9 @@
         </div>
 
         <!-- Upload Custom Song -->
-        <button type="button" class="upload-btn-label" id="btn-upload-audio" onclick="window.triggerAudioUpload ? window.triggerAudioUpload() : document.getElementById('audio-file-input').click()" title="Cargar archivo de audio (MP3, WAV, M4A, etc.)">
+        <label for="audio-file-input" class="upload-btn-label" id="btn-upload-audio" title="Cargar archivo de audio (MP3, WAV, M4A, etc.)">
           <span id="upload-btn-text">📂 Cargar MP3/WAV</span>
-        </button>
+        </label>
 
         <!-- Botón para alternar vista de figuras en móvil -->
         <button type="button" class="btn-toggle-pads-mobile" id="btn-toggle-pads" onclick="window.togglePadsView()" title="Expandir / Plegar figuras de baile">
@@ -1562,7 +1573,7 @@
         </button>
       </div>
 
-      <input type="file" id="audio-file-input" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/m4a,audio/x-m4a,audio/aac,audio/flac" style="position:fixed; top:-9999px; left:-9999px; opacity:0; pointer-events:none; width:1px; height:1px;" onchange="window.loadUserAudioFile(event)">
+      <input type="file" id="audio-file-input" accept="audio/*,audio/mpeg,audio/mp3,audio/wav,audio/m4a,audio/x-m4a,audio/aac,audio/flac,.mp3,.wav,.m4a" style="position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; z-index:-1;" onchange="window.loadUserAudioFile(event)">
     </div>
 
     <!-- Base Mocap Groove Switcher (Hips, Waist & Footwork Dynamic) -->
@@ -3533,7 +3544,22 @@
       }
     }
 
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (window.innerWidth <= 768);
+
+    function unlockAudioContext() {
+      initAudio();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      if (sampleAudio) sampleAudio.volume = 1.0;
+      if (userAudio) userAudio.volume = 1.0;
+    }
+    ['touchstart', 'touchend', 'click'].forEach(evt => {
+      document.addEventListener(evt, unlockAudioContext, { passive: true });
+    });
+
     function ensureSampleAudioConnected() {
+      if (isMobileDevice) return;
       if (!audioCtx || !masterGain || sampleAudioSource || !sampleAudio) return;
       try {
         sampleAudioSource = audioCtx.createMediaElementSource(sampleAudio);
@@ -3544,6 +3570,7 @@
     }
 
     function ensureUserAudioConnected() {
+      if (isMobileDevice) return;
       if (!audioCtx || !masterGain || userAudioSource || !userAudio) return;
       try {
         userAudioSource = audioCtx.createMediaElementSource(userAudio);
@@ -3676,15 +3703,25 @@
       setTimeout(() => statusBadge.classList.remove('pulse'), 140);
 
       // Flash stroboscopic lights
-      leftStrobe.intensity = 4.5 * (1 + intensity * 0.8);
-      rightStrobe.intensity = 4.5 * (1 + intensity * 0.8);
-      mainSpot.intensity = 6.0 * (1 + intensity * 0.6);
+      leftStrobe.intensity *= (1 + intensity * 0.4);
+      rightStrobe.intensity *= (1 + intensity * 0.4);
+      mainSpot.intensity *= (1 + intensity * 0.3);
       danceRing.scale.set(1 + intensity * 0.12, 1 + intensity * 0.12, 1);
 
       setTimeout(() => {
-        leftStrobe.intensity = 4.5;
-        rightStrobe.intensity = 4.5;
-        mainSpot.intensity = 6.0;
+        if (typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'laser') {
+          leftStrobe.intensity = 7.0;
+          rightStrobe.intensity = 7.0;
+          mainSpot.intensity = 8.5;
+        } else if (typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'gold') {
+          leftStrobe.intensity = 6.5;
+          rightStrobe.intensity = 6.5;
+          mainSpot.intensity = 8.0;
+        } else {
+          leftStrobe.intensity = 5.5;
+          rightStrobe.intensity = 5.5;
+          mainSpot.intensity = 7.0;
+        }
         danceRing.scale.set(1, 1, 1);
       }, 120);
 
@@ -4251,7 +4288,10 @@
       }
     };
 
+    let currentLightingTheme = 'cyber';
+
     window.setLightingTheme = function(theme) {
+      currentLightingTheme = theme;
       document.querySelectorAll('.stage-tools .tool-btn, .menu-chips-row .menu-chip-btn').forEach(b => {
         if (b.id && (b.id.startsWith('light-') || b.id.startsWith('m-light-'))) b.classList.remove('active');
       });
@@ -4260,21 +4300,85 @@
       const mBtn = document.getElementById(`m-light-${theme}`);
       if (mBtn) mBtn.classList.add('active');
 
+      const stageGlow = document.getElementById('stage-glow');
+
       if (theme === 'cyber') {
+        // TEMA 1: CYBER RAVE NEON (Electric Cyan & Neon Magenta)
+        ambientLight.color.setHex(0x0a192f);
+        ambientLight.intensity = 0.5;
+
         mainSpot.color.setHex(0x00f2fe);
+        mainSpot.intensity = 7.0;
+
         leftStrobe.color.setHex(0xf72585);
-        rightStrobe.color.setHex(0x7209b7);
+        leftStrobe.intensity = 5.5;
+
+        rightStrobe.color.setHex(0x9d4edd);
+        rightStrobe.intensity = 5.5;
+
+        backRim.color.setHex(0x00f2fe);
+        backRim.intensity = 4.0;
+
         grid.material.color.setHex(0x00f2fe);
+        danceRing.material.color.setHex(0x00f2fe);
+        scene.fog.color.setHex(0x05070c);
+        scene.background.setHex(0x05070c);
+
+        if (stageGlow) {
+          stageGlow.style.background = 'radial-gradient(circle, rgba(0, 242, 254, 0.35) 0%, rgba(157, 78, 221, 0.25) 45%, transparent 75%)';
+        }
+
       } else if (theme === 'laser') {
-        mainSpot.color.setHex(0xff0055);
-        leftStrobe.color.setHex(0x00ffcc);
-        rightStrobe.color.setHex(0xff0055);
-        grid.material.color.setHex(0xff0055);
+        // TEMA 2: LÁSER STROBE (Laser Crimson & Toxic Acid Green)
+        ambientLight.color.setHex(0x240407);
+        ambientLight.intensity = 0.4;
+
+        mainSpot.color.setHex(0xff0033);
+        mainSpot.intensity = 8.5;
+
+        leftStrobe.color.setHex(0x00ff66);
+        leftStrobe.intensity = 7.0;
+
+        rightStrobe.color.setHex(0xff0044);
+        rightStrobe.intensity = 7.0;
+
+        backRim.color.setHex(0xff0033);
+        backRim.intensity = 5.0;
+
+        grid.material.color.setHex(0xff0033);
+        danceRing.material.color.setHex(0x00ff66);
+        scene.fog.color.setHex(0x160205);
+        scene.background.setHex(0x160205);
+
+        if (stageGlow) {
+          stageGlow.style.background = 'radial-gradient(circle, rgba(255, 0, 51, 0.45) 0%, rgba(0, 255, 102, 0.28) 45%, transparent 75%)';
+        }
+
       } else if (theme === 'gold') {
+        // TEMA 3: SUNSET FESTIVAL (Warm Gold, Burning Amber & Coral)
+        ambientLight.color.setHex(0x281404);
+        ambientLight.intensity = 0.55;
+
         mainSpot.color.setHex(0xffb703);
+        mainSpot.intensity = 8.0;
+
         leftStrobe.color.setHex(0xfb8500);
-        rightStrobe.color.setHex(0x219ebc);
+        leftStrobe.intensity = 6.5;
+
+        rightStrobe.color.setHex(0xff5400);
+        rightStrobe.intensity = 6.5;
+
+        backRim.color.setHex(0xffd166);
+        backRim.intensity = 4.5;
+
         grid.material.color.setHex(0xffb703);
+        danceRing.material.color.setHex(0xfb8500);
+        scene.fog.color.setHex(0x140801);
+        scene.background.setHex(0x140801);
+
+        if (stageGlow) {
+          stageGlow.style.background = 'radial-gradient(circle, rgba(255, 183, 3, 0.40) 0%, rgba(251, 133, 0, 0.28) 45%, transparent 75%)';
+        }
       }
 
       // En móviles, cerrar los cajones tras seleccionar iluminación
