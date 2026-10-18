@@ -2157,11 +2157,10 @@
         const i2 = (i1 + 1) % n;
         const i3 = (i1 + 2) % n;
 
-        // Curva suave continua orgánica (S-curve cúbica Hermite sin cortes bruscos)
-        const s = Math.max(0.0, Math.min(1.0, rawU));
-        const t = s * s * (3.0 - 2.0 * s);
+        // Parámetro lineal estándar para Catmull-Rom C1 (velocidad continua que nunca se frena a cero)
+        const t = Math.max(0.0, Math.min(1.0, rawU));
 
-        const tau = 0.45;
+        const tau = 0.5;
         const t2 = t * t;
         const t3 = t2 * t;
         const h00 = 2.0 * t3 - 3.0 * t2 + 1.0;
@@ -2198,12 +2197,11 @@
         const kf2 = keyframes[i2];
         const kf3 = keyframes[i3];
 
-        // Transición continua con S-curve cúbica (aceleración y frenado natural de brazos sin paradas congeladas)
-        const s = Math.max(0.0, Math.min(1.0, rawU));
-        const t = s * s * (3.0 - 2.0 * s);
+        // Parámetro lineal estándar para Catmull-Rom C1 (flujo continuo ininterrumpido sin micro-paradas)
+        const t = Math.max(0.0, Math.min(1.0, rawU));
 
-        const tau1 = 0.45;
-        const tau2 = 0.45;
+        const tau1 = 0.5;
+        const tau2 = 0.5;
         const t2 = t * t;
         const t3 = t2 * t;
         const h00 = 2.0 * t3 - 3.0 * t2 + 1.0;
@@ -3707,43 +3705,12 @@
 
     // Visual drop & pulse effect on kick/bass
     function onBeatDrop(intensity = 1.0) {
-      const glow = document.getElementById('stage-glow');
-      glow.classList.add('bass-drop');
-      setTimeout(() => glow.classList.remove('bass-drop'), 160);
-
-      const statusBadge = document.getElementById('dance-status');
-      statusBadge.classList.add('pulse');
-      setTimeout(() => statusBadge.classList.remove('pulse'), 140);
-
-      // Flash stroboscopic lights
-      leftStrobe.intensity *= (1 + intensity * 0.4);
-      rightStrobe.intensity *= (1 + intensity * 0.4);
-      mainSpot.intensity *= (1 + intensity * 0.3);
-      danceRing.scale.set(1 + intensity * 0.12, 1 + intensity * 0.12, 1);
-
-      setTimeout(() => {
-        if (typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'laser') {
-          leftStrobe.intensity = 7.0;
-          rightStrobe.intensity = 7.0;
-          mainSpot.intensity = 8.5;
-        } else if (typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'gold') {
-          leftStrobe.intensity = 6.5;
-          rightStrobe.intensity = 6.5;
-          mainSpot.intensity = 8.0;
-        } else {
-          leftStrobe.intensity = 5.5;
-          rightStrobe.intensity = 5.5;
-          mainSpot.intensity = 7.0;
-        }
-        danceRing.scale.set(1, 1, 1);
-      }, 120);
-
-      // Cam punch in Dynamic Beat Cam mode
-      if (cameraMode === 'dynamic') {
-        camera.position.y += 0.04 * intensity;
-        setTimeout(() => {
-          camera.position.y -= 0.04 * intensity;
-        }, 120);
+      if (leftStrobe && rightStrobe && mainSpot) {
+        const baseStrobe = (typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'laser') ? 7.0 : ((typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'gold') ? 6.5 : 5.5);
+        const baseSpot = (typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'laser') ? 8.5 : ((typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'gold') ? 8.0 : 7.0);
+        leftStrobe.intensity = Math.min(14.0, leftStrobe.intensity + baseStrobe * intensity * 0.35);
+        rightStrobe.intensity = Math.min(14.0, rightStrobe.intensity + baseStrobe * intensity * 0.35);
+        mainSpot.intensity = Math.min(15.0, mainSpot.intensity + baseSpot * intensity * 0.25);
       }
     }
 
@@ -4517,7 +4484,17 @@
 
     function animate() {
       requestAnimationFrame(animate);
-      const delta = clock.getDelta();
+      const rawDelta = clock.getDelta();
+      const delta = Math.min(rawDelta, 0.05);
+
+      // Suave decaimiento de luces sincronizado con el render loop (cero timers asíncronos)
+      if (leftStrobe && rightStrobe && mainSpot) {
+        const baseStrobe = (typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'laser') ? 7.0 : ((typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'gold') ? 6.5 : 5.5);
+        const baseSpot = (typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'laser') ? 8.5 : ((typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'gold') ? 8.0 : 7.0);
+        leftStrobe.intensity = THREE.MathUtils.lerp(leftStrobe.intensity, baseStrobe, delta * 10.0);
+        rightStrobe.intensity = THREE.MathUtils.lerp(rightStrobe.intensity, baseStrobe, delta * 10.0);
+        mainSpot.intensity = THREE.MathUtils.lerp(mainSpot.intensity, baseSpot, delta * 10.0);
+      }
 
       // Extracción de datos de audio en tiempo real para reactividad orgánica
       if (analyserNode && freqData && isDancing && activeBeatTrack !== 'none') {
