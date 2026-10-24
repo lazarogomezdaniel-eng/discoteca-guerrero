@@ -13,6 +13,7 @@ scratch/
 *.mtl
 *.zip
 *.mp4
+version_profesional/
 
 # Modelos antiguos / pesados no usados en la web (GitHub tiene límite de 100MB)
 guerrero.glb

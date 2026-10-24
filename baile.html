@@ -1460,9 +1460,10 @@
 
       <div class="menu-section-label" style="margin-top: 14px;">✨ Iluminación</div>
       <div class="menu-chips-row">
-        <button class="menu-chip-btn active" id="m-light-cyber" onclick="setLightingTheme('cyber'); window.toggleMobileMainMenu(false);">⚡ Cyber Neon</button>
-        <button class="menu-chip-btn" id="m-light-laser" onclick="setLightingTheme('laser'); window.toggleMobileMainMenu(false);">🔴 Láser</button>
-        <button class="menu-chip-btn" id="m-light-gold" onclick="setLightingTheme('gold'); window.toggleMobileMainMenu(false);">✨ Festival</button>
+        <button class="menu-chip-btn active" id="m-light-normal" onclick="setLightingTheme('normal'); window.toggleMobileMainMenu(false);">💡 Normal</button>
+        <button class="menu-chip-btn" id="m-light-cyber" onclick="setLightingTheme('cyber'); window.toggleMobileMainMenu(false);">⚡ Cyber Neon</button>
+        <button class="menu-chip-btn" id="m-light-laser" onclick="setLightingTheme('laser'); window.toggleMobileMainMenu(false);">🔴 Láser Suave</button>
+        <button class="menu-chip-btn" id="m-light-gold" onclick="setLightingTheme('gold'); window.toggleMobileMainMenu(false);">✨ Dorado Cálido</button>
       </div>
 
       <!-- Section: Modo Inmersivo -->
@@ -1511,14 +1512,17 @@
     </button>
 
     <div class="tool-title" style="margin-top: 10px;">Iluminación</div>
-    <button class="tool-btn active" id="light-cyber" onclick="setLightingTheme('cyber')">
+    <button class="tool-btn active" id="light-normal" onclick="setLightingTheme('normal')">
+      <span>💡</span> Normal (Original)
+    </button>
+    <button class="tool-btn" id="light-cyber" onclick="setLightingTheme('cyber')">
       <span>⚡</span> Cyber Rave Neon
     </button>
     <button class="tool-btn" id="light-laser" onclick="setLightingTheme('laser')">
-      <span>🔴</span> Láser Strobe
+      <span>🔴</span> Láser Club
     </button>
     <button class="tool-btn" id="light-gold" onclick="setLightingTheme('gold')">
-      <span>✨</span> Sunset Festival
+      <span>✨</span> Sunset Dorado
     </button>
   </div>
 
@@ -3698,14 +3702,14 @@
       }
     }
 
-    // Visual drop & pulse effect on kick/bass
+    // Visual drop & pulse effect on kick/bass (suave y equilibrado, sin quemar el modelo)
     function onBeatDrop(intensity = 1.0) {
       if (leftStrobe && rightStrobe && mainSpot) {
-        const baseStrobe = (typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'laser') ? 7.0 : ((typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'gold') ? 6.5 : 5.5);
-        const baseSpot = (typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'laser') ? 8.5 : ((typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'gold') ? 8.0 : 7.0);
-        leftStrobe.intensity = Math.min(14.0, leftStrobe.intensity + baseStrobe * intensity * 0.35);
-        rightStrobe.intensity = Math.min(14.0, rightStrobe.intensity + baseStrobe * intensity * 0.35);
-        mainSpot.intensity = Math.min(15.0, mainSpot.intensity + baseSpot * intensity * 0.25);
+        const cfg = (typeof LIGHTING_THEMES !== 'undefined' && LIGHTING_THEMES[currentLightingTheme]) ? LIGHTING_THEMES[currentLightingTheme] : { baseStrobe: 3.5, baseSpot: 5.0 };
+        const clampedIntensity = Math.min(1.0, intensity);
+        leftStrobe.intensity = Math.min(cfg.baseStrobe + 1.2, leftStrobe.intensity + clampedIntensity * 0.6);
+        rightStrobe.intensity = Math.min(cfg.baseStrobe + 1.2, rightStrobe.intensity + clampedIntensity * 0.6);
+        mainSpot.intensity = Math.min(cfg.baseSpot + 1.2, mainSpot.intensity + clampedIntensity * 0.6);
       }
     }
 
@@ -4251,10 +4255,84 @@
       }
     };
 
-    let currentLightingTheme = 'cyber';
+    let currentLightingTheme = 'normal';
+
+    const LIGHTING_THEMES = {
+      normal: {
+        // ILUMINACIÓN NORMAL ORIGINAL DEL PRINCIPIO (Luz blanca natural + acentos suaves)
+        ambientColor: 0xffffff,
+        ambientIntensity: 0.85,
+        mainSpotColor: 0x00f2fe,
+        baseSpot: 5.0,
+        leftStrobeColor: 0xf72585,
+        rightStrobeColor: 0x7209b7,
+        baseStrobe: 4.0,
+        backRimColor: 0x4facfe,
+        backRimIntensity: 3.0,
+        gridColor: 0x00f2fe,
+        ringColor: 0x00f2fe,
+        fogColor: 0x05070c,
+        bgColor: 0x05070c,
+        glow: 'radial-gradient(circle, rgba(0, 242, 254, 0.30) 0%, rgba(114, 9, 183, 0.20) 45%, transparent 75%)'
+      },
+      cyber: {
+        // TEMA 1: CYBER RAVE NEON (Cian & Magenta equilibrados manteniendo nitidez en rostro y armadura)
+        ambientColor: 0xdbeafe,
+        ambientIntensity: 0.72,
+        mainSpotColor: 0x00f2fe,
+        baseSpot: 4.5,
+        leftStrobeColor: 0xf72585,
+        rightStrobeColor: 0x9d4edd,
+        baseStrobe: 3.5,
+        backRimColor: 0x00f2fe,
+        backRimIntensity: 2.8,
+        gridColor: 0x00f2fe,
+        ringColor: 0xf72585,
+        fogColor: 0x040711,
+        bgColor: 0x040711,
+        glow: 'radial-gradient(circle, rgba(0, 242, 254, 0.28) 0%, rgba(247, 37, 133, 0.20) 45%, transparent 75%)'
+      },
+      laser: {
+        // TEMA 2: LÁSER CLUB (Rubí y Cian suaves de cine, sin saturar la piel ni quemar luces)
+        ambientColor: 0xf1f5f9,
+        ambientIntensity: 0.70,
+        mainSpotColor: 0xfb7185,
+        baseSpot: 4.2,
+        leftStrobeColor: 0x06b6d4,
+        rightStrobeColor: 0xf43f5e,
+        baseStrobe: 3.2,
+        backRimColor: 0xf43f5e,
+        backRimIntensity: 2.6,
+        gridColor: 0xf43f5e,
+        ringColor: 0x06b6d4,
+        fogColor: 0x0b0407,
+        bgColor: 0x0b0407,
+        glow: 'radial-gradient(circle, rgba(244, 63, 94, 0.26) 0%, rgba(6, 182, 212, 0.18) 45%, transparent 75%)'
+      },
+      gold: {
+        // TEMA 3: SUNSET DORADO (Ámbar cálido elegante de concierto sin oscurecer el personaje)
+        ambientColor: 0xfef3c7,
+        ambientIntensity: 0.76,
+        mainSpotColor: 0xfbbf24,
+        baseSpot: 4.2,
+        leftStrobeColor: 0xf97316,
+        rightStrobeColor: 0xd946ef,
+        baseStrobe: 3.0,
+        backRimColor: 0xfde047,
+        backRimIntensity: 2.6,
+        gridColor: 0xfbbf24,
+        ringColor: 0xf97316,
+        fogColor: 0x0a0602,
+        bgColor: 0x0a0602,
+        glow: 'radial-gradient(circle, rgba(251, 191, 36, 0.26) 0%, rgba(249, 115, 22, 0.18) 45%, transparent 75%)'
+      }
+    };
 
     window.setLightingTheme = function(theme) {
+      if (!LIGHTING_THEMES[theme]) theme = 'normal';
       currentLightingTheme = theme;
+      const cfg = LIGHTING_THEMES[theme];
+
       document.querySelectorAll('.stage-tools .tool-btn, .menu-chips-row .menu-chip-btn').forEach(b => {
         if (b.id && (b.id.startsWith('light-') || b.id.startsWith('m-light-'))) b.classList.remove('active');
       });
@@ -4265,83 +4343,28 @@
 
       const stageGlow = document.getElementById('stage-glow');
 
-      if (theme === 'cyber') {
-        // TEMA 1: CYBER RAVE NEON (Electric Cyan & Neon Magenta)
-        ambientLight.color.setHex(0x0a192f);
-        ambientLight.intensity = 0.5;
+      ambientLight.color.setHex(cfg.ambientColor);
+      ambientLight.intensity = cfg.ambientIntensity;
 
-        mainSpot.color.setHex(0x00f2fe);
-        mainSpot.intensity = 7.0;
+      mainSpot.color.setHex(cfg.mainSpotColor);
+      mainSpot.intensity = cfg.baseSpot;
 
-        leftStrobe.color.setHex(0xf72585);
-        leftStrobe.intensity = 5.5;
+      leftStrobe.color.setHex(cfg.leftStrobeColor);
+      leftStrobe.intensity = cfg.baseStrobe;
 
-        rightStrobe.color.setHex(0x9d4edd);
-        rightStrobe.intensity = 5.5;
+      rightStrobe.color.setHex(cfg.rightStrobeColor);
+      rightStrobe.intensity = cfg.baseStrobe;
 
-        backRim.color.setHex(0x00f2fe);
-        backRim.intensity = 4.0;
+      backRim.color.setHex(cfg.backRimColor);
+      backRim.intensity = cfg.backRimIntensity;
 
-        grid.material.color.setHex(0x00f2fe);
-        danceRing.material.color.setHex(0x00f2fe);
-        scene.fog.color.setHex(0x05070c);
-        scene.background.setHex(0x05070c);
+      grid.material.color.setHex(cfg.gridColor);
+      danceRing.material.color.setHex(cfg.ringColor);
+      scene.fog.color.setHex(cfg.fogColor);
+      scene.background.setHex(cfg.bgColor);
 
-        if (stageGlow) {
-          stageGlow.style.background = 'radial-gradient(circle, rgba(0, 242, 254, 0.35) 0%, rgba(157, 78, 221, 0.25) 45%, transparent 75%)';
-        }
-
-      } else if (theme === 'laser') {
-        // TEMA 2: LÁSER STROBE (Laser Crimson & Toxic Acid Green)
-        ambientLight.color.setHex(0x240407);
-        ambientLight.intensity = 0.4;
-
-        mainSpot.color.setHex(0xff0033);
-        mainSpot.intensity = 8.5;
-
-        leftStrobe.color.setHex(0x00ff66);
-        leftStrobe.intensity = 7.0;
-
-        rightStrobe.color.setHex(0xff0044);
-        rightStrobe.intensity = 7.0;
-
-        backRim.color.setHex(0xff0033);
-        backRim.intensity = 5.0;
-
-        grid.material.color.setHex(0xff0033);
-        danceRing.material.color.setHex(0x00ff66);
-        scene.fog.color.setHex(0x160205);
-        scene.background.setHex(0x160205);
-
-        if (stageGlow) {
-          stageGlow.style.background = 'radial-gradient(circle, rgba(255, 0, 51, 0.45) 0%, rgba(0, 255, 102, 0.28) 45%, transparent 75%)';
-        }
-
-      } else if (theme === 'gold') {
-        // TEMA 3: SUNSET FESTIVAL (Warm Gold, Burning Amber & Coral)
-        ambientLight.color.setHex(0x281404);
-        ambientLight.intensity = 0.55;
-
-        mainSpot.color.setHex(0xffb703);
-        mainSpot.intensity = 8.0;
-
-        leftStrobe.color.setHex(0xfb8500);
-        leftStrobe.intensity = 6.5;
-
-        rightStrobe.color.setHex(0xff5400);
-        rightStrobe.intensity = 6.5;
-
-        backRim.color.setHex(0xffd166);
-        backRim.intensity = 4.5;
-
-        grid.material.color.setHex(0xffb703);
-        danceRing.material.color.setHex(0xfb8500);
-        scene.fog.color.setHex(0x140801);
-        scene.background.setHex(0x140801);
-
-        if (stageGlow) {
-          stageGlow.style.background = 'radial-gradient(circle, rgba(255, 183, 3, 0.40) 0%, rgba(251, 133, 0, 0.28) 45%, transparent 75%)';
-        }
+      if (stageGlow && cfg.glow) {
+        stageGlow.style.background = cfg.glow;
       }
 
       // En móviles, cerrar los cajones tras seleccionar iluminación
@@ -4484,11 +4507,10 @@
 
       // Suave decaimiento de luces sincronizado con el render loop (cero timers asíncronos)
       if (leftStrobe && rightStrobe && mainSpot) {
-        const baseStrobe = (typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'laser') ? 7.0 : ((typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'gold') ? 6.5 : 5.5);
-        const baseSpot = (typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'laser') ? 8.5 : ((typeof currentLightingTheme !== 'undefined' && currentLightingTheme === 'gold') ? 8.0 : 7.0);
-        leftStrobe.intensity = THREE.MathUtils.lerp(leftStrobe.intensity, baseStrobe, delta * 10.0);
-        rightStrobe.intensity = THREE.MathUtils.lerp(rightStrobe.intensity, baseStrobe, delta * 10.0);
-        mainSpot.intensity = THREE.MathUtils.lerp(mainSpot.intensity, baseSpot, delta * 10.0);
+        const cfg = (typeof LIGHTING_THEMES !== 'undefined' && LIGHTING_THEMES[currentLightingTheme]) ? LIGHTING_THEMES[currentLightingTheme] : { baseStrobe: 4.0, baseSpot: 5.0 };
+        leftStrobe.intensity = THREE.MathUtils.lerp(leftStrobe.intensity, cfg.baseStrobe, delta * 8.0);
+        rightStrobe.intensity = THREE.MathUtils.lerp(rightStrobe.intensity, cfg.baseStrobe, delta * 8.0);
+        mainSpot.intensity = THREE.MathUtils.lerp(mainSpot.intensity, cfg.baseSpot, delta * 8.0);
       }
 
       if (isDancing) {
