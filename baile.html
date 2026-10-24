@@ -1601,6 +1601,9 @@
         <button class="groove-btn" id="groove-btn-singleladies" onclick="window.setBaseGroove('singleladies')" title="Caderas exageradas, cintura y meneo Beyoncé">
           <span>💃 Beyoncé Caderas</span>
         </button>
+        <button class="groove-btn" id="groove-btn-baile3" onclick="window.setBaseGroove('baile3')" title="Footwork y dinamismo completo de Baile 3">
+          <span>⚡ Baile 3 Base</span>
+        </button>
       </div>
     </div>
 
@@ -1611,6 +1614,9 @@
       </button>
       <button class="pad-btn" id="pad-singleladies" onclick="window.triggerMoveNow('singleladies')" style="border-color: rgba(255, 110, 199, 0.7); background: linear-gradient(135deg, rgba(255, 110, 199, 0.3), rgba(123, 44, 191, 0.25)); box-shadow: 0 0 12px rgba(255, 110, 199, 0.3);">
         <span>💃 Single Ladies Real</span> <kbd>S</kbd>
+      </button>
+      <button class="pad-btn" id="pad-baile3" onclick="window.triggerMoveNow('baile3')" style="border-color: rgba(0, 242, 254, 0.7); background: linear-gradient(135deg, rgba(0, 242, 254, 0.3), rgba(76, 201, 240, 0.25)); box-shadow: 0 0 12px rgba(0, 242, 254, 0.35);">
+        <span>⚡ Baile 3 Real</span> <kbd>3</kbd>
       </button>
       <button class="pad-btn active" id="pad-viral" onclick="window.triggerMoveNow('combo_viral')">
         <span>🔥 Baile Viral 360°</span> <kbd>V</kbd>
@@ -3719,6 +3725,7 @@
     const SEQ_DATA = {
       deepmotion: { name: '🎬 Captura Real DeepMotion (Video Original 15s)', icon: '🎬', desc: 'Secuencia real fotograma a fotograma de DeepMotion: brazos, cabeza, torso y piernas del video' },
       singleladies: { name: '💃 Single Ladies Real (Coreografía Beyoncé 12.5s)', icon: '💃', desc: 'Coreografía Single Ladies fotograma a fotograma: cadera icónica, giros de muñeca y pasos reales' },
+      baile3: { name: '⚡ Baile 3 Real (Coreografía Mocap Completa 14.6s)', icon: '⚡', desc: 'Coreografía Baile 3 fotograma a fotograma: cuerpo completo y dedos articulados' },
       combo_viral: { name: '🔥 Baile Viral Continuo (Coreografía 360°)', icon: '🔥', desc: 'Coreografía 360° en brazos + dinamismo real de cadera, cintura y footwork mocap' },
       estirados: { name: '💥 1. Extensión Horizontal & Cruce Máximo', icon: '💥', desc: 'Brazos 100% estirados y latigazo al cruce frontal + base de cadera y pisadas mocap' },
       trenzado: { name: '🥨 2. Arm Wrap Bicicleta (Pot de Colle)', icon: '🥨', desc: 'Rodillo eléctrico continuo frente al esternón + rebote elástico y cadera mocap' },
@@ -3771,7 +3778,7 @@
 
     function crossFadeToClip(targetAction, duration = 0.38) {
       if (!mixer) return;
-      const allActions = [danceAction, singleLadiesAction].filter(Boolean);
+      const allActions = [danceAction, singleLadiesAction, baile3Action].filter(Boolean);
 
       if (!targetAction) {
         allActions.forEach(act => {
@@ -3835,12 +3842,14 @@
       updateGrooveUI();
 
       const currentMode = tecktonikController ? tecktonikController.currentMode : 'combo_viral';
-      if (isDancing && currentMode !== 'deepmotion' && currentMode !== 'singleladies') {
+      if (isDancing && currentMode !== 'deepmotion' && currentMode !== 'singleladies' && currentMode !== 'baile3') {
         const isProceduralGroove = (baseMocapGroove === 'combo' || baseMocapGroove === 'patadas' || baseMocapGroove === 'rodillas');
         if (isProceduralGroove) {
           playClipExclusively(null);
         } else {
-          const baseAction = (baseMocapGroove === 'singleladies') ? singleLadiesAction : danceAction;
+          let baseAction = danceAction;
+          if (baseMocapGroove === 'singleladies') baseAction = singleLadiesAction;
+          else if (baseMocapGroove === 'baile3') baseAction = baile3Action;
           playBaseMocap(baseAction);
         }
       }
@@ -3867,6 +3876,8 @@
         playClipExclusively(danceAction);
       } else if (seqKey === 'singleladies') {
         playClipExclusively(singleLadiesAction);
+      } else if (seqKey === 'baile3') {
+        playClipExclusively(baile3Action);
       } else {
         // Baile 360 y todas las figuras: piernas y cadera con el movimiento real de Tecktonik mocap
         playBaseMocap(danceAction);
@@ -3943,6 +3954,8 @@
             playClipExclusively(danceAction);
           } else if (resumeMode === 'singleladies') {
             playClipExclusively(singleLadiesAction);
+          } else if (resumeMode === 'baile3') {
+            playClipExclusively(baile3Action);
           } else {
             playBaseMocap(danceAction);
           }
@@ -4150,6 +4163,9 @@
       }
       if (singleLadiesAction) {
         singleLadiesAction.timeScale = currentBPM / 138;
+      }
+      if (baile3Action) {
+        baile3Action.timeScale = currentBPM / 138;
       }
       if (isDancing && (activeBeatTrack === 'cyber' || activeBeatTrack === 'rave' || activeBeatTrack === 'lofi')) {
         startBeatClock();
@@ -4382,6 +4398,7 @@
     let mixer = null;
     let danceAction = null;
     let singleLadiesAction = null;
+    let baile3Action = null;
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath('https://unpkg.com/three@0.165.0/examples/jsm/libs/draco/');
     const loader = new GLTFLoader();
@@ -4411,6 +4428,9 @@
           if (clip.name === 'single_ladies_dance_real') {
             singleLadiesAction = mixer.clipAction(clip);
             singleLadiesAction.setLoop(THREE.LoopRepeat);
+          } else if (clip.name === 'baile3_dance_real' || clip.name.includes('baile3')) {
+            baile3Action = mixer.clipAction(clip);
+            baile3Action.setLoop(THREE.LoopRepeat);
           } else if (clip.name === 'tecktonik_dance_real' || clip.name.includes('tecktonik') || clip.name.includes('Armature')) {
             danceAction = mixer.clipAction(clip);
             danceAction.setLoop(THREE.LoopRepeat);
@@ -4424,6 +4444,10 @@
           singleLadiesAction = mixer.clipAction(gltf.animations[1]);
           singleLadiesAction.setLoop(THREE.LoopRepeat);
         }
+        if (!baile3Action && gltf.animations[2]) {
+          baile3Action = mixer.clipAction(gltf.animations[2]);
+          baile3Action.setLoop(THREE.LoopRepeat);
+        }
 
         if (danceAction) {
           danceAction.timeScale = currentBPM / 138;
@@ -4432,6 +4456,10 @@
         if (singleLadiesAction) {
           singleLadiesAction.timeScale = currentBPM / 138;
           console.log('Single Ladies real listo en el Guerrero:', singleLadiesAction.getClip().duration.toFixed(2) + 's');
+        }
+        if (baile3Action) {
+          baile3Action.timeScale = currentBPM / 138;
+          console.log('Baile 3 real listo en el Guerrero:', baile3Action.getClip().duration.toFixed(2) + 's');
         }
       }
 
@@ -4522,7 +4550,7 @@
           currentModel.updateMatrixWorld(true);
         }
 
-        if (tecktonikController && tecktonikController.currentMode !== 'deepmotion' && tecktonikController.currentMode !== 'singleladies') {
+        if (tecktonikController && tecktonikController.currentMode !== 'deepmotion' && tecktonikController.currentMode !== 'singleladies' && tecktonikController.currentMode !== 'baile3') {
           tecktonikController.amplitude = 1.0;
           tecktonikController.update(delta);
         }
