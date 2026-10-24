@@ -4167,6 +4167,9 @@
       if (baile3Action) {
         baile3Action.timeScale = currentBPM / 138;
       }
+      if (window.baile3ActionSecondary) {
+        window.baile3ActionSecondary.timeScale = currentBPM / 138;
+      }
       if (isDancing && (activeBeatTrack === 'cyber' || activeBeatTrack === 'rave' || activeBeatTrack === 'lofi')) {
         startBeatClock();
       }
@@ -4431,6 +4434,9 @@
           } else if (clip.name === 'baile3_dance_real' || clip.name.includes('baile3')) {
             baile3Action = mixer.clipAction(clip);
             baile3Action.setLoop(THREE.LoopRepeat);
+            // Acción secundaria para crossfade continuo en bucle sin saltos
+            window.baile3ActionSecondary = mixer.clipAction(clip.clone());
+            window.baile3ActionSecondary.setLoop(THREE.LoopRepeat);
           } else if (clip.name === 'tecktonik_dance_real' || clip.name.includes('tecktonik') || clip.name.includes('Armature')) {
             danceAction = mixer.clipAction(clip);
             danceAction.setLoop(THREE.LoopRepeat);
@@ -4459,8 +4465,45 @@
         }
         if (baile3Action) {
           baile3Action.timeScale = currentBPM / 138;
+          if (window.baile3ActionSecondary) {
+            window.baile3ActionSecondary.timeScale = currentBPM / 138;
+          }
           console.log('Baile 3 real listo en el Guerrero:', baile3Action.getClip().duration.toFixed(2) + 's');
         }
+
+        // Suavizado orgánico del final al principio de Baile 3 (Crossfade de ciclo automático)
+        let activeB3Slot = 0; // 0 = primario, 1 = secundario
+        let b3CrossFadeTriggered = false;
+        const b3Duration = baile3Action ? baile3Action.getClip().duration : 14.6;
+        const fadeLeadTime = 0.55; // 0.55 segundos antes de terminar el ciclo
+
+        window.updateBaile3SeamlessLoop = function() {
+          if (!baile3Action || !window.baile3ActionSecondary || !isDancing) return;
+          const currentMode = tecktonikController ? tecktonikController.currentMode : '';
+          if (currentMode !== 'baile3') {
+            b3CrossFadeTriggered = false;
+            return;
+          }
+
+          const runningAction = (activeB3Slot === 0) ? baile3Action : window.baile3ActionSecondary;
+          const incomingAction = (activeB3Slot === 0) ? window.baile3ActionSecondary : baile3Action;
+
+          const actionTime = runningAction.time % b3Duration;
+          if (actionTime >= (b3Duration - fadeLeadTime) && !b3CrossFadeTriggered) {
+            b3CrossFadeTriggered = true;
+            incomingAction.reset();
+            incomingAction.enabled = true;
+            incomingAction.paused = false;
+            incomingAction.setEffectiveTimeScale(currentBPM / 138);
+            incomingAction.setEffectiveWeight(1.0);
+            incomingAction.play();
+            runningAction.crossFadeTo(incomingAction, fadeLeadTime, false);
+            activeB3Slot = (activeB3Slot === 0) ? 1 : 0;
+            currentClipAction = incomingAction;
+          } else if (actionTime < (b3Duration - fadeLeadTime - 0.5)) {
+            b3CrossFadeTriggered = false;
+          }
+        };
       }
 
       // Por defecto en el inicio: reproducir el Baile Viral 360° con piernas mocap de Tecktonik real
@@ -4544,6 +4587,9 @@
       if (isDancing) {
         if (mixer) {
           mixer.update(delta);
+        }
+        if (typeof window.updateBaile3SeamlessLoop === 'function') {
+          window.updateBaile3SeamlessLoop();
         }
 
         if (currentModel && typeof currentModel.updateMatrixWorld === 'function') {
