@@ -168,24 +168,10 @@
       border-color: var(--accent-cyan);
     }
 
-    /* Live Dance Indicator Banner (Top Center) */
+    /* Live Dance Indicator Banner (Top Center) - Oculto para no tapar al bailarín */
     .current-move-card {
-      position: absolute;
-      top: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 25;
-      background: var(--panel-bg);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid var(--panel-border);
-      border-radius: 20px;
-      padding: 10px 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
-      transition: all 0.25s ease;
+      display: none !important;
+      pointer-events: none !important;
     }
 
     .move-icon {
@@ -1702,18 +1688,12 @@
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     scene.add(ambientLight);
 
-    // Foco frontal superior a 45° (iluminación de cine que modela el volumen de la cara y cráneo sin quemar la coronilla)
-    const mainSpot = new THREE.SpotLight(0x00f2fe, 5.0, 18, Math.PI / 4.5, 0.5, 1.0);
-    mainSpot.position.set(0, 3.8, 4.0);
-    mainSpot.target.position.set(0, 1.2, 0);
+    const mainSpot = new THREE.SpotLight(0x00f2fe, 6.0, 15, Math.PI / 4, 0.4, 1.0);
+    mainSpot.position.set(0, 5, 2.5);
+    mainSpot.target.position.set(0, 0.9, 0);
     mainSpot.castShadow = true;
     scene.add(mainSpot);
     scene.add(mainSpot.target);
-
-    // Luz de relleno facial suave (resalta ojos, mandíbula y cráneo de forma armónica)
-    const faceFillLight = new THREE.DirectionalLight(0xffffff, 0.65);
-    faceFillLight.position.set(0, 1.6, 3.0);
-    scene.add(faceFillLight);
 
     const leftStrobe = new THREE.PointLight(0xf72585, 4.5, 10);
     leftStrobe.position.set(-3, 2.5, 1);
@@ -4446,12 +4426,6 @@
           node.castShadow = true;
           node.receiveShadow = true;
           node.frustumCulled = false; // Evita que Three.js oculte la malla al bailar, desplazarse o agacharse
-          if (node.material) {
-            // Suavizado de brillos especulares para evitar quemados en cráneo y frente
-            if (node.material.roughness !== undefined && node.material.roughness < 0.45) {
-              node.material.roughness = 0.52;
-            }
-          }
         }
       });
 
