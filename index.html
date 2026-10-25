@@ -1563,6 +1563,9 @@
         <button class="menu-chip-btn" id="m-light-laser" onclick="setLightingTheme('laser'); window.toggleMobileMainMenu(false);">🔴 Láser Suave</button>
         <button class="menu-chip-btn" id="m-light-gold" onclick="setLightingTheme('gold'); window.toggleMobileMainMenu(false);">✨ Dorado Cálido</button>
       </div>
+      <div class="menu-chips-row" style="margin-top: 6px;">
+        <button class="menu-chip-btn active" id="m-btn-neutral-spot" onclick="window.toggleNeutralSpot();">🔦 Foco Neutro Frontal: ON</button>
+      </div>
 
       <!-- Section: Modo Inmersivo -->
       <div class="menu-section-label" style="margin-top: 14px;">👁️ Visualización</div>
@@ -1630,6 +1633,9 @@
     </button>
     <button class="tool-btn" id="light-gold" onclick="setLightingTheme('gold')">
       <span>✨</span> Sunset Dorado
+    </button>
+    <button class="tool-btn active" id="btn-neutral-spot" onclick="window.toggleNeutralSpot()" title="Activar/desactivar foco de luz neutra frontal sobre el personaje">
+      <span>🔦</span> Foco Frontal Neutro
     </button>
   </div>
 
@@ -1840,6 +1846,20 @@
     const backRim = new THREE.DirectionalLight(0x4facfe, 3.0);
     backRim.position.set(0, 4, -4);
     scene.add(backRim);
+
+    // Foco Frontal Neutro Performer (Key Light / Followspot 5500K blanco natural de escenario)
+    // Asegura visibilidad clara, anatomía y volumen sin que se oscurezca con los colores psicodélicos
+    const neutralSpot = new THREE.SpotLight(0xfffbf5, 5.2, 18, Math.PI / 4.2, 0.45, 1.0);
+    neutralSpot.position.set(0, 4.4, 3.2);
+    neutralSpot.target.position.set(0, 0.95, 0);
+    neutralSpot.castShadow = true;
+    neutralSpot.shadow.bias = -0.0005;
+    scene.add(neutralSpot);
+    scene.add(neutralSpot.target);
+
+    // Luz de relleno hemisférica suave para mantener relieve natural en sombras
+    const fillLight = new THREE.HemisphereLight(0xffffff, 0x222233, 0.65);
+    scene.add(fillLight);
 
     // Dynamic Floor Grid & Ring
     const grid = new THREE.GridHelper(20, 40, 0x00f2fe, 0x1e293b);
@@ -3977,11 +3997,14 @@
     // Visual drop & pulse effect on kick/bass (suave y equilibrado, sin quemar el modelo)
     function onBeatDrop(intensity = 1.0) {
       if (leftStrobe && rightStrobe && mainSpot) {
-        const cfg = (typeof LIGHTING_THEMES !== 'undefined' && LIGHTING_THEMES[currentLightingTheme]) ? LIGHTING_THEMES[currentLightingTheme] : { baseStrobe: 4.0, baseSpot: 5.0 };
+        const cfg = (typeof LIGHTING_THEMES !== 'undefined' && LIGHTING_THEMES[currentLightingTheme]) ? LIGHTING_THEMES[currentLightingTheme] : { baseStrobe: 4.0, baseSpot: 5.0, baseNeutralSpot: 5.2 };
         const clampedIntensity = Math.min(1.0, intensity);
         leftStrobe.intensity = Math.min(cfg.baseStrobe + 1.2, leftStrobe.intensity + clampedIntensity * 0.6);
         rightStrobe.intensity = Math.min(cfg.baseStrobe + 1.2, rightStrobe.intensity + clampedIntensity * 0.6);
         mainSpot.intensity = Math.min(cfg.baseSpot + 1.2, mainSpot.intensity + clampedIntensity * 0.6);
+        if (typeof neutralSpot !== 'undefined' && neutralSpot && (typeof isNeutralSpotEnabled === 'undefined' || isNeutralSpotEnabled)) {
+          neutralSpot.intensity = Math.min((cfg.baseNeutralSpot || 5.2) + 0.9, neutralSpot.intensity + clampedIntensity * 0.45);
+        }
       }
     }
 
@@ -4617,6 +4640,9 @@
         ambientIntensity: 0.85,
         mainSpotColor: 0x00f2fe,
         baseSpot: 5.0,
+        baseNeutralSpot: 4.2,
+        neutralSpotColor: 0xffffff,
+        fillIntensity: 0.60,
         leftStrobeColor: 0xf72585,
         rightStrobeColor: 0x7209b7,
         baseStrobe: 4.0,
@@ -4630,10 +4656,14 @@
       },
       mandala: {
         // TEMA MANDALA ASTRAL: Geometría sagrada fractal, rayos de prisma y estrellas celestes
-        ambientColor: 0x1f0b35,
-        ambientIntensity: 0.90,
+        // Con foco neutro frontal de escenario que mantiene al guerrero perfectamente iluminado
+        ambientColor: 0x584c6c,
+        ambientIntensity: 0.92,
         mainSpotColor: 0xffd700,
-        baseSpot: 6.5,
+        baseSpot: 5.8,
+        baseNeutralSpot: 6.8,
+        neutralSpotColor: 0xfffaf2,
+        fillIntensity: 0.78,
         leftStrobeColor: 0xff007f,
         rightStrobeColor: 0x00f2fe,
         baseStrobe: 5.2,
@@ -4647,10 +4677,14 @@
       },
       psycho: {
         // TEMA PSICODÉLICO: Pista con anillos concéntricos irisados, estrellas cósmicas y luces reactivas
-        ambientColor: 0x2b0938,
-        ambientIntensity: 0.85,
+        // Con foco neutro frontal de alto rendimiento para resaltar rostro, piel y armadura
+        ambientColor: 0x5a426e,
+        ambientIntensity: 0.90,
         mainSpotColor: 0x00ffcc,
-        baseSpot: 6.2,
+        baseSpot: 5.5,
+        baseNeutralSpot: 6.6,
+        neutralSpotColor: 0xfffcf5,
+        fillIntensity: 0.78,
         leftStrobeColor: 0xff007f,
         rightStrobeColor: 0x7928ca,
         baseStrobe: 5.0,
@@ -4664,10 +4698,13 @@
       },
       cyberportal: {
         // TEMA TÚNEL HIPERESPACIO: Anillos luminosos infinitos en profundidad 3D y destellos estelares
-        ambientColor: 0x0a1931,
-        ambientIntensity: 0.82,
+        ambientColor: 0x3b5270,
+        ambientIntensity: 0.88,
         mainSpotColor: 0x38ef7d,
-        baseSpot: 5.8,
+        baseSpot: 5.2,
+        baseNeutralSpot: 6.2,
+        neutralSpotColor: 0xf8f9fd,
+        fillIntensity: 0.74,
         leftStrobeColor: 0x00f2fe,
         rightStrobeColor: 0xf72585,
         baseStrobe: 4.8,
@@ -4682,9 +4719,12 @@
       cyber: {
         // TEMA 1: CYBER RAVE NEON (Cian & Magenta equilibrados manteniendo nitidez en rostro y armadura)
         ambientColor: 0xdbeafe,
-        ambientIntensity: 0.72,
+        ambientIntensity: 0.75,
         mainSpotColor: 0x00f2fe,
         baseSpot: 4.5,
+        baseNeutralSpot: 4.8,
+        neutralSpotColor: 0xffffff,
+        fillIntensity: 0.65,
         leftStrobeColor: 0xf72585,
         rightStrobeColor: 0x9d4edd,
         baseStrobe: 3.5,
@@ -4699,9 +4739,12 @@
       laser: {
         // TEMA 2: LÁSER CLUB (Rubí y Cian suaves de cine, sin saturar la piel ni quemar luces)
         ambientColor: 0xf1f5f9,
-        ambientIntensity: 0.70,
+        ambientIntensity: 0.72,
         mainSpotColor: 0xfb7185,
         baseSpot: 4.2,
+        baseNeutralSpot: 4.8,
+        neutralSpotColor: 0xfff8f5,
+        fillIntensity: 0.60,
         leftStrobeColor: 0x06b6d4,
         rightStrobeColor: 0xf43f5e,
         baseStrobe: 3.2,
@@ -4716,9 +4759,12 @@
       gold: {
         // TEMA 3: SUNSET DORADO (Ámbar cálido elegante de concierto sin oscurecer el personaje)
         ambientColor: 0xfef3c7,
-        ambientIntensity: 0.76,
+        ambientIntensity: 0.78,
         mainSpotColor: 0xfbbf24,
         baseSpot: 4.2,
+        baseNeutralSpot: 4.5,
+        neutralSpotColor: 0xfffaf0,
+        fillIntensity: 0.65,
         leftStrobeColor: 0xf97316,
         rightStrobeColor: 0xd946ef,
         baseStrobe: 3.0,
@@ -4729,6 +4775,28 @@
         fogColor: 0x0a0602,
         bgColor: 0x0a0602,
         glow: 'none'
+      }
+    };
+
+    let isNeutralSpotEnabled = true;
+    window.toggleNeutralSpot = function(forceState) {
+      if (typeof forceState === 'boolean') {
+        isNeutralSpotEnabled = forceState;
+      } else {
+        isNeutralSpotEnabled = !isNeutralSpotEnabled;
+      }
+      const cfg = (typeof LIGHTING_THEMES !== 'undefined' && LIGHTING_THEMES[currentLightingTheme]) ? LIGHTING_THEMES[currentLightingTheme] : { baseNeutralSpot: 5.2 };
+      if (typeof neutralSpot !== 'undefined' && neutralSpot) {
+        neutralSpot.intensity = isNeutralSpotEnabled ? (cfg.baseNeutralSpot || 5.2) : 0;
+      }
+      const btn = document.getElementById('btn-neutral-spot');
+      const mBtn = document.getElementById('m-btn-neutral-spot');
+      if (btn) {
+        btn.classList.toggle('active', isNeutralSpotEnabled);
+      }
+      if (mBtn) {
+        mBtn.classList.toggle('active', isNeutralSpotEnabled);
+        mBtn.innerText = isNeutralSpotEnabled ? '🔦 Foco Neutro Frontal: ON' : '🔦 Foco Neutro Frontal: OFF';
       }
     };
 
@@ -4761,6 +4829,17 @@
 
       backRim.color.setHex(cfg.backRimColor);
       backRim.intensity = cfg.backRimIntensity;
+
+      if (typeof neutralSpot !== 'undefined' && neutralSpot) {
+        neutralSpot.color.setHex(cfg.neutralSpotColor || 0xfffbf5);
+        if (isNeutralSpotEnabled) {
+          neutralSpot.intensity = cfg.baseNeutralSpot || 5.2;
+        }
+      }
+
+      if (typeof fillLight !== 'undefined' && fillLight) {
+        fillLight.intensity = cfg.fillIntensity || 0.65;
+      }
 
       grid.material.color.setHex(cfg.gridColor);
       danceRing.material.color.setHex(cfg.ringColor);
@@ -5050,10 +5129,13 @@
 
       // Suave decaimiento de luces sincronizado con el render loop (cero timers asíncronos)
       if (leftStrobe && rightStrobe && mainSpot) {
-        const cfg = (typeof LIGHTING_THEMES !== 'undefined' && LIGHTING_THEMES[currentLightingTheme]) ? LIGHTING_THEMES[currentLightingTheme] : { baseStrobe: 4.0, baseSpot: 5.0 };
+        const cfg = (typeof LIGHTING_THEMES !== 'undefined' && LIGHTING_THEMES[currentLightingTheme]) ? LIGHTING_THEMES[currentLightingTheme] : { baseStrobe: 4.0, baseSpot: 5.0, baseNeutralSpot: 5.2 };
         leftStrobe.intensity = THREE.MathUtils.lerp(leftStrobe.intensity, cfg.baseStrobe, delta * 8.0);
         rightStrobe.intensity = THREE.MathUtils.lerp(rightStrobe.intensity, cfg.baseStrobe, delta * 8.0);
         mainSpot.intensity = THREE.MathUtils.lerp(mainSpot.intensity, cfg.baseSpot, delta * 8.0);
+        if (typeof neutralSpot !== 'undefined' && neutralSpot && (typeof isNeutralSpotEnabled === 'undefined' || isNeutralSpotEnabled)) {
+          neutralSpot.intensity = THREE.MathUtils.lerp(neutralSpot.intensity, cfg.baseNeutralSpot || 5.2, delta * 8.0);
+        }
       }
 
       // Animación continua y reactiva de las pistas psicodélicas y mandala
@@ -5095,6 +5177,97 @@
         starField.rotation.y = elapsedTime * 0.08;
       }
 
+    // Sistema anti-colisión en tiempo real: Asegura que el brazo derecho e izquierdo nunca penetren los muslos o rodillas
+    const _vAB = new THREE.Vector3();
+    const _vAP = new THREE.Vector3();
+    const _vProj = new THREE.Vector3();
+    const _vDiff = new THREE.Vector3();
+    const _vThigh = new THREE.Vector3();
+    const _vCalf = new THREE.Vector3();
+    const _vUpper = new THREE.Vector3();
+    const _vLower = new THREE.Vector3();
+    const _vHand = new THREE.Vector3();
+    const _vTarget = new THREE.Vector3();
+    const _v1 = new THREE.Vector3();
+    const _v2 = new THREE.Vector3();
+    const _qDelta = new THREE.Quaternion();
+    const _qParent = new THREE.Quaternion();
+    const _qParentInv = new THREE.Quaternion();
+    const _qLocalDelta = new THREE.Quaternion();
+
+    function distPointToSegment(p, a, b, outProj, outDiff) {
+      _vAB.subVectors(b, a);
+      const l2 = _vAB.lengthSq();
+      if (l2 < 1e-6) {
+        outProj.copy(a);
+        outDiff.subVectors(p, a);
+        return outDiff.length();
+      }
+      _vAP.subVectors(p, a);
+      const t = Math.max(0, Math.min(1, _vAP.dot(_vAB) / l2));
+      outProj.copy(a).addScaledVector(_vAB, t);
+      outDiff.subVectors(p, outProj);
+      return outDiff.length();
+    }
+
+    function rotateBoneTowardsWorldTarget(bone, pivotWorldPos, origWorldPos, targetWorldPos) {
+      if (!bone || !bone.parent) return;
+      _v1.subVectors(origWorldPos, pivotWorldPos).normalize();
+      _v2.subVectors(targetWorldPos, pivotWorldPos).normalize();
+      _qDelta.setFromUnitVectors(_v1, _v2);
+
+      bone.parent.getWorldQuaternion(_qParent);
+      _qParentInv.copy(_qParent).invert();
+      _qLocalDelta.copy(_qParentInv).multiply(_qDelta).multiply(_qParent);
+
+      bone.quaternion.premultiply(_qLocalDelta);
+      bone.updateMatrixWorld(true);
+    }
+
+    function enforceArmLegClearance(bones) {
+      if (!bones) return;
+      const R_ARMOR = 0.25; // Radio seguro para evitar fusión con armadura
+
+      for (const side of ['r', 'l']) {
+        const thigh = bones['thigh_' + side];
+        const calf = bones['calf_' + side];
+        const upper = bones['upperarm_' + side];
+        const lower = bones['lowerarm_' + side];
+        const hand = bones['hand_' + side];
+
+        if (!thigh || !calf || !upper || !lower || !hand) continue;
+
+        thigh.getWorldPosition(_vThigh);
+        calf.getWorldPosition(_vCalf);
+        upper.getWorldPosition(_vUpper);
+        lower.getWorldPosition(_vLower);
+        hand.getWorldPosition(_vHand);
+
+        let d = distPointToSegment(_vHand, _vThigh, _vCalf, _vProj, _vDiff);
+        if (d < R_ARMOR) {
+          const pen = R_ARMOR - d;
+          const norm = d > 1e-4 ? _vDiff.multiplyScalar(1 / d) : new THREE.Vector3(side === 'r' ? -1 : 1, 0, 0);
+          const push = norm.clone();
+          push.z += (_vHand.z > _vThigh.z) ? 0.2 : -0.2;
+          push.normalize();
+
+          _vTarget.copy(_vHand).addScaledVector(push, pen);
+          rotateBoneTowardsWorldTarget(upper, _vUpper, _vHand, _vTarget);
+
+          hand.getWorldPosition(_vHand);
+          lower.getWorldPosition(_vLower);
+          d = distPointToSegment(_vHand, _vThigh, _vCalf, _vProj, _vDiff);
+
+          if (d < R_ARMOR) {
+            const pen2 = R_ARMOR - d;
+            const norm2 = d > 1e-4 ? _vDiff.multiplyScalar(1 / d) : new THREE.Vector3(side === 'r' ? -1 : 1, 0, 0);
+            _vTarget.copy(_vHand).addScaledVector(norm2, pen2);
+            rotateBoneTowardsWorldTarget(lower, _vLower, _vHand, _vTarget);
+          }
+        }
+      }
+    }
+
       if (isDancing) {
         if (mixer) {
           mixer.update(delta);
@@ -5105,6 +5278,10 @@
 
         if (currentModel && typeof currentModel.updateMatrixWorld === 'function') {
           currentModel.updateMatrixWorld(true);
+        }
+
+        if (tecktonikController && tecktonikController.bones) {
+          enforceArmLegClearance(tecktonikController.bones);
         }
 
         if (tecktonikController && tecktonikController.currentMode !== 'deepmotion' && tecktonikController.currentMode !== 'singleladies' && tecktonikController.currentMode !== 'baile3' && tecktonikController.currentMode !== 'baile4') {
