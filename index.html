@@ -4583,15 +4583,32 @@
 
     function initWarriorModel(gltf) {
       currentModel = gltf.scene;
-      scene.add(currentModel);
 
+      // Purgar de raíz cualquier malla residual o fantasma (como Body_Lod de 90 metros que creaba la niebla blanca de fondo)
+      const strayMeshes = [];
       currentModel.traverse((node) => {
         if (node.isMesh) {
-          node.castShadow = true;
-          node.receiveShadow = true;
-          node.frustumCulled = false; // Evita que Three.js oculte la malla al bailar, desplazarse o agacharse
+          if (node.name !== 'Solid_Guerrero' || node.name.includes('Lod') || node.name.includes('geodésica')) {
+            strayMeshes.push(node);
+          } else {
+            node.castShadow = true;
+            node.receiveShadow = true;
+            node.frustumCulled = false; // Evita que Three.js oculte la malla al bailar, desplazarse o agacharse
+          }
         }
       });
+
+      strayMeshes.forEach((mesh) => {
+        mesh.visible = false;
+        if (mesh.geometry) mesh.geometry.dispose();
+        if (mesh.material) {
+          if (Array.isArray(mesh.material)) mesh.material.forEach(m => m.dispose());
+          else mesh.material.dispose();
+        }
+        if (mesh.parent) mesh.parent.remove(mesh);
+      });
+
+      scene.add(currentModel);
 
       // Inicializar controlador Tecktonik (Baile Viral 360° continuo por defecto con combo de piernas)
       tecktonikController = new TecktonikController(currentModel);
