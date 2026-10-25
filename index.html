@@ -5177,99 +5177,6 @@
         starField.rotation.y = elapsedTime * 0.08;
       }
 
-    // Sistema anti-colisión en tiempo real: Asegura que el brazo derecho e izquierdo nunca penetren los muslos o rodillas
-    const _vAB = new THREE.Vector3();
-    const _vAP = new THREE.Vector3();
-    const _vProj = new THREE.Vector3();
-    const _vDiff = new THREE.Vector3();
-    const _vThigh = new THREE.Vector3();
-    const _vCalf = new THREE.Vector3();
-    const _vUpper = new THREE.Vector3();
-    const _vLower = new THREE.Vector3();
-    const _vHand = new THREE.Vector3();
-    const _vTarget = new THREE.Vector3();
-    const _v1 = new THREE.Vector3();
-    const _v2 = new THREE.Vector3();
-    const _qDelta = new THREE.Quaternion();
-    const _qParent = new THREE.Quaternion();
-    const _qParentInv = new THREE.Quaternion();
-    const _qLocalDelta = new THREE.Quaternion();
-    const _qBaile4Upper = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.28).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.16));
-    const _qBaile4Lower = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.18).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.12));
-
-    function distPointToSegment(p, a, b, outProj, outDiff) {
-      _vAB.subVectors(b, a);
-      const l2 = _vAB.lengthSq();
-      if (l2 < 1e-6) {
-        outProj.copy(a);
-        outDiff.subVectors(p, a);
-        return outDiff.length();
-      }
-      _vAP.subVectors(p, a);
-      const t = Math.max(0, Math.min(1, _vAP.dot(_vAB) / l2));
-      outProj.copy(a).addScaledVector(_vAB, t);
-      outDiff.subVectors(p, outProj);
-      return outDiff.length();
-    }
-
-    function rotateBoneTowardsWorldTarget(bone, pivotWorldPos, origWorldPos, targetWorldPos) {
-      if (!bone || !bone.parent) return;
-      _v1.subVectors(origWorldPos, pivotWorldPos).normalize();
-      _v2.subVectors(targetWorldPos, pivotWorldPos).normalize();
-      _qDelta.setFromUnitVectors(_v1, _v2);
-
-      bone.parent.getWorldQuaternion(_qParent);
-      _qParentInv.copy(_qParent).invert();
-      _qLocalDelta.copy(_qParentInv).multiply(_qDelta).multiply(_qParent);
-
-      bone.quaternion.premultiply(_qLocalDelta);
-      bone.updateMatrixWorld(true);
-    }
-
-    function enforceArmLegClearance(bones) {
-      if (!bones) return;
-      const R_ARMOR = 0.25; // Radio seguro para evitar fusión con armadura
-
-      for (const side of ['r', 'l']) {
-        const thigh = bones['thigh_' + side];
-        const calf = bones['calf_' + side];
-        const upper = bones['upperarm_' + side];
-        const lower = bones['lowerarm_' + side];
-        const hand = bones['hand_' + side];
-
-        if (!thigh || !calf || !upper || !lower || !hand) continue;
-
-        thigh.getWorldPosition(_vThigh);
-        calf.getWorldPosition(_vCalf);
-        upper.getWorldPosition(_vUpper);
-        lower.getWorldPosition(_vLower);
-        hand.getWorldPosition(_vHand);
-
-        let d = distPointToSegment(_vHand, _vThigh, _vCalf, _vProj, _vDiff);
-        if (d < R_ARMOR) {
-          const pen = R_ARMOR - d;
-          const norm = d > 1e-4 ? _vDiff.multiplyScalar(1 / d) : new THREE.Vector3(side === 'r' ? -1 : 1, 0, 0);
-          const push = norm.clone();
-          push.z += (_vHand.z > _vThigh.z) ? 0.2 : -0.2;
-          push.normalize();
-
-          _vTarget.copy(_vHand).addScaledVector(push, pen);
-          rotateBoneTowardsWorldTarget(upper, _vUpper, _vHand, _vTarget);
-
-          hand.getWorldPosition(_vHand);
-          lower.getWorldPosition(_vLower);
-          d = distPointToSegment(_vHand, _vThigh, _vCalf, _vProj, _vDiff);
-
-          if (d < R_ARMOR) {
-            const pen2 = R_ARMOR - d;
-            const norm2 = d > 1e-4 ? _vDiff.multiplyScalar(1 / d) : new THREE.Vector3(side === 'r' ? -1 : 1, 0, 0);
-            _vTarget.copy(_vHand).addScaledVector(norm2, pen2);
-            rotateBoneTowardsWorldTarget(lower, _vLower, _vHand, _vTarget);
-          }
-        }
-      }
-    }
-
       if (isDancing) {
         if (mixer) {
           mixer.update(delta);
@@ -5278,20 +5185,8 @@
           window.updateAllMocapSeamlessLoops();
         }
 
-        const activeMode = tecktonikController ? tecktonikController.currentMode : 'combo_viral';
-        if (activeMode === 'baile4' || currentClipAction === baile4Action) {
-          const upperR = tecktonikController?.bones?.upperarm_r;
-          const lowerR = tecktonikController?.bones?.lowerarm_r;
-          if (upperR) {
-            upperR.quaternion.multiply(_qBaile4Upper);
-          }
-          if (lowerR) {
-            lowerR.quaternion.multiply(_qBaile4Lower);
-          }
-        }
-
-        if (tecktonikController && tecktonikController.bones) {
-          enforceArmLegClearance(tecktonikController.bones);
+        if (currentModel && typeof currentModel.updateMatrixWorld === 'function') {
+          currentModel.updateMatrixWorld(true);
         }
 
         if (currentModel && typeof currentModel.updateMatrixWorld === 'function') {
