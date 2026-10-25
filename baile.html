@@ -395,6 +395,100 @@
       flex-wrap: wrap;
       justify-content: center;
       max-width: 900px;
+      position: relative;
+    }
+
+    /* Dropdown de Figuras Individuales Tecktonik */
+    .figures-dropdown-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-figures-dropdown {
+      background: linear-gradient(135deg, rgba(14, 20, 36, 0.9), rgba(26, 34, 56, 0.9));
+      border: 1px solid rgba(0, 242, 254, 0.35);
+      color: #e2e8f0;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .btn-figures-dropdown:hover {
+      border-color: #00f2fe;
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 242, 254, 0.3);
+    }
+    .btn-figures-dropdown.active,
+    .btn-figures-dropdown.open {
+      border-color: #00f2fe;
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(157, 78, 221, 0.25));
+      box-shadow: 0 0 18px rgba(0, 242, 254, 0.45);
+      color: #fff;
+    }
+    .btn-figures-dropdown .dropdown-arrow {
+      font-size: 10px;
+      transition: transform 0.25s ease;
+      color: #00f2fe;
+    }
+    .btn-figures-dropdown.open .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+    .figures-dropdown-menu {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%) translateY(10px) scale(0.96);
+      background: rgba(10, 15, 29, 0.96);
+      border: 1px solid rgba(0, 242, 254, 0.35);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border-radius: 16px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 6px;
+      z-index: 999;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 242, 254, 0.25);
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0.22s;
+      max-height: 380px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 242, 254, 0.3) transparent;
+    }
+    .figures-dropdown-menu::-webkit-scrollbar {
+      width: 5px;
+    }
+    .figures-dropdown-menu::-webkit-scrollbar-thumb {
+      background: rgba(0, 242, 254, 0.3);
+      border-radius: 4px;
+    }
+    .figures-dropdown-menu.show {
+      opacity: 1;
+      pointer-events: auto;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+    .figures-dropdown-menu .pad-btn {
+      width: 100%;
+      justify-content: space-between;
+      padding: 7px 11px;
+      font-size: 11.5px;
+      border-radius: 10px;
+      white-space: nowrap;
     }
 
     /* Base Mocap Groove Switcher (Hips, Waist & Footwork Dynamic) */
@@ -1328,6 +1422,37 @@
       .pad-btn kbd {
         display: none;
       }
+
+      /* Figures Dropdown en Móvil */
+      .figures-dropdown-container {
+        flex-shrink: 0;
+      }
+      .btn-figures-dropdown {
+        padding: 6px 11px;
+        font-size: 11px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      .figures-dropdown-menu {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px) scale(0.96);
+        width: calc(100vw - 24px);
+        max-width: 360px;
+        grid-template-columns: 1fr;
+        max-height: 55vh;
+        z-index: 10001;
+      }
+      .figures-dropdown-menu.show {
+        transform: translateX(-50%) translateY(0) scale(1);
+      }
+      .figures-dropdown-menu .pad-btn {
+        width: 100%;
+        border-radius: 10px;
+        padding: 9px 12px;
+        font-size: 12px;
+      }
     }
   </style>
 
@@ -1607,39 +1732,47 @@
       <button class="pad-btn active" id="pad-viral" onclick="window.triggerMoveNow('combo_viral')">
         <span>🔥 Baile Viral 360°</span> <kbd>V</kbd>
       </button>
-      <button class="pad-btn" id="pad-1" onclick="window.triggerMoveNow('estirados')">
-        <span>💥 1. Extensión & Cruce</span> <kbd>1</kbd>
-      </button>
-      <button class="pad-btn" id="pad-2" onclick="window.triggerMoveNow('trenzado')">
-        <span>🥨 2. Arm Wrap (Bici)</span> <kbd>2</kbd>
-      </button>
-      <button class="pad-btn" id="pad-3" onclick="window.triggerMoveNow('peinada')">
-        <span>👑 3. Peinada Real 360°</span> <kbd>3</kbd>
-      </button>
-      <button class="pad-btn" id="pad-4" onclick="window.triggerMoveNow('enhebrado')">
-        <span>🪡 4. El Enhebrado</span> <kbd>4</kbd>
-      </button>
-      <button class="pad-btn" id="pad-5" onclick="window.triggerMoveNow('l_shapes')">
-        <span>📐 5. Geometría Neón</span> <kbd>5</kbd>
-      </button>
-      <button class="pad-btn" id="pad-6" onclick="window.triggerMoveNow('molino')">
-        <span>🌀 6. El Molino 360°</span> <kbd>6</kbd>
-      </button>
-      <button class="pad-btn" id="pad-7" onclick="window.triggerMoveNow('cielo')">
-        <span>☝️ 7. Señalar al Cielo</span> <kbd>7</kbd>
-      </button>
-      <button class="pad-btn" id="pad-8" onclick="window.triggerMoveNow('cuadrado_reloj')">
-        <span>🔲 8. Cuadrado Cabeza</span> <kbd>8</kbd>
-      </button>
-      <button class="pad-btn" id="pad-9" onclick="window.triggerMoveNow('arco_vertigo')">
-        <span>🌈 9. Arco & Slash</span> <kbd>9</kbd>
-      </button>
-      <button class="pad-btn" id="pad-0" onclick="window.triggerMoveNow('laser_front')">
-        <span>🎯 10. Láser & Drop</span> <kbd>0</kbd>
-      </button>
-      <button class="pad-btn" id="pad-freeze" onclick="window.triggerMoveNow('brazos_cruzados')">
-        <span>🛡️ Brazos Cruzados</span> <kbd>P</kbd>
-      </button>
+      <div class="figures-dropdown-container" id="figures-dropdown-container">
+        <button type="button" class="pad-btn btn-figures-dropdown" id="btn-figures-dropdown" onclick="window.toggleFiguresDropdown(event)" title="Abrir catálogo de 11 figuras individuales Tecktonik">
+          <span id="active-figure-title">✨ Figuras Individuales (1-10)</span>
+          <span class="dropdown-arrow">▼</span>
+        </button>
+        <div class="figures-dropdown-menu" id="figures-dropdown-menu">
+          <button class="pad-btn" id="pad-1" onclick="window.triggerMoveNow('estirados')">
+            <span>💥 1. Extensión & Cruce</span> <kbd>1</kbd>
+          </button>
+          <button class="pad-btn" id="pad-2" onclick="window.triggerMoveNow('trenzado')">
+            <span>🥨 2. Arm Wrap (Bici)</span> <kbd>2</kbd>
+          </button>
+          <button class="pad-btn" id="pad-3" onclick="window.triggerMoveNow('peinada')">
+            <span>👑 3. Peinada Real 360°</span> <kbd>3</kbd>
+          </button>
+          <button class="pad-btn" id="pad-4" onclick="window.triggerMoveNow('enhebrado')">
+            <span>🪡 4. El Enhebrado</span> <kbd>4</kbd>
+          </button>
+          <button class="pad-btn" id="pad-5" onclick="window.triggerMoveNow('l_shapes')">
+            <span>📐 5. Geometría Neón</span> <kbd>5</kbd>
+          </button>
+          <button class="pad-btn" id="pad-6" onclick="window.triggerMoveNow('molino')">
+            <span>🌀 6. El Molino 360°</span> <kbd>6</kbd>
+          </button>
+          <button class="pad-btn" id="pad-7" onclick="window.triggerMoveNow('cielo')">
+            <span>☝️ 7. Señalar al Cielo</span> <kbd>7</kbd>
+          </button>
+          <button class="pad-btn" id="pad-8" onclick="window.triggerMoveNow('cuadrado_reloj')">
+            <span>🔲 8. Cuadrado Cabeza</span> <kbd>8</kbd>
+          </button>
+          <button class="pad-btn" id="pad-9" onclick="window.triggerMoveNow('arco_vertigo')">
+            <span>🌈 9. Arco & Slash</span> <kbd>9</kbd>
+          </button>
+          <button class="pad-btn" id="pad-0" onclick="window.triggerMoveNow('laser_front')">
+            <span>🎯 10. Láser & Drop</span> <kbd>0</kbd>
+          </button>
+          <button class="pad-btn" id="pad-freeze" onclick="window.triggerMoveNow('brazos_cruzados')">
+            <span>🛡️ Brazos Cruzados</span> <kbd>P</kbd>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1695,15 +1828,15 @@
     scene.add(mainSpot);
     scene.add(mainSpot.target);
 
-    const leftStrobe = new THREE.PointLight(0xf72585, 0.0, 10);
+    const leftStrobe = new THREE.PointLight(0xf72585, 4.5, 10);
     leftStrobe.position.set(-3, 2.5, 1);
     scene.add(leftStrobe);
 
-    const rightStrobe = new THREE.PointLight(0x7209b7, 0.0, 10);
+    const rightStrobe = new THREE.PointLight(0x7209b7, 4.5, 10);
     rightStrobe.position.set(3, 2.5, 1);
     scene.add(rightStrobe);
 
-    const backRim = new THREE.DirectionalLight(0x4facfe, 0.0);
+    const backRim = new THREE.DirectionalLight(0x4facfe, 3.0);
     backRim.position.set(0, 4, -4);
     scene.add(backRim);
 
@@ -3710,10 +3843,12 @@
 
     // Visual drop & pulse effect on kick/bass (suave y equilibrado, sin quemar el modelo)
     function onBeatDrop(intensity = 1.0) {
-      if (mainSpot) {
-        const cfg = (typeof LIGHTING_THEMES !== 'undefined' && LIGHTING_THEMES[currentLightingTheme]) ? LIGHTING_THEMES[currentLightingTheme] : { baseSpot: 5.5 };
+      if (leftStrobe && rightStrobe && mainSpot) {
+        const cfg = (typeof LIGHTING_THEMES !== 'undefined' && LIGHTING_THEMES[currentLightingTheme]) ? LIGHTING_THEMES[currentLightingTheme] : { baseStrobe: 3.5, baseSpot: 5.0 };
         const clampedIntensity = Math.min(1.0, intensity);
-        mainSpot.intensity = Math.min(cfg.baseSpot + 0.8, mainSpot.intensity + clampedIntensity * 0.4);
+        leftStrobe.intensity = Math.min(cfg.baseStrobe + 1.2, leftStrobe.intensity + clampedIntensity * 0.6);
+        rightStrobe.intensity = Math.min(cfg.baseStrobe + 1.2, rightStrobe.intensity + clampedIntensity * 0.6);
+        mainSpot.intensity = Math.min(cfg.baseSpot + 1.2, mainSpot.intensity + clampedIntensity * 0.6);
       }
     }
 
@@ -3858,6 +3993,31 @@
       onBeatDrop(1.0);
     };
 
+    // Control del desplegable de figuras individuales Tecktonik
+    window.toggleFiguresDropdown = function(e, forceState = null) {
+      if (e) e.stopPropagation();
+      const menu = document.getElementById('figures-dropdown-menu');
+      const btn = document.getElementById('btn-figures-dropdown');
+      if (!menu || !btn) return;
+      const isOpen = menu.classList.contains('show');
+      const next = (forceState !== null) ? forceState : !isOpen;
+      if (next) {
+        menu.classList.add('show');
+        btn.classList.add('open');
+      } else {
+        menu.classList.remove('show');
+        btn.classList.remove('open');
+      }
+    };
+
+    // Cerrar desplegable si se hace click fuera
+    document.addEventListener('click', (e) => {
+      const container = document.getElementById('figures-dropdown-container');
+      if (container && !container.contains(e.target)) {
+        window.toggleFiguresDropdown(null, false);
+      }
+    });
+
     // Disparar figura en directo (Live Pad)
     window.triggerMoveNow = function(seqKey) {
       if (!tecktonikController) return;
@@ -3869,6 +4029,27 @@
         padBtn.classList.add('active');
         padBtn.classList.add('firing');
         setTimeout(() => padBtn.classList.remove('firing'), 300);
+      }
+
+      // Si es una figura individual dentro del dropdown, actualizar el título del botón desplegable y marcarlo activo
+      const dropdownBtn = document.getElementById('btn-figures-dropdown');
+      const dropdownTitle = document.getElementById('active-figure-title');
+      const isDropdownMove = [
+        'estirados', 'trenzado', 'peinada', 'enhebrado', 'l_shapes',
+        'molino', 'cielo', 'cuadrado_reloj', 'arco_vertigo', 'laser_front', 'brazos_cruzados'
+      ].includes(seqKey);
+
+      if (isDropdownMove) {
+        if (dropdownBtn) dropdownBtn.classList.add('active');
+        if (dropdownTitle && SEQ_DATA[seqKey]) {
+          const shortTitle = SEQ_DATA[seqKey].name.split(' (')[0];
+          dropdownTitle.innerText = `✨ ${shortTitle}`;
+        }
+        // Cerrar suavemente el desplegable tras elegir figura
+        window.toggleFiguresDropdown(null, false);
+      } else {
+        if (dropdownBtn) dropdownBtn.classList.remove('active');
+        if (dropdownTitle) dropdownTitle.innerText = '✨ Figuras Individuales (1-10)';
       }
 
       tecktonikController.lastActiveMode = seqKey;
@@ -4286,72 +4467,72 @@
 
     const LIGHTING_THEMES = {
       normal: {
-        // ILUMINACIÓN NORMAL ORIGINAL DEL PRINCIPIO (Luz blanca natural sobre el bailarín, fondo limpio)
+        // ILUMINACIÓN NORMAL ORIGINAL DEL PRINCIPIO (Luz blanca natural + acentos suaves)
         ambientColor: 0xffffff,
-        ambientIntensity: 0.90,
+        ambientIntensity: 0.85,
         mainSpotColor: 0x00f2fe,
-        baseSpot: 5.5,
-        leftStrobeColor: 0x000000,
-        rightStrobeColor: 0x000000,
-        baseStrobe: 0.0,
-        backRimColor: 0x000000,
-        backRimIntensity: 0.0,
+        baseSpot: 5.0,
+        leftStrobeColor: 0xf72585,
+        rightStrobeColor: 0x7209b7,
+        baseStrobe: 4.0,
+        backRimColor: 0x4facfe,
+        backRimIntensity: 3.0,
         gridColor: 0x00f2fe,
         ringColor: 0x00f2fe,
         fogColor: 0x05070c,
         bgColor: 0x05070c,
-        glow: 'none'
+        glow: 'radial-gradient(circle, rgba(0, 242, 254, 0.30) 0%, rgba(114, 9, 183, 0.20) 45%, transparent 75%)'
       },
       cyber: {
-        // TEMA 1: CYBER RAVE NEON (Luz frontal nítida, sin halos laterales ni traseros)
+        // TEMA 1: CYBER RAVE NEON (Cian & Magenta equilibrados manteniendo nitidez en rostro y armadura)
         ambientColor: 0xdbeafe,
-        ambientIntensity: 0.80,
+        ambientIntensity: 0.72,
         mainSpotColor: 0x00f2fe,
-        baseSpot: 5.0,
-        leftStrobeColor: 0x000000,
-        rightStrobeColor: 0x000000,
-        baseStrobe: 0.0,
-        backRimColor: 0x000000,
-        backRimIntensity: 0.0,
+        baseSpot: 4.5,
+        leftStrobeColor: 0xf72585,
+        rightStrobeColor: 0x9d4edd,
+        baseStrobe: 3.5,
+        backRimColor: 0x00f2fe,
+        backRimIntensity: 2.8,
         gridColor: 0x00f2fe,
         ringColor: 0xf72585,
         fogColor: 0x040711,
         bgColor: 0x040711,
-        glow: 'none'
+        glow: 'radial-gradient(circle, rgba(0, 242, 254, 0.28) 0%, rgba(247, 37, 133, 0.20) 45%, transparent 75%)'
       },
       laser: {
-        // TEMA 2: LÁSER CLUB
+        // TEMA 2: LÁSER CLUB (Rubí y Cian suaves de cine, sin saturar la piel ni quemar luces)
         ambientColor: 0xf1f5f9,
-        ambientIntensity: 0.78,
+        ambientIntensity: 0.70,
         mainSpotColor: 0xfb7185,
-        baseSpot: 4.8,
-        leftStrobeColor: 0x000000,
-        rightStrobeColor: 0x000000,
-        baseStrobe: 0.0,
-        backRimColor: 0x000000,
-        backRimIntensity: 0.0,
+        baseSpot: 4.2,
+        leftStrobeColor: 0x06b6d4,
+        rightStrobeColor: 0xf43f5e,
+        baseStrobe: 3.2,
+        backRimColor: 0xf43f5e,
+        backRimIntensity: 2.6,
         gridColor: 0xf43f5e,
         ringColor: 0x06b6d4,
         fogColor: 0x0b0407,
         bgColor: 0x0b0407,
-        glow: 'none'
+        glow: 'radial-gradient(circle, rgba(244, 63, 94, 0.26) 0%, rgba(6, 182, 212, 0.18) 45%, transparent 75%)'
       },
       gold: {
-        // TEMA 3: SUNSET DORADO
+        // TEMA 3: SUNSET DORADO (Ámbar cálido elegante de concierto sin oscurecer el personaje)
         ambientColor: 0xfef3c7,
-        ambientIntensity: 0.82,
+        ambientIntensity: 0.76,
         mainSpotColor: 0xfbbf24,
-        baseSpot: 4.8,
-        leftStrobeColor: 0x000000,
-        rightStrobeColor: 0x000000,
-        baseStrobe: 0.0,
-        backRimColor: 0x000000,
-        backRimIntensity: 0.0,
+        baseSpot: 4.2,
+        leftStrobeColor: 0xf97316,
+        rightStrobeColor: 0xd946ef,
+        baseStrobe: 3.0,
+        backRimColor: 0xfde047,
+        backRimIntensity: 2.6,
         gridColor: 0xfbbf24,
         ringColor: 0xf97316,
         fogColor: 0x0a0602,
         bgColor: 0x0a0602,
-        glow: 'none'
+        glow: 'radial-gradient(circle, rgba(251, 191, 36, 0.26) 0%, rgba(249, 115, 22, 0.18) 45%, transparent 75%)'
       }
     };
 
@@ -4390,8 +4571,8 @@
       scene.fog.color.setHex(cfg.fogColor);
       scene.background.setHex(cfg.bgColor);
 
-      if (stageGlow) {
-        stageGlow.style.display = 'none';
+      if (stageGlow && cfg.glow) {
+        stageGlow.style.background = cfg.glow;
       }
 
       // En móviles, cerrar los cajones tras seleccionar iluminación
