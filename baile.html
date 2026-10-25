@@ -1828,17 +1828,21 @@
     scene.add(mainSpot);
     scene.add(mainSpot.target);
 
-    const leftStrobe = new THREE.PointLight(0xf72585, 0.0, 10);
-    leftStrobe.position.set(-3, 2.5, 1);
+    // Focos frontales-laterales dirigidos hacia el personaje (Z positiva = hacia delante, sin tocar el fondo de atras)
+    const leftStrobe = new THREE.PointLight(0xf72585, 3.5, 6.0, 1.5);
+    leftStrobe.position.set(-2.2, 1.8, 2.0);
     scene.add(leftStrobe);
 
-    const rightStrobe = new THREE.PointLight(0x7209b7, 0.0, 10);
-    rightStrobe.position.set(3, 2.5, 1);
+    const rightStrobe = new THREE.PointLight(0x7209b7, 3.5, 6.0, 1.5);
+    rightStrobe.position.set(2.2, 1.8, 2.0);
     scene.add(rightStrobe);
 
-    const backRim = new THREE.DirectionalLight(0x4facfe, 0.0);
-    backRim.position.set(0, 4, -4);
+    // Luz cenital suave de recorte directo hacia abajo sobre hombros y cabeza (sin apuntar al fondo)
+    const backRim = new THREE.DirectionalLight(0x4facfe, 1.8);
+    backRim.position.set(0, 5.0, -0.5);
+    backRim.target.position.set(0, 0.9, 0);
     scene.add(backRim);
+    scene.add(backRim.target);
 
     // Dynamic Floor Grid & Ring
     const grid = new THREE.GridHelper(20, 40, 0x00f2fe, 0x1e293b);
@@ -4465,16 +4469,16 @@
 
     const LIGHTING_THEMES = {
       normal: {
-        // ILUMINACIÓN NORMAL ORIGINAL DEL PRINCIPIO (Luz frontal limpia, sin focos laterales/traseros)
+        // ILUMINACIÓN NORMAL: Luz clara sobre el bailarín, fondo negro limpio
         ambientColor: 0xffffff,
-        ambientIntensity: 0.90,
+        ambientIntensity: 0.85,
         mainSpotColor: 0x00f2fe,
         baseSpot: 5.5,
-        leftStrobeColor: 0x000000,
-        rightStrobeColor: 0x000000,
-        baseStrobe: 0.0,
-        backRimColor: 0x000000,
-        backRimIntensity: 0.0,
+        leftStrobeColor: 0xf72585,
+        rightStrobeColor: 0x7209b7,
+        baseStrobe: 3.5,
+        backRimColor: 0x4facfe,
+        backRimIntensity: 1.8,
         gridColor: 0x00f2fe,
         ringColor: 0x00f2fe,
         fogColor: 0x05070c,
@@ -4482,16 +4486,16 @@
         glow: 'none'
       },
       cyber: {
-        // TEMA 1: CYBER RAVE NEON (Sin focos laterales ni traseros)
+        // TEMA 1: CYBER RAVE NEON
         ambientColor: 0xdbeafe,
-        ambientIntensity: 0.80,
+        ambientIntensity: 0.75,
         mainSpotColor: 0x00f2fe,
         baseSpot: 5.0,
-        leftStrobeColor: 0x000000,
-        rightStrobeColor: 0x000000,
-        baseStrobe: 0.0,
-        backRimColor: 0x000000,
-        backRimIntensity: 0.0,
+        leftStrobeColor: 0xf72585,
+        rightStrobeColor: 0x9d4edd,
+        baseStrobe: 3.5,
+        backRimColor: 0x00f2fe,
+        backRimIntensity: 1.8,
         gridColor: 0x00f2fe,
         ringColor: 0xf72585,
         fogColor: 0x040711,
@@ -4501,14 +4505,14 @@
       laser: {
         // TEMA 2: LÁSER CLUB
         ambientColor: 0xf1f5f9,
-        ambientIntensity: 0.78,
+        ambientIntensity: 0.72,
         mainSpotColor: 0xfb7185,
         baseSpot: 4.8,
-        leftStrobeColor: 0x000000,
-        rightStrobeColor: 0x000000,
-        baseStrobe: 0.0,
-        backRimColor: 0x000000,
-        backRimIntensity: 0.0,
+        leftStrobeColor: 0x06b6d4,
+        rightStrobeColor: 0xf43f5e,
+        baseStrobe: 3.2,
+        backRimColor: 0xf43f5e,
+        backRimIntensity: 1.6,
         gridColor: 0xf43f5e,
         ringColor: 0x06b6d4,
         fogColor: 0x0b0407,
@@ -4518,14 +4522,14 @@
       gold: {
         // TEMA 3: SUNSET DORADO
         ambientColor: 0xfef3c7,
-        ambientIntensity: 0.82,
+        ambientIntensity: 0.78,
         mainSpotColor: 0xfbbf24,
         baseSpot: 4.8,
-        leftStrobeColor: 0x000000,
-        rightStrobeColor: 0x000000,
-        baseStrobe: 0.0,
-        backRimColor: 0x000000,
-        backRimIntensity: 0.0,
+        leftStrobeColor: 0xf97316,
+        rightStrobeColor: 0xd946ef,
+        baseStrobe: 3.0,
+        backRimColor: 0xfde047,
+        backRimIntensity: 1.6,
         gridColor: 0xfbbf24,
         ringColor: 0xf97316,
         fogColor: 0x0a0602,
