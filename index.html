@@ -1695,15 +1695,15 @@
     scene.add(mainSpot);
     scene.add(mainSpot.target);
 
-    const leftStrobe = new THREE.PointLight(0xf72585, 4.5, 10);
+    const leftStrobe = new THREE.PointLight(0xf72585, 0.0, 10);
     leftStrobe.position.set(-3, 2.5, 1);
     scene.add(leftStrobe);
 
-    const rightStrobe = new THREE.PointLight(0x7209b7, 4.5, 10);
+    const rightStrobe = new THREE.PointLight(0x7209b7, 0.0, 10);
     rightStrobe.position.set(3, 2.5, 1);
     scene.add(rightStrobe);
 
-    const backRim = new THREE.DirectionalLight(0x4facfe, 3.0);
+    const backRim = new THREE.DirectionalLight(0x4facfe, 0.0);
     backRim.position.set(0, 4, -4);
     scene.add(backRim);
 
@@ -3710,12 +3710,10 @@
 
     // Visual drop & pulse effect on kick/bass (suave y equilibrado, sin quemar el modelo)
     function onBeatDrop(intensity = 1.0) {
-      if (leftStrobe && rightStrobe && mainSpot) {
-        const cfg = (typeof LIGHTING_THEMES !== 'undefined' && LIGHTING_THEMES[currentLightingTheme]) ? LIGHTING_THEMES[currentLightingTheme] : { baseStrobe: 3.5, baseSpot: 5.0 };
+      if (mainSpot) {
+        const cfg = (typeof LIGHTING_THEMES !== 'undefined' && LIGHTING_THEMES[currentLightingTheme]) ? LIGHTING_THEMES[currentLightingTheme] : { baseSpot: 5.5 };
         const clampedIntensity = Math.min(1.0, intensity);
-        leftStrobe.intensity = Math.min(cfg.baseStrobe + 1.2, leftStrobe.intensity + clampedIntensity * 0.6);
-        rightStrobe.intensity = Math.min(cfg.baseStrobe + 1.2, rightStrobe.intensity + clampedIntensity * 0.6);
-        mainSpot.intensity = Math.min(cfg.baseSpot + 1.2, mainSpot.intensity + clampedIntensity * 0.6);
+        mainSpot.intensity = Math.min(cfg.baseSpot + 0.8, mainSpot.intensity + clampedIntensity * 0.4);
       }
     }
 
@@ -4288,72 +4286,72 @@
 
     const LIGHTING_THEMES = {
       normal: {
-        // ILUMINACIÓN NORMAL ORIGINAL DEL PRINCIPIO (Luz blanca natural + acentos suaves)
+        // ILUMINACIÓN NORMAL ORIGINAL DEL PRINCIPIO (Luz blanca natural sobre el bailarín, fondo limpio)
         ambientColor: 0xffffff,
-        ambientIntensity: 0.85,
+        ambientIntensity: 0.90,
         mainSpotColor: 0x00f2fe,
-        baseSpot: 5.0,
-        leftStrobeColor: 0xf72585,
-        rightStrobeColor: 0x7209b7,
-        baseStrobe: 4.0,
-        backRimColor: 0x4facfe,
-        backRimIntensity: 3.0,
+        baseSpot: 5.5,
+        leftStrobeColor: 0x000000,
+        rightStrobeColor: 0x000000,
+        baseStrobe: 0.0,
+        backRimColor: 0x000000,
+        backRimIntensity: 0.0,
         gridColor: 0x00f2fe,
         ringColor: 0x00f2fe,
         fogColor: 0x05070c,
         bgColor: 0x05070c,
-        glow: 'radial-gradient(circle, rgba(0, 242, 254, 0.30) 0%, rgba(114, 9, 183, 0.20) 45%, transparent 75%)'
+        glow: 'none'
       },
       cyber: {
-        // TEMA 1: CYBER RAVE NEON (Cian & Magenta equilibrados manteniendo nitidez en rostro y armadura)
+        // TEMA 1: CYBER RAVE NEON (Luz frontal nítida, sin halos laterales ni traseros)
         ambientColor: 0xdbeafe,
-        ambientIntensity: 0.72,
+        ambientIntensity: 0.80,
         mainSpotColor: 0x00f2fe,
-        baseSpot: 4.5,
-        leftStrobeColor: 0xf72585,
-        rightStrobeColor: 0x9d4edd,
-        baseStrobe: 3.5,
-        backRimColor: 0x00f2fe,
-        backRimIntensity: 2.8,
+        baseSpot: 5.0,
+        leftStrobeColor: 0x000000,
+        rightStrobeColor: 0x000000,
+        baseStrobe: 0.0,
+        backRimColor: 0x000000,
+        backRimIntensity: 0.0,
         gridColor: 0x00f2fe,
         ringColor: 0xf72585,
         fogColor: 0x040711,
         bgColor: 0x040711,
-        glow: 'radial-gradient(circle, rgba(0, 242, 254, 0.28) 0%, rgba(247, 37, 133, 0.20) 45%, transparent 75%)'
+        glow: 'none'
       },
       laser: {
-        // TEMA 2: LÁSER CLUB (Rubí y Cian suaves de cine, sin saturar la piel ni quemar luces)
+        // TEMA 2: LÁSER CLUB
         ambientColor: 0xf1f5f9,
-        ambientIntensity: 0.70,
+        ambientIntensity: 0.78,
         mainSpotColor: 0xfb7185,
-        baseSpot: 4.2,
-        leftStrobeColor: 0x06b6d4,
-        rightStrobeColor: 0xf43f5e,
-        baseStrobe: 3.2,
-        backRimColor: 0xf43f5e,
-        backRimIntensity: 2.6,
+        baseSpot: 4.8,
+        leftStrobeColor: 0x000000,
+        rightStrobeColor: 0x000000,
+        baseStrobe: 0.0,
+        backRimColor: 0x000000,
+        backRimIntensity: 0.0,
         gridColor: 0xf43f5e,
         ringColor: 0x06b6d4,
         fogColor: 0x0b0407,
         bgColor: 0x0b0407,
-        glow: 'radial-gradient(circle, rgba(244, 63, 94, 0.26) 0%, rgba(6, 182, 212, 0.18) 45%, transparent 75%)'
+        glow: 'none'
       },
       gold: {
-        // TEMA 3: SUNSET DORADO (Ámbar cálido elegante de concierto sin oscurecer el personaje)
+        // TEMA 3: SUNSET DORADO
         ambientColor: 0xfef3c7,
-        ambientIntensity: 0.76,
+        ambientIntensity: 0.82,
         mainSpotColor: 0xfbbf24,
-        baseSpot: 4.2,
-        leftStrobeColor: 0xf97316,
-        rightStrobeColor: 0xd946ef,
-        baseStrobe: 3.0,
-        backRimColor: 0xfde047,
-        backRimIntensity: 2.6,
+        baseSpot: 4.8,
+        leftStrobeColor: 0x000000,
+        rightStrobeColor: 0x000000,
+        baseStrobe: 0.0,
+        backRimColor: 0x000000,
+        backRimIntensity: 0.0,
         gridColor: 0xfbbf24,
         ringColor: 0xf97316,
         fogColor: 0x0a0602,
         bgColor: 0x0a0602,
-        glow: 'radial-gradient(circle, rgba(251, 191, 36, 0.26) 0%, rgba(249, 115, 22, 0.18) 45%, transparent 75%)'
+        glow: 'none'
       }
     };
 
@@ -4392,8 +4390,8 @@
       scene.fog.color.setHex(cfg.fogColor);
       scene.background.setHex(cfg.bgColor);
 
-      if (stageGlow && cfg.glow) {
-        stageGlow.style.background = cfg.glow;
+      if (stageGlow) {
+        stageGlow.style.display = 'none';
       }
 
       // En móviles, cerrar los cajones tras seleccionar iluminación
