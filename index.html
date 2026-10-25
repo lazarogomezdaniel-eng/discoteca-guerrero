@@ -5194,6 +5194,8 @@
     const _qParent = new THREE.Quaternion();
     const _qParentInv = new THREE.Quaternion();
     const _qLocalDelta = new THREE.Quaternion();
+    const _qBaile4Upper = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.28).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.16));
+    const _qBaile4Lower = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.18).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.12));
 
     function distPointToSegment(p, a, b, outProj, outDiff) {
       _vAB.subVectors(b, a);
@@ -5276,12 +5278,24 @@
           window.updateAllMocapSeamlessLoops();
         }
 
-        if (currentModel && typeof currentModel.updateMatrixWorld === 'function') {
-          currentModel.updateMatrixWorld(true);
+        const activeMode = tecktonikController ? tecktonikController.currentMode : 'combo_viral';
+        if (activeMode === 'baile4' || currentClipAction === baile4Action) {
+          const upperR = tecktonikController?.bones?.upperarm_r;
+          const lowerR = tecktonikController?.bones?.lowerarm_r;
+          if (upperR) {
+            upperR.quaternion.multiply(_qBaile4Upper);
+          }
+          if (lowerR) {
+            lowerR.quaternion.multiply(_qBaile4Lower);
+          }
         }
 
         if (tecktonikController && tecktonikController.bones) {
           enforceArmLegClearance(tecktonikController.bones);
+        }
+
+        if (currentModel && typeof currentModel.updateMatrixWorld === 'function') {
+          currentModel.updateMatrixWorld(true);
         }
 
         if (tecktonikController && tecktonikController.currentMode !== 'deepmotion' && tecktonikController.currentMode !== 'singleladies' && tecktonikController.currentMode !== 'baile3' && tecktonikController.currentMode !== 'baile4') {
