@@ -1725,8 +1725,8 @@
       <button class="pad-btn" id="pad-baile3" onclick="window.triggerMoveNow('baile3')" style="border-color: rgba(0, 242, 254, 0.7); background: linear-gradient(135deg, rgba(0, 242, 254, 0.3), rgba(76, 201, 240, 0.25)); box-shadow: 0 0 12px rgba(0, 242, 254, 0.35);">
         <span>⚡ Baile 3 Real</span> <kbd>3</kbd>
       </button>
-      <button class="pad-btn" id="pad-baile4" onclick="window.triggerMoveNow('baile4')" style="border-color: rgba(255, 0, 127, 0.85); background: linear-gradient(135deg, rgba(255, 0, 127, 0.40), rgba(121, 40, 202, 0.30)); box-shadow: 0 0 14px rgba(255, 0, 127, 0.45);" title="Baile 4 Mocap Real con movimientos exagerados de hombro, cadera y torso">
-        <span>🔥 Baile 4 Real (Hombros & Cadera)</span> <kbd>4</kbd>
+      <button class="pad-btn" id="pad-baile4" onclick="window.triggerMoveNow('baile4')" style="border-color: rgba(255, 0, 127, 0.85); background: linear-gradient(135deg, rgba(255, 0, 127, 0.40), rgba(121, 40, 202, 0.30)); box-shadow: 0 0 14px rgba(255, 0, 127, 0.45);" title="Baile 4 Mocap Real fotograma a fotograma original">
+        <span>🔥 Baile 4 Real</span> <kbd>4</kbd>
       </button>
       <button class="pad-btn active" id="pad-viral" onclick="window.triggerMoveNow('combo_viral')">
         <span>🕺 Baile Viral 360°</span> <kbd>V</kbd>
@@ -3992,7 +3992,7 @@
       deepmotion: { name: '🎬 Captura Real DeepMotion (Video Original 15s)', icon: '🎬', desc: 'Secuencia real fotograma a fotograma de DeepMotion: brazos, cabeza, torso y piernas del video' },
       singleladies: { name: '💃 Single Ladies Real (Coreografía Beyoncé 12.5s)', icon: '💃', desc: 'Coreografía Single Ladies fotograma a fotograma: cadera icónica, giros de muñeca y pasos reales' },
       baile3: { name: '⚡ Baile 3 Real (Coreografía Mocap Completa 14.6s)', icon: '⚡', desc: 'Coreografía Baile 3 fotograma a fotograma: cuerpo completo y dedos articulados' },
-      baile4: { name: '🔥 Baile 4 Real (Mocap Exagerado Hombros & Cadera 11.8s)', icon: '🔥', desc: 'Coreografía Baile 4 real con acentos muy exagerados de clavícula, cadera, cintura y torso' },
+      baile4: { name: '🔥 Baile 4 Real (Coreografía Mocap Completa 11.8s)', icon: '🔥', desc: 'Coreografía Baile 4 fotograma a fotograma: hombros, cadera, footwork y cuerpo completo' },
       combo_viral: { name: '🔥 Baile Viral Continuo (Coreografía 360°)', icon: '🔥', desc: 'Coreografía 360° en brazos + dinamismo real de cadera, cintura y footwork mocap' },
       estirados: { name: '💥 1. Extensión Horizontal & Cruce Máximo', icon: '💥', desc: 'Brazos 100% estirados y latigazo al cruce frontal + base de cadera y pisadas mocap' },
       trenzado: { name: '🥨 2. Arm Wrap Bicicleta (Pot de Colle)', icon: '🥨', desc: 'Rodillo eléctrico continuo frente al esternón + rebote elástico y cadera mocap' },
@@ -4114,7 +4114,7 @@
       updateGrooveUI();
 
       const currentMode = tecktonikController ? tecktonikController.currentMode : 'combo_viral';
-      if (isDancing && currentMode !== 'deepmotion' && currentMode !== 'singleladies' && currentMode !== 'baile3') {
+      if (isDancing && currentMode !== 'deepmotion' && currentMode !== 'singleladies' && currentMode !== 'baile3' && currentMode !== 'baile4') {
         const isProceduralGroove = (baseMocapGroove === 'combo' || baseMocapGroove === 'patadas' || baseMocapGroove === 'rodillas');
         if (isProceduralGroove) {
           playClipExclusively(null);
@@ -5107,7 +5107,7 @@
           currentModel.updateMatrixWorld(true);
         }
 
-        if (tecktonikController && tecktonikController.currentMode !== 'deepmotion' && tecktonikController.currentMode !== 'singleladies' && tecktonikController.currentMode !== 'baile3') {
+        if (tecktonikController && tecktonikController.currentMode !== 'deepmotion' && tecktonikController.currentMode !== 'singleladies' && tecktonikController.currentMode !== 'baile3' && tecktonikController.currentMode !== 'baile4') {
           tecktonikController.amplitude = 1.0;
           tecktonikController.update(delta);
         }
