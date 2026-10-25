@@ -1556,6 +1556,7 @@
       <div class="menu-section-label" style="margin-top: 14px;">✨ Iluminación & Pista</div>
       <div class="menu-chips-row">
         <button class="menu-chip-btn active" id="m-light-normal" onclick="setLightingTheme('normal'); window.toggleMobileMainMenu(false);">💡 Normal</button>
+        <button class="menu-chip-btn" id="m-light-mandala" onclick="setLightingTheme('mandala'); window.toggleMobileMainMenu(false);">🌀 Mandala Astral</button>
         <button class="menu-chip-btn" id="m-light-psycho" onclick="setLightingTheme('psycho'); window.toggleMobileMainMenu(false);">🔮 Psicodélica</button>
         <button class="menu-chip-btn" id="m-light-cyberportal" onclick="setLightingTheme('cyberportal'); window.toggleMobileMainMenu(false);">🌌 Hiperespacio</button>
         <button class="menu-chip-btn" id="m-light-cyber" onclick="setLightingTheme('cyber'); window.toggleMobileMainMenu(false);">⚡ Cyber Neon</button>
@@ -1611,6 +1612,9 @@
     <div class="tool-title" style="margin-top: 10px;">Iluminación & Pistas</div>
     <button class="tool-btn active" id="light-normal" onclick="setLightingTheme('normal')">
       <span>💡</span> Normal (Original)
+    </button>
+    <button class="tool-btn" id="light-mandala" onclick="setLightingTheme('mandala')">
+      <span>🌀</span> Mandala Astral Fractal
     </button>
     <button class="tool-btn" id="light-psycho" onclick="setLightingTheme('psycho')">
       <span>🔮</span> Pista Psicodélica
@@ -1891,15 +1895,77 @@
     }
     scene.add(tunnelGroup);
 
-    // 3. Campo de Partículas Estelares / Nebulosa Psicodélica
-    const starCount = 380;
+    // 3. PISTA AUTÉNTICA PSICODÉLICA: Mandala Astral Sagrado & Geometría Fractal
+    const mandalaGroup = new THREE.Group();
+    mandalaGroup.visible = false;
+    const mandalaLayers = [];
+    const sacredColors = [0xff007f, 0x00f2fe, 0xffd700, 0x00ff88, 0x7928ca, 0xff3366, 0x00ffff];
+
+    // Rosetón y polígonos sagrados concéntricos rotatorios
+    const polySegments = [3, 6, 8, 12, 16, 24, 32];
+    polySegments.forEach((segs, idx) => {
+      const rad = 0.9 + idx * 0.52;
+      const polyGeo = new THREE.RingGeometry(rad, rad + 0.035, segs);
+      const polyMat = new THREE.MeshBasicMaterial({
+        color: sacredColors[idx % sacredColors.length],
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.85
+      });
+      const polyMesh = new THREE.Mesh(polyGeo, polyMat);
+      polyMesh.rotation.x = -Math.PI / 2;
+      polyMesh.position.y = 0.003 + idx * 0.0006;
+      mandalaGroup.add(polyMesh);
+      mandalaLayers.push({ mesh: polyMesh, speed: (idx % 2 === 0 ? 1 : -1) * (0.28 + idx * 0.06), baseScale: 1.0 });
+    });
+
+    // Rayos de flor de loto en el suelo
+    const lotusPetalCount = 12;
+    for (let p = 0; p < lotusPetalCount; p++) {
+      const angle = (p / lotusPetalCount) * Math.PI * 2;
+      const petalGeo = new THREE.RingGeometry(1.4, 2.8, 3, 1, angle, Math.PI / 6);
+      const petalMat = new THREE.MeshBasicMaterial({
+        color: sacredColors[p % sacredColors.length],
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.45
+      });
+      const petalMesh = new THREE.Mesh(petalGeo, petalMat);
+      petalMesh.rotation.x = -Math.PI / 2;
+      petalMesh.position.y = 0.004;
+      mandalaGroup.add(petalMesh);
+      mandalaLayers.push({ mesh: petalMesh, speed: 0.18, baseScale: 1.0 });
+    }
+
+    // Domo de rayos láser ascendentes en espiral (Prisma astral)
+    const beamCount = 16;
+    const beamGeo = new THREE.CylinderGeometry(0.015, 0.05, 7.5, 8);
+    for (let b = 0; b < beamCount; b++) {
+      const bMat = new THREE.MeshBasicMaterial({
+        color: sacredColors[b % sacredColors.length],
+        transparent: true,
+        opacity: 0.40
+      });
+      const beamMesh = new THREE.Mesh(beamGeo, bMat);
+      const bAngle = (b / beamCount) * Math.PI * 2;
+      const bRad = 3.6;
+      beamMesh.position.set(Math.cos(bAngle) * bRad, 3.6, Math.sin(bAngle) * bRad);
+      beamMesh.rotation.x = Math.sin(bAngle) * 0.22;
+      beamMesh.rotation.z = -Math.cos(bAngle) * 0.22;
+      mandalaGroup.add(beamMesh);
+      mandalaLayers.push({ mesh: beamMesh, speed: 0.12, isBeam: true, origAngle: bAngle, origRad: bRad });
+    }
+    scene.add(mandalaGroup);
+
+    // 4. Campo de Partículas Estelares / Nebulosa Psicodélica
+    const starCount = 520;
     const starGeo = new THREE.BufferGeometry();
     const starPos = new Float32Array(starCount * 3);
     const starColorsArr = new Float32Array(starCount * 3);
     for (let i = 0; i < starCount; i++) {
-      starPos[i * 3] = (Math.random() - 0.5) * 22;
-      starPos[i * 3 + 1] = Math.random() * 8 + 0.2;
-      starPos[i * 3 + 2] = (Math.random() - 0.5) * 22;
+      starPos[i * 3] = (Math.random() - 0.5) * 24;
+      starPos[i * 3 + 1] = Math.random() * 9 + 0.2;
+      starPos[i * 3 + 2] = (Math.random() - 0.5) * 24;
       const c = new THREE.Color().setHSL((i / starCount) * 0.8 + 0.1, 1.0, 0.65);
       starColorsArr[i * 3] = c.r;
       starColorsArr[i * 3 + 1] = c.g;
@@ -1908,10 +1974,10 @@
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
     starGeo.setAttribute('color', new THREE.BufferAttribute(starColorsArr, 3));
     const starMat = new THREE.PointsMaterial({
-      size: 0.08,
+      size: 0.09,
       vertexColors: true,
       transparent: true,
-      opacity: 0.85
+      opacity: 0.90
     });
     const starField = new THREE.Points(starGeo, starMat);
     starField.visible = false;
@@ -4547,6 +4613,23 @@
         bgColor: 0x05070c,
         glow: 'none'
       },
+      mandala: {
+        // TEMA MANDALA ASTRAL: Geometría sagrada fractal, rayos de prisma y estrellas celestes
+        ambientColor: 0x1f0b35,
+        ambientIntensity: 0.90,
+        mainSpotColor: 0xffd700,
+        baseSpot: 6.5,
+        leftStrobeColor: 0xff007f,
+        rightStrobeColor: 0x00f2fe,
+        baseStrobe: 5.2,
+        backRimColor: 0x9d4edd,
+        backRimIntensity: 4.2,
+        gridColor: 0x7928ca,
+        ringColor: 0xffd700,
+        fogColor: 0x07020d,
+        bgColor: 0x07020d,
+        glow: 'none'
+      },
       psycho: {
         // TEMA PSICODÉLICO: Pista con anillos concéntricos irisados, estrellas cósmicas y luces reactivas
         ambientColor: 0x2b0938,
@@ -4672,15 +4755,18 @@
         stageGlow.style.display = 'none';
       }
 
-      // Conmutar pistas psicodélicas y túneles 3D según el tema activo
+      // Conmutar pistas psicodélicas, mandalas y túneles 3D según el tema activo
       if (typeof psychoFloorGroup !== 'undefined' && psychoFloorGroup) {
         psychoFloorGroup.visible = (theme === 'psycho');
+      }
+      if (typeof mandalaGroup !== 'undefined' && mandalaGroup) {
+        mandalaGroup.visible = (theme === 'mandala');
       }
       if (typeof tunnelGroup !== 'undefined' && tunnelGroup) {
         tunnelGroup.visible = (theme === 'cyberportal');
       }
       if (typeof starField !== 'undefined' && starField) {
-        starField.visible = (theme === 'psycho' || theme === 'cyberportal');
+        starField.visible = (theme === 'psycho' || theme === 'cyberportal' || theme === 'mandala');
       }
 
       // En móviles, cerrar los cajones tras seleccionar iluminación
@@ -4930,8 +5016,24 @@
         mainSpot.intensity = THREE.MathUtils.lerp(mainSpot.intensity, cfg.baseSpot, delta * 8.0);
       }
 
-      // Animación continua y reactiva de las pistas psicodélicas
+      // Animación continua y reactiva de las pistas psicodélicas y mandala
       const elapsedTime = clock.getElapsedTime();
+      if (typeof mandalaGroup !== 'undefined' && mandalaGroup.visible && mandalaLayers.length > 0) {
+        mandalaLayers.forEach((ml, idx) => {
+          if (ml.isBeam) {
+            // Rotación suave del domo de rayos prismáticos
+            const curAngle = ml.origAngle + elapsedTime * ml.speed;
+            ml.mesh.position.x = Math.cos(curAngle) * ml.origRad;
+            ml.mesh.position.z = Math.sin(curAngle) * ml.origRad;
+            ml.mesh.rotation.y = elapsedTime * 0.4;
+          } else {
+            // Rotación contrarrotatoria y pulso sagrado al compás
+            ml.mesh.rotation.z = elapsedTime * ml.speed;
+            const pulse = 1.0 + Math.sin(elapsedTime * 4.0 + idx * 0.6) * 0.05;
+            ml.mesh.scale.set(pulse, pulse, 1);
+          }
+        });
+      }
       if (typeof psychoFloorGroup !== 'undefined' && psychoFloorGroup.visible && floorRings.length > 0) {
         floorRings.forEach((r, idx) => {
           const s = 1.0 + Math.sin(elapsedTime * 3.5 + idx * 0.9) * 0.08;
