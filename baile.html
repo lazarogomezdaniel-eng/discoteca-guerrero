@@ -3778,7 +3778,11 @@
 
     function crossFadeToClip(targetAction, duration = 0.38) {
       if (!mixer) return;
-      const allActions = [danceAction, singleLadiesAction, baile3Action].filter(Boolean);
+      const allActions = [
+        danceAction, window.danceActionSecondary,
+        singleLadiesAction, window.singleLadiesActionSecondary,
+        baile3Action, window.baile3ActionSecondary
+      ].filter(Boolean);
 
       if (!targetAction) {
         allActions.forEach(act => {
@@ -4161,8 +4165,14 @@
       if (danceAction) {
         danceAction.timeScale = currentBPM / 138;
       }
+      if (window.danceActionSecondary) {
+        window.danceActionSecondary.timeScale = currentBPM / 138;
+      }
       if (singleLadiesAction) {
         singleLadiesAction.timeScale = currentBPM / 138;
+      }
+      if (window.singleLadiesActionSecondary) {
+        window.singleLadiesActionSecondary.timeScale = currentBPM / 138;
       }
       if (baile3Action) {
         baile3Action.timeScale = currentBPM / 138;
@@ -4431,15 +4441,18 @@
           if (clip.name === 'single_ladies_dance_real') {
             singleLadiesAction = mixer.clipAction(clip);
             singleLadiesAction.setLoop(THREE.LoopRepeat);
+            window.singleLadiesActionSecondary = mixer.clipAction(clip.clone());
+            window.singleLadiesActionSecondary.setLoop(THREE.LoopRepeat);
           } else if (clip.name === 'baile3_dance_real' || clip.name.includes('baile3')) {
             baile3Action = mixer.clipAction(clip);
             baile3Action.setLoop(THREE.LoopRepeat);
-            // Acción secundaria para crossfade continuo en bucle sin saltos
             window.baile3ActionSecondary = mixer.clipAction(clip.clone());
             window.baile3ActionSecondary.setLoop(THREE.LoopRepeat);
           } else if (clip.name === 'tecktonik_dance_real' || clip.name.includes('tecktonik') || clip.name.includes('Armature')) {
             danceAction = mixer.clipAction(clip);
             danceAction.setLoop(THREE.LoopRepeat);
+            window.danceActionSecondary = mixer.clipAction(clip.clone());
+            window.danceActionSecondary.setLoop(THREE.LoopRepeat);
           }
         });
         if (!danceAction && gltf.animations[0]) {
@@ -4457,10 +4470,16 @@
 
         if (danceAction) {
           danceAction.timeScale = currentBPM / 138;
+          if (window.danceActionSecondary) {
+            window.danceActionSecondary.timeScale = currentBPM / 138;
+          }
           console.log('Tecktonik real listo en el Guerrero:', danceAction.getClip().duration.toFixed(2) + 's');
         }
         if (singleLadiesAction) {
           singleLadiesAction.timeScale = currentBPM / 138;
+          if (window.singleLadiesActionSecondary) {
+            window.singleLadiesActionSecondary.timeScale = currentBPM / 138;
+          }
           console.log('Single Ladies real listo en el Guerrero:', singleLadiesAction.getClip().duration.toFixed(2) + 's');
         }
         if (baile3Action) {
@@ -4471,37 +4490,60 @@
           console.log('Baile 3 real listo en el Guerrero:', baile3Action.getClip().duration.toFixed(2) + 's');
         }
 
-        // Suavizado orgánico del final al principio de Baile 3 (Crossfade de ciclo automático)
-        let activeB3Slot = 0; // 0 = primario, 1 = secundario
-        let b3CrossFadeTriggered = false;
-        const b3Duration = baile3Action ? baile3Action.getClip().duration : 14.6;
-        const fadeLeadTime = 0.55; // 0.55 segundos antes de terminar el ciclo
-
-        window.updateBaile3SeamlessLoop = function() {
-          if (!baile3Action || !window.baile3ActionSecondary || !isDancing) return;
-          const currentMode = tecktonikController ? tecktonikController.currentMode : '';
-          if (currentMode !== 'baile3') {
-            b3CrossFadeTriggered = false;
-            return;
+        // Sistema Universal de Suavizado Orgánico de Bucles (Ping-Pong Crossfade en los 3 bailes)
+        const loopTrackers = {
+          baile3: {
+            activeSlot: 0,
+            triggered: false,
+            primary: baile3Action,
+            get secondary() { return window.baile3ActionSecondary; },
+            duration: baile3Action ? baile3Action.getClip().duration : 14.6,
+            fadeLeadTime: 0.55
+          },
+          singleladies: {
+            activeSlot: 0,
+            triggered: false,
+            primary: singleLadiesAction,
+            get secondary() { return window.singleLadiesActionSecondary; },
+            duration: singleLadiesAction ? singleLadiesAction.getClip().duration : 12.5,
+            fadeLeadTime: 0.55
+          },
+          deepmotion: {
+            activeSlot: 0,
+            triggered: false,
+            primary: danceAction,
+            get secondary() { return window.danceActionSecondary; },
+            duration: danceAction ? danceAction.getClip().duration : 15.0,
+            fadeLeadTime: 0.55
           }
+        };
 
-          const runningAction = (activeB3Slot === 0) ? baile3Action : window.baile3ActionSecondary;
-          const incomingAction = (activeB3Slot === 0) ? window.baile3ActionSecondary : baile3Action;
+        window.updateAllMocapSeamlessLoops = function() {
+          if (!isDancing || !tecktonikController) return;
+          const currentMode = tecktonikController.currentMode;
+          const tracker = loopTrackers[currentMode];
+          if (!tracker || !tracker.primary || !tracker.secondary) return;
 
-          const actionTime = runningAction.time % b3Duration;
-          if (actionTime >= (b3Duration - fadeLeadTime) && !b3CrossFadeTriggered) {
-            b3CrossFadeTriggered = true;
+          const runningAction = (tracker.activeSlot === 0) ? tracker.primary : tracker.secondary;
+          const incomingAction = (tracker.activeSlot === 0) ? tracker.secondary : tracker.primary;
+
+          const dur = tracker.duration;
+          const lead = tracker.fadeLeadTime;
+          const actionTime = runningAction.time % dur;
+
+          if (actionTime >= (dur - lead) && !tracker.triggered) {
+            tracker.triggered = true;
             incomingAction.reset();
             incomingAction.enabled = true;
             incomingAction.paused = false;
             incomingAction.setEffectiveTimeScale(currentBPM / 138);
             incomingAction.setEffectiveWeight(1.0);
             incomingAction.play();
-            runningAction.crossFadeTo(incomingAction, fadeLeadTime, false);
-            activeB3Slot = (activeB3Slot === 0) ? 1 : 0;
+            runningAction.crossFadeTo(incomingAction, lead, false);
+            tracker.activeSlot = (tracker.activeSlot === 0) ? 1 : 0;
             currentClipAction = incomingAction;
-          } else if (actionTime < (b3Duration - fadeLeadTime - 0.5)) {
-            b3CrossFadeTriggered = false;
+          } else if (actionTime < (dur - lead - 0.5)) {
+            tracker.triggered = false;
           }
         };
       }
@@ -4588,8 +4630,8 @@
         if (mixer) {
           mixer.update(delta);
         }
-        if (typeof window.updateBaile3SeamlessLoop === 'function') {
-          window.updateBaile3SeamlessLoop();
+        if (typeof window.updateAllMocapSeamlessLoops === 'function') {
+          window.updateAllMocapSeamlessLoops();
         }
 
         if (currentModel && typeof currentModel.updateMatrixWorld === 'function') {
