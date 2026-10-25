@@ -56,25 +56,9 @@
       touch-action: none;
     }
 
-    /* Ambient Pulsing Glow */
+    /* Ambient Pulsing Glow - Desactivado para fondo completamente limpio y puro */
     .stage-glow {
-      position: absolute;
-      bottom: -15vh;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80vw;
-      height: 40vh;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(0, 242, 254, 0.15) 0%, rgba(157, 78, 221, 0.12) 40%, transparent 75%);
-      pointer-events: none;
-      z-index: 2;
-      transition: all 0.12s ease;
-      filter: blur(40px);
-    }
-    .stage-glow.bass-drop {
-      transform: translateX(-50%) scale(1.35);
-      background: radial-gradient(circle, rgba(247, 37, 133, 0.35) 0%, rgba(0, 242, 254, 0.25) 50%, transparent 80%);
-      filter: blur(55px);
+      display: none !important;
     }
 
     /* Header Bar */
@@ -1818,31 +1802,36 @@
     controls.maxDistance = 12;
 
     // Club Stage Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.05);
     scene.add(ambientLight);
 
-    const mainSpot = new THREE.SpotLight(0x00f2fe, 6.0, 15, Math.PI / 4, 0.4, 1.0);
+    // Foco principal cenital-frontal directo hacia el bailarín
+    const mainSpot = new THREE.SpotLight(0x00f2fe, 6.5, 16, Math.PI / 4, 0.45, 1.0);
     mainSpot.position.set(0, 5, 2.5);
     mainSpot.target.position.set(0, 0.9, 0);
     mainSpot.castShadow = true;
     scene.add(mainSpot);
     scene.add(mainSpot.target);
 
-    // Focos frontales-laterales dirigidos hacia el personaje (Z positiva = hacia delante, sin tocar el fondo de atras)
-    const leftStrobe = new THREE.PointLight(0xf72585, 3.5, 6.0, 1.5);
-    leftStrobe.position.set(-2.2, 1.8, 2.0);
+    // Luz frontal suave de relleno que ilumina pecho, cara y armadura sin proyectar hacia el fondo
+    const frontFillLight = new THREE.DirectionalLight(0xffffff, 0.85);
+    frontFillLight.position.set(0, 2.0, 3.5);
+    frontFillLight.target.position.set(0, 1.0, 0);
+    scene.add(frontFillLight);
+    scene.add(frontFillLight.target);
+
+    // Focos laterales y traseros completamente apagados (0.0) para erradicar cualquier halo o reflejo lateral
+    const leftStrobe = new THREE.PointLight(0xf72585, 0.0, 10);
+    leftStrobe.position.set(-3, 2.5, 1);
     scene.add(leftStrobe);
 
-    const rightStrobe = new THREE.PointLight(0x7209b7, 3.5, 6.0, 1.5);
-    rightStrobe.position.set(2.2, 1.8, 2.0);
+    const rightStrobe = new THREE.PointLight(0x7209b7, 0.0, 10);
+    rightStrobe.position.set(3, 2.5, 1);
     scene.add(rightStrobe);
 
-    // Luz cenital suave de recorte directo hacia abajo sobre hombros y cabeza (sin apuntar al fondo)
-    const backRim = new THREE.DirectionalLight(0x4facfe, 1.8);
-    backRim.position.set(0, 5.0, -0.5);
-    backRim.target.position.set(0, 0.9, 0);
+    const backRim = new THREE.DirectionalLight(0x4facfe, 0.0);
+    backRim.position.set(0, 4, -4);
     scene.add(backRim);
-    scene.add(backRim.target);
 
     // Dynamic Floor Grid & Ring
     const grid = new THREE.GridHelper(20, 40, 0x00f2fe, 0x1e293b);
@@ -4469,16 +4458,17 @@
 
     const LIGHTING_THEMES = {
       normal: {
-        // ILUMINACIÓN NORMAL: Luz clara sobre el bailarín, fondo negro limpio
+        // ILUMINACIÓN NORMAL: Guerrero nítido y bien iluminado de frente, fondo negro puro sin reflejos
         ambientColor: 0xffffff,
-        ambientIntensity: 0.85,
+        ambientIntensity: 1.05,
         mainSpotColor: 0x00f2fe,
-        baseSpot: 5.5,
-        leftStrobeColor: 0xf72585,
-        rightStrobeColor: 0x7209b7,
-        baseStrobe: 3.5,
-        backRimColor: 0x4facfe,
-        backRimIntensity: 1.8,
+        baseSpot: 6.5,
+        frontFillIntensity: 0.85,
+        leftStrobeColor: 0x000000,
+        rightStrobeColor: 0x000000,
+        baseStrobe: 0.0,
+        backRimColor: 0x000000,
+        backRimIntensity: 0.0,
         gridColor: 0x00f2fe,
         ringColor: 0x00f2fe,
         fogColor: 0x05070c,
@@ -4486,16 +4476,17 @@
         glow: 'none'
       },
       cyber: {
-        // TEMA 1: CYBER RAVE NEON
+        // TEMA 1: CYBER RAVE NEON (Frente vivo sin focos traseros que generen manchas)
         ambientColor: 0xdbeafe,
-        ambientIntensity: 0.75,
+        ambientIntensity: 0.95,
         mainSpotColor: 0x00f2fe,
-        baseSpot: 5.0,
-        leftStrobeColor: 0xf72585,
-        rightStrobeColor: 0x9d4edd,
-        baseStrobe: 3.5,
-        backRimColor: 0x00f2fe,
-        backRimIntensity: 1.8,
+        baseSpot: 5.8,
+        frontFillIntensity: 0.75,
+        leftStrobeColor: 0x000000,
+        rightStrobeColor: 0x000000,
+        baseStrobe: 0.0,
+        backRimColor: 0x000000,
+        backRimIntensity: 0.0,
         gridColor: 0x00f2fe,
         ringColor: 0xf72585,
         fogColor: 0x040711,
@@ -4505,14 +4496,15 @@
       laser: {
         // TEMA 2: LÁSER CLUB
         ambientColor: 0xf1f5f9,
-        ambientIntensity: 0.72,
+        ambientIntensity: 0.92,
         mainSpotColor: 0xfb7185,
-        baseSpot: 4.8,
-        leftStrobeColor: 0x06b6d4,
-        rightStrobeColor: 0xf43f5e,
-        baseStrobe: 3.2,
-        backRimColor: 0xf43f5e,
-        backRimIntensity: 1.6,
+        baseSpot: 5.5,
+        frontFillIntensity: 0.70,
+        leftStrobeColor: 0x000000,
+        rightStrobeColor: 0x000000,
+        baseStrobe: 0.0,
+        backRimColor: 0x000000,
+        backRimIntensity: 0.0,
         gridColor: 0xf43f5e,
         ringColor: 0x06b6d4,
         fogColor: 0x0b0407,
@@ -4522,14 +4514,15 @@
       gold: {
         // TEMA 3: SUNSET DORADO
         ambientColor: 0xfef3c7,
-        ambientIntensity: 0.78,
+        ambientIntensity: 0.95,
         mainSpotColor: 0xfbbf24,
-        baseSpot: 4.8,
-        leftStrobeColor: 0xf97316,
-        rightStrobeColor: 0xd946ef,
-        baseStrobe: 3.0,
-        backRimColor: 0xfde047,
-        backRimIntensity: 1.6,
+        baseSpot: 5.5,
+        frontFillIntensity: 0.72,
+        leftStrobeColor: 0x000000,
+        rightStrobeColor: 0x000000,
+        baseStrobe: 0.0,
+        backRimColor: 0x000000,
+        backRimIntensity: 0.0,
         gridColor: 0xfbbf24,
         ringColor: 0xf97316,
         fogColor: 0x0a0602,
@@ -4558,6 +4551,10 @@
 
       mainSpot.color.setHex(cfg.mainSpotColor);
       mainSpot.intensity = cfg.baseSpot;
+
+      if (typeof frontFillLight !== 'undefined' && frontFillLight) {
+        frontFillLight.intensity = cfg.frontFillIntensity || 0.8;
+      }
 
       leftStrobe.color.setHex(cfg.leftStrobeColor);
       leftStrobe.intensity = cfg.baseStrobe;
