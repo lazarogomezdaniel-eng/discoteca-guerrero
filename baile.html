@@ -1734,6 +1734,9 @@
       <button class="pad-btn" id="pad-baile4" onclick="window.triggerMoveNow('baile4')" style="border-color: rgba(255, 0, 127, 0.85); background: linear-gradient(135deg, rgba(255, 0, 127, 0.40), rgba(121, 40, 202, 0.30)); box-shadow: 0 0 14px rgba(255, 0, 127, 0.45);" title="Baile 4 Mocap Real fotograma a fotograma original">
         <span>🔥 Baile 4 Real</span> <kbd>4</kbd>
       </button>
+      <button class="pad-btn" id="pad-baile5" onclick="window.triggerMoveNow('baile5')" style="border-color: rgba(255, 180, 0, 0.85); background: linear-gradient(135deg, rgba(255, 180, 0, 0.35), rgba(255, 0, 127, 0.25)); box-shadow: 0 0 14px rgba(255, 180, 0, 0.45);" title="Baile 5 Mocap Real fotograma a fotograma original">
+        <span>🌟 Baile 5 Real</span> <kbd>5</kbd>
+      </button>
       <button class="pad-btn active" id="pad-viral" onclick="window.triggerMoveNow('combo_viral')">
         <span>🕺 Baile Viral 360°</span> <kbd>V</kbd>
       </button>
@@ -4016,6 +4019,7 @@
       singleladies: { name: '💃 Single Ladies Real (Coreografía Beyoncé 12.5s)', icon: '💃', desc: 'Coreografía Single Ladies fotograma a fotograma: cadera icónica, giros de muñeca y pasos reales' },
       baile3: { name: '⚡ Baile 3 Real (Coreografía Mocap Completa 14.6s)', icon: '⚡', desc: 'Coreografía Baile 3 fotograma a fotograma: cuerpo completo y dedos articulados' },
       baile4: { name: '🔥 Baile 4 Real (Coreografía Mocap Completa 11.8s)', icon: '🔥', desc: 'Coreografía Baile 4 fotograma a fotograma: hombros, cadera, footwork y cuerpo completo' },
+      baile5: { name: '🌟 Baile 5 Real (Coreografía Mocap Completa 9.4s)', icon: '🌟', desc: 'Coreografía Baile 5 fotograma a fotograma: cuerpo completo y ritmo mocap' },
       combo_viral: { name: '🔥 Baile Viral Continuo (Coreografía 360°)', icon: '🔥', desc: 'Coreografía 360° en brazos + dinamismo real de cadera, cintura y footwork mocap' },
       estirados: { name: '💥 1. Extensión Horizontal & Cruce Máximo', icon: '💥', desc: 'Brazos 100% estirados y latigazo al cruce frontal + base de cadera y pisadas mocap' },
       trenzado: { name: '🥨 2. Arm Wrap Bicicleta (Pot de Colle)', icon: '🥨', desc: 'Rodillo eléctrico continuo frente al esternón + rebote elástico y cadera mocap' },
@@ -4072,7 +4076,8 @@
         danceAction, window.danceActionSecondary,
         singleLadiesAction, window.singleLadiesActionSecondary,
         baile3Action, window.baile3ActionSecondary,
-        baile4Action, window.baile4ActionSecondary
+        baile4Action, window.baile4ActionSecondary,
+        baile5Action, window.baile5ActionSecondary
       ].filter(Boolean);
 
       if (!targetAction) {
@@ -4137,7 +4142,7 @@
       updateGrooveUI();
 
       const currentMode = tecktonikController ? tecktonikController.currentMode : 'combo_viral';
-      if (isDancing && currentMode !== 'deepmotion' && currentMode !== 'singleladies' && currentMode !== 'baile3' && currentMode !== 'baile4') {
+      if (isDancing && currentMode !== 'deepmotion' && currentMode !== 'singleladies' && currentMode !== 'baile3' && currentMode !== 'baile4' && currentMode !== 'baile5') {
         const isProceduralGroove = (baseMocapGroove === 'combo' || baseMocapGroove === 'patadas' || baseMocapGroove === 'rodillas');
         if (isProceduralGroove) {
           playClipExclusively(null);
@@ -4221,6 +4226,8 @@
         playClipExclusively(baile3Action);
       } else if (seqKey === 'baile4') {
         playClipExclusively(baile4Action);
+      } else if (seqKey === 'baile5') {
+        playClipExclusively(baile5Action);
       } else {
         // Baile 360 y todas las figuras: piernas y cadera con el movimiento real de Tecktonik mocap
         playBaseMocap(danceAction);
@@ -4301,6 +4308,8 @@
             playClipExclusively(baile3Action);
           } else if (resumeMode === 'baile4') {
             playClipExclusively(baile4Action);
+          } else if (resumeMode === 'baile5') {
+            playClipExclusively(baile5Action);
           } else {
             playBaseMocap(danceAction);
           }
@@ -4443,11 +4452,13 @@
           'S': 'singleladies',
           '3': 'baile3',
           '4': 'baile4',
+          '5': 'baile5',
           'v': 'combo_viral',
           'V': 'combo_viral',
           '1': 'estirados',
           '2': 'trenzado',
-          '5': 'l_shapes',
+          'l': 'l_shapes',
+          'L': 'l_shapes',
           '6': 'molino',
           '7': 'cielo',
           '8': 'cuadrado_reloj',
@@ -4526,6 +4537,12 @@
       }
       if (window.baile4ActionSecondary) {
         window.baile4ActionSecondary.timeScale = currentBPM / 138;
+      }
+      if (baile5Action) {
+        baile5Action.timeScale = currentBPM / 138;
+      }
+      if (window.baile5ActionSecondary) {
+        window.baile5ActionSecondary.timeScale = currentBPM / 138;
       }
       if (isDancing && (activeBeatTrack === 'cyber' || activeBeatTrack === 'rave' || activeBeatTrack === 'lofi')) {
         startBeatClock();
@@ -4880,6 +4897,7 @@
     let singleLadiesAction = null;
     let baile3Action = null;
     let baile4Action = null;
+    let baile5Action = null;
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath('https://unpkg.com/three@0.165.0/examples/jsm/libs/draco/');
     const loader = new GLTFLoader();
@@ -4938,6 +4956,11 @@
             baile4Action.setLoop(THREE.LoopRepeat);
             window.baile4ActionSecondary = mixer.clipAction(clip.clone());
             window.baile4ActionSecondary.setLoop(THREE.LoopRepeat);
+          } else if (clip.name === 'baile5_dance_real' || clip.name.includes('baile5')) {
+            baile5Action = mixer.clipAction(clip);
+            baile5Action.setLoop(THREE.LoopRepeat);
+            window.baile5ActionSecondary = mixer.clipAction(clip.clone());
+            window.baile5ActionSecondary.setLoop(THREE.LoopRepeat);
           } else if (clip.name === 'tecktonik_dance_real' || clip.name.includes('tecktonik') || clip.name.includes('Armature')) {
             danceAction = mixer.clipAction(clip);
             danceAction.setLoop(THREE.LoopRepeat);
@@ -4960,6 +4983,10 @@
         if (!baile4Action && gltf.animations[3]) {
           baile4Action = mixer.clipAction(gltf.animations[3]);
           baile4Action.setLoop(THREE.LoopRepeat);
+        }
+        if (!baile5Action && gltf.animations[4]) {
+          baile5Action = mixer.clipAction(gltf.animations[4]);
+          baile5Action.setLoop(THREE.LoopRepeat);
         }
 
         if (danceAction) {
@@ -4990,9 +5017,24 @@
           }
           console.log('Baile 4 real listo en el Guerrero:', baile4Action.getClip().duration.toFixed(2) + 's');
         }
+        if (baile5Action) {
+          baile5Action.timeScale = currentBPM / 138;
+          if (window.baile5ActionSecondary) {
+            window.baile5ActionSecondary.timeScale = currentBPM / 138;
+          }
+          console.log('Baile 5 real listo en el Guerrero:', baile5Action.getClip().duration.toFixed(2) + 's');
+        }
 
-        // Sistema Universal de Suavizado Orgánico de Bucles (Ping-Pong Crossfade en los 4 bailes)
+        // Sistema Universal de Suavizado Orgánico de Bucles (Ping-Pong Crossfade en los 5 bailes)
         const loopTrackers = {
+          baile5: {
+            activeSlot: 0,
+            triggered: false,
+            primary: baile5Action,
+            get secondary() { return window.baile5ActionSecondary; },
+            duration: baile5Action ? baile5Action.getClip().duration : 9.4,
+            fadeLeadTime: 0.55
+          },
           baile4: {
             activeSlot: 0,
             triggered: false,
@@ -5193,7 +5235,7 @@
           currentModel.updateMatrixWorld(true);
         }
 
-        if (tecktonikController && tecktonikController.currentMode !== 'deepmotion' && tecktonikController.currentMode !== 'singleladies' && tecktonikController.currentMode !== 'baile3' && tecktonikController.currentMode !== 'baile4') {
+        if (tecktonikController && tecktonikController.currentMode !== 'deepmotion' && tecktonikController.currentMode !== 'singleladies' && tecktonikController.currentMode !== 'baile3' && tecktonikController.currentMode !== 'baile4' && tecktonikController.currentMode !== 'baile5') {
           tecktonikController.amplitude = 1.0;
           tecktonikController.update(delta);
         }
