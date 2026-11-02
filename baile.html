@@ -2328,17 +2328,14 @@
           }
         }
 
-        // Clavícula anatómica reactiva relativa a la posición actual del hombro (suavizada para evitar deformación)
-        const reachUp = Math.max(-0.06, Math.min(0.12, (targetW.y - sPos.y) * 0.16));
-        const reachCross = isRight
-          ? Math.max(-0.12, Math.min(0.24, (targetW.x - sPos.x + 0.05) * 0.34))
-          : Math.max(-0.12, Math.min(0.24, (sPos.x - targetW.x + 0.05) * 0.34));
-        const reachForward = Math.max(-0.08, Math.min(0.18, (targetW.z - sPos.z - 0.24) * 0.28));
+        // Clavícula ultra-estable anatómica: bloquea cualquier giro horizontal que estreche el pecho
+        // y preserva el 100% del volumen del hombro y deltoides sin pellizcos de malla
+        const reachUp = Math.max(-0.03, Math.min(0.06, (targetW.y - sPos.y) * 0.10));
 
         this.setWorldDelta(
           clavKey,
-          isRight ? -reachForward * 0.5 : reachForward * 0.5,
-          isRight ? reachCross : -reachCross,
+          0.0,
+          0.0,
           isRight ? -reachUp : reachUp,
           qDelta
         );
@@ -2781,16 +2778,16 @@
             wL: [0.26, 1.80, 0.06],  pL: [0.72, 0.0, 0.68],  flexL: -0.15, twistL: 0.0,
             spine: [-0.09, 0.0, 0.0], head: [-0.15, 0.0, 0.0], hip: [0.0, -0.12, -0.04], snap: 0.74
           },
-          // 37: Tutting Caja Paralela A en Pecho (Izquierda arriba, Derecha abajo)
+          // 37: Tutting Caja Paralela A en Pecho (Derecha abajo, Izquierda arriba - caja amplia y geométrica)
           {
-            wR: [0.10, 1.32, 0.25],  pR: [-0.72, -0.45, 0.55], flexR: 0.22, twistR: 0.28,
-            wL: [-0.10, 1.50, 0.27], pL: [0.72, -0.25, 0.65],  flexL: 0.22, twistL: -0.28,
+            wR: [-0.14, 1.36, 0.28], pR: [-0.90, -0.28, 0.20], flexR: 0.22, twistR: 0.28,
+            wL: [0.14, 1.50, 0.28],  pL: [0.90, -0.28, 0.20],  flexL: 0.22, twistL: -0.28,
             spine: [0.06, 0.04, 0.06], head: [0.09, -0.06, 0.05], hip: [0.30, 0.25, 0.01], snap: 0.70
           },
           // 38: Tutting Caja Paralela B Flip 180° (Derecha arriba, Izquierda abajo)
           {
-            wR: [0.10, 1.50, 0.27],  pR: [-0.72, -0.25, 0.65], flexR: 0.22, twistR: 0.28,
-            wL: [-0.10, 1.32, 0.25], pL: [0.72, -0.45, 0.55],  flexL: 0.22, twistL: -0.28,
+            wR: [-0.14, 1.50, 0.28], pR: [-0.90, -0.28, 0.20], flexR: 0.22, twistR: 0.28,
+            wL: [0.14, 1.36, 0.28],  pL: [0.90, -0.28, 0.20],  flexL: 0.22, twistL: -0.28,
             spine: [0.06, -0.04, -0.06], head: [0.09, 0.06, -0.05], hip: [-0.30, 0.25, 0.01], snap: 0.70
           },
           // 39: Enhebrado Inverso (Derecha arma ventana, Izquierda proyecta arriba)
@@ -3185,32 +3182,32 @@
       applyLShapes(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
         const normPhase = ((t / (beatDur * 4.0)) % 1.0);
         const wR = this.sampleClosedSpline3D([
-          [-0.44, 1.65, 0.14], // L derecha alta
-          [-0.40, 1.66, 0.16], // Marco Faraón
-          [-0.02, 1.35, 0.27], // Barra horizontal pecho
-          [0.10, 1.50, 0.27]   // Caja paralela alta
+          [-0.44, 1.62, 0.16], // 0: L alta derecha (escuadra vertical)
+          [-0.42, 1.64, 0.16], // 1: Marco Faraón (ambos brazos a 90° abiertos)
+          [-0.08, 1.36, 0.28], // 2: Barra horizontal en pecho (escuadra frontal nítida)
+          [-0.14, 1.50, 0.28]  // 3: Caja frontal tutting (barra superior derecha)
         ], normPhase, 0.25);
         const wL = this.sampleClosedSpline3D([
-          [0.02, 1.35, 0.27],
-          [0.40, 1.66, 0.16],
-          [0.44, 1.65, 0.14],
-          [-0.10, 1.32, 0.25]
+          [0.08, 1.36, 0.28],  // 0: Barra horizontal en pecho (escuadra frontal nítida)
+          [0.42, 1.64, 0.16],  // 1: Marco Faraón (ambos brazos a 90° abiertos)
+          [0.44, 1.62, 0.16],  // 2: L alta izquierda (escuadra vertical)
+          [0.14, 1.36, 0.28]   // 3: Caja frontal tutting (barra inferior izquierda)
         ], normPhase, 0.25);
         const pR = this.sampleClosedSpline3D([
-          [-0.88, -0.35, 0.24],
-          [-0.82, -0.45, 0.36],
-          [-0.75, -0.30, 0.58],
-          [-0.70, -0.25, 0.65]
+          [-0.92, -0.20, 0.15],
+          [-0.95, -0.35, 0.15],
+          [-0.90, -0.25, 0.20],
+          [-0.90, -0.28, 0.20]
         ], normPhase, 0.20);
         const pL = this.sampleClosedSpline3D([
-          [0.75, -0.30, 0.58],
-          [0.82, -0.45, 0.36],
-          [0.88, -0.35, 0.24],
-          [0.70, -0.45, 0.55]
+          [0.90, -0.25, 0.20],
+          [0.95, -0.35, 0.15],
+          [0.92, -0.20, 0.15],
+          [0.90, -0.28, 0.20]
         ], normPhase, 0.20);
 
-        this.solveArmIK(true, wR, pR, 0.18, 0.15, qDelta, amp);
-        this.solveArmIK(false, wL, pL, 0.18, -0.15, qDelta, amp);
+        this.solveArmIK(true, wR, pR, 0.22, 0.12, qDelta, amp);
+        this.solveArmIK(false, wL, pL, 0.22, -0.12, qDelta, amp);
 
         this.setWorldDelta('spine', 0.03 * amp, 0.0, 0.0, qDelta);
         this.setWorldDelta('chest', 0.02 * amp, 0.0, 0.0, qDelta);
