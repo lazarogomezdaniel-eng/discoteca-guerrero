@@ -2328,6 +2328,20 @@
           }
         }
 
+        // Escudo anatómico del torso / pecho: impide que muñecas o manos penetren en el tórax
+        const chestPos = new THREE.Vector3();
+        if (this.bones.chest) {
+          this.bones.chest.getWorldPosition(chestPos);
+        } else {
+          chestPos.set(0.0, 1.35, 0.0).add(shoulderDelta);
+        }
+        if (targetW.y >= 1.05 && targetW.y <= 1.55 && Math.abs(targetW.x - chestPos.x) < 0.28) {
+          const minTorsoZ = chestPos.z + 0.25;
+          if (targetW.z < minTorsoZ) {
+            targetW.z = minTorsoZ;
+          }
+        }
+
         // Clavícula ultra-estable anatómica: bloquea cualquier giro horizontal que estreche el pecho
         // y preserva el 100% del volumen del hombro y deltoides sin pellizcos de malla
         const reachUp = Math.max(-0.03, Math.min(0.06, (targetW.y - sPos.y) * 0.10));
@@ -2371,6 +2385,14 @@
           .addScaledVector(dHat, L1 * cosAlpha)
           .addScaledVector(pHat, L1 * sinAlpha);
         const W = new THREE.Vector3().copy(sPos).addScaledVector(dHat, D);
+
+        // Protección anti-penetración de codo en torso
+        if (E.y >= 1.05 && E.y <= 1.55 && Math.abs(E.x - chestPos.x) < 0.22) {
+          const minElbowZ = chestPos.z + 0.16;
+          if (E.z < minElbowZ) {
+            E.z = minElbowZ;
+          }
+        }
 
         // Direcciones unitarias de brazo (u1) y antebrazo (u2)
         const u1 = new THREE.Vector3().subVectors(E, sPos).normalize();
@@ -2684,10 +2706,10 @@
             wL: [-0.12, 1.78, 0.12], pL: [0.85, 0.58, 0.25],   flexL: 0.95, twistL: -0.35,
             spine: [0.04, 0.06, -0.10], head: [0.10, -0.08, -0.14], hip: [-0.38, 0.20, 0.01], snap: 0.72
           },
-          // 22: ¡EL ENHEBRADO (VENTANA)! (Izquierda baja a marco horizontal, Derecha enhebra por dentro)
+          // 22: ¡EL ENHEBRADO (VENTANA)! (Izquierda arma marco en pecho, Derecha enhebra por dentro al frente)
           {
-            wR: [-0.02, 1.56, 0.24], pR: [-0.72, -0.38, 0.55], flexR: 0.18, twistR: 0.25,
-            wL: [-0.04, 1.34, 0.28], pL: [0.78, -0.25, 0.58],  flexL: 0.22, twistL: -0.20,
+            wR: [0.04, 1.56, 0.34],  pR: [-0.85, -0.25, 0.35], flexR: 0.18, twistR: 0.25,
+            wL: [0.06, 1.36, 0.30],  pL: [0.88, -0.30, 0.30],  flexL: 0.22, twistL: -0.20,
             spine: [0.06, 0.05, 0.05], head: [0.08, -0.08, 0.04], hip: [0.30, 0.25, 0.01], snap: 0.65
           },
           // 23: ¡MARCO FARAÓN SIMÉTRICO 90°! (Doble escuadra geométrica a los lados)
@@ -2790,10 +2812,10 @@
             wL: [0.14, 1.36, 0.28],  pL: [0.90, -0.28, 0.20],  flexL: 0.22, twistL: -0.28,
             spine: [0.06, -0.04, -0.06], head: [0.09, 0.06, -0.05], hip: [-0.30, 0.25, 0.01], snap: 0.70
           },
-          // 39: Enhebrado Inverso (Derecha arma ventana, Izquierda proyecta arriba)
+          // 39: Enhebrado Inverso (Derecha arma marco en pecho, Izquierda enhebra y proyecta arriba)
           {
-            wR: [0.04, 1.35, 0.27],  pR: [-0.78, -0.25, 0.58], flexR: 0.20, twistR: 0.20,
-            wL: [0.04, 1.56, 0.24],  pL: [0.72, -0.38, 0.55],  flexL: 0.18, twistL: -0.25,
+            wR: [-0.06, 1.36, 0.30], pR: [-0.88, -0.30, 0.30], flexR: 0.20, twistR: 0.20,
+            wL: [-0.04, 1.56, 0.34], pL: [0.85, -0.25, 0.35],  flexL: 0.18, twistL: -0.25,
             spine: [0.05, -0.05, -0.05], head: [0.08, 0.08, -0.04], hip: [-0.28, 0.24, 0.01], snap: 0.65
           },
 
@@ -3072,20 +3094,34 @@
       applyThreading(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
         const normPhase = ((t / (beatDur * 4.0)) % 1.0);
         const wR = this.sampleClosedSpline3D([
-          [-0.08, 1.32, 0.22],
-          [0.06, 1.58, 0.27],
-          [0.04, 1.36, 0.26],
-          [-0.38, 1.48, 0.18]
+          [-0.08, 1.34, 0.36], // 0: Derecha enhebra por dentro hacia el frente
+          [0.04, 1.56, 0.34],  // 1: Derecha proyecta arriba saliendo de la ventana
+          [-0.06, 1.36, 0.30], // 2: Derecha arma marco horizontal en pecho
+          [-0.42, 1.48, 0.24]  // 3: Derecha abre lateral a la derecha (-X)
         ], normPhase, 0.20);
         const wL = this.sampleClosedSpline3D([
-          [-0.04, 1.36, 0.26],
-          [-0.38, 1.48, 0.18],
-          [0.08, 1.32, 0.22],
-          [-0.06, 1.58, 0.27]
+          [0.06, 1.36, 0.30],  // 0: Izquierda arma marco horizontal en pecho
+          [0.42, 1.48, 0.24],  // 1: Izquierda abre lateral a la IZQUIERDA (+X)
+          [0.08, 1.34, 0.36],  // 2: Izquierda enhebra por dentro hacia el frente
+          [-0.04, 1.56, 0.34]  // 3: Izquierda proyecta arriba saliendo de la ventana
         ], normPhase, 0.20);
 
-        this.solveArmIK(true, wR, [-0.76, -0.35, 0.50], 0.18, 0.18, qDelta, amp);
-        this.solveArmIK(false, wL, [0.76, -0.35, 0.50], 0.18, -0.18, qDelta, amp);
+        const pR = this.sampleClosedSpline3D([
+          [-0.85, -0.35, 0.30],
+          [-0.85, -0.25, 0.35],
+          [-0.88, -0.30, 0.30],
+          [-0.92, -0.35, 0.20]
+        ], normPhase, 0.20);
+
+        const pL = this.sampleClosedSpline3D([
+          [0.88, -0.30, 0.30],
+          [0.92, -0.35, 0.20],
+          [0.85, -0.35, 0.30],
+          [0.85, -0.25, 0.35]
+        ], normPhase, 0.20);
+
+        this.solveArmIK(true, wR, pR, 0.18, 0.18, qDelta, amp);
+        this.solveArmIK(false, wL, pL, 0.18, -0.18, qDelta, amp);
 
         this.setWorldDelta('spine', 0.03 * amp, 0.0, 0.0, qDelta);
         this.setWorldDelta('chest', 0.02 * amp, 0.0, 0.0, qDelta);
