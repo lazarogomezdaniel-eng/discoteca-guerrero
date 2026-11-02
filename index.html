@@ -1759,7 +1759,7 @@
             <span>👑 3. Peinada Real 360°</span> <kbd>3</kbd>
           </button>
           <button class="pad-btn" id="pad-4" onclick="window.triggerMoveNow('enhebrado')">
-            <span>🪡 4. El Enhebrado</span> <kbd>4</kbd>
+            <span>🌸 4. La Flor Abierta</span> <kbd>4</kbd>
           </button>
           <button class="pad-btn" id="pad-5" onclick="window.triggerMoveNow('l_shapes')">
             <span>📐 5. Geometría Neón</span> <kbd>5</kbd>
@@ -2561,7 +2561,7 @@
       //   3. Señalar Arriba al Cielo con los DOS brazos extendidos + Cruce Aéreo + Punteros alternos
       //   4. La Peinada 360° Derecha & Izquierda con relevo y esquiva de cabeza
       //   5. Cuadrado sobre la Cabeza flexionando la muñeca a 90° + Agujas de Reloj
-      //   6. El Enhebrado (Ventana) + Marco Faraón 90°
+      //   6. La Flor Abierta (Apertura simétrica sin cruce) + Marco Faraón 90°
       //   7. Barrido Aéreo Vértigo (Arco Iris 180° por encima de la cabeza) + Slash Diagonal 45°
       //   8. Disparo Frontal Láser + Nudo Wrap & Lock + Freeze Brazos Cruzados + Electro Drop
       //   9. Tutting Caja Paralela + Molino 360° Figura-8 + Frenesí Electro
@@ -2706,11 +2706,11 @@
             wL: [-0.12, 1.78, 0.12], pL: [0.85, 0.58, 0.25],   flexL: 0.95, twistL: -0.35,
             spine: [0.04, 0.06, -0.10], head: [0.10, -0.08, -0.14], hip: [-0.38, 0.20, 0.01], snap: 0.72
           },
-          // 22: ¡EL ENHEBRADO (VENTANA)! (Izquierda arma marco en pecho, Derecha enhebra por dentro al frente)
+          // 22: ¡LA FLOR ABIERTA! (Apertura simétrica amplia hacia los lados, floreciendo sin cruzar)
           {
-            wR: [0.04, 1.56, 0.34],  pR: [-0.85, -0.25, 0.35], flexR: 0.18, twistR: 0.25,
-            wL: [0.06, 1.36, 0.30],  pL: [0.88, -0.30, 0.30],  flexL: 0.22, twistL: -0.20,
-            spine: [0.06, 0.05, 0.05], head: [0.08, -0.08, 0.04], hip: [0.30, 0.25, 0.01], snap: 0.65
+            wR: [-0.44, 1.54, 0.26], pR: [-0.95, -0.20, 0.20], flexR: -0.15, twistR: 0.25,
+            wL: [0.44, 1.54, 0.26],  pL: [0.95, -0.20, 0.20],  flexL: -0.15, twistL: -0.25,
+            spine: [0.04, 0.0, 0.0], head: [0.06, 0.0, 0.0],   hip: [0.0, 0.18, 0.01], snap: 0.65
           },
           // 23: ¡MARCO FARAÓN SIMÉTRICO 90°! (Doble escuadra geométrica a los lados)
           {
@@ -3090,42 +3090,60 @@
         return { x: 0.0, z: 0.08 };
       }
 
-      // 5. EL ENHEBRADO (Window Threading armónico)
+      // 5. LA FLOR ABIERTA (Blooming Flower - Florecimiento estético sin cruzar por dentro)
       applyThreading(qDelta, amp = 1.0, t = 0, beatDur = 0.435) {
+        // Ciclo de 4.0 beats para apertura hipnótica y fluida
         const normPhase = ((t / (beatDur * 4.0)) % 1.0);
         const wR = this.sampleClosedSpline3D([
-          [-0.08, 1.34, 0.36], // 0: Derecha enhebra por dentro hacia el frente
-          [0.04, 1.56, 0.34],  // 1: Derecha proyecta arriba saliendo de la ventana
-          [-0.06, 1.36, 0.30], // 2: Derecha arma marco horizontal en pecho
-          [-0.42, 1.48, 0.24]  // 3: Derecha abre lateral a la derecha (-X)
-        ], normPhase, 0.20);
+          [-0.10, 1.34, 0.30], // 0: Capullo en el centro frente al pecho
+          [-0.16, 1.52, 0.32], // 1: Brote hacia arriba abriendo hacia fuera
+          [-0.34, 1.66, 0.28], // 2: Pétalos altos en expansión
+          [-0.54, 1.52, 0.24], // 3: Flor abierta en pleno esplendor (amplitud máxima hacia la derecha)
+          [-0.46, 1.34, 0.24], // 4: Descenso lateral amplio y estético
+          [-0.24, 1.28, 0.28]  // 5: Recogida suave hacia el centro
+        ], normPhase, 0.25);
+
         const wL = this.sampleClosedSpline3D([
-          [0.06, 1.36, 0.30],  // 0: Izquierda arma marco horizontal en pecho
-          [0.42, 1.48, 0.24],  // 1: Izquierda abre lateral a la IZQUIERDA (+X)
-          [0.08, 1.34, 0.36],  // 2: Izquierda enhebra por dentro hacia el frente
-          [-0.04, 1.56, 0.34]  // 3: Izquierda proyecta arriba saliendo de la ventana
-        ], normPhase, 0.20);
+          [0.10, 1.34, 0.30],  // 0: Capullo en el centro frente al pecho
+          [0.16, 1.52, 0.32],  // 1: Brote hacia arriba abriendo hacia fuera
+          [0.34, 1.66, 0.28],  // 2: Pétalos altos en expansión
+          [0.54, 1.52, 0.24],  // 3: Flor abierta en pleno esplendor (amplitud máxima hacia la izquierda)
+          [0.46, 1.34, 0.24],  // 4: Descenso lateral amplio y estético
+          [0.24, 1.28, 0.28]   // 5: Recogida suave hacia el centro
+        ], normPhase, 0.25);
 
         const pR = this.sampleClosedSpline3D([
-          [-0.85, -0.35, 0.30],
-          [-0.85, -0.25, 0.35],
-          [-0.88, -0.30, 0.30],
-          [-0.92, -0.35, 0.20]
+          [-0.85, -0.40, 0.25],
+          [-0.88, -0.30, 0.28],
+          [-0.92, -0.22, 0.22],
+          [-0.95, -0.20, 0.18],
+          [-0.92, -0.38, 0.18],
+          [-0.88, -0.45, 0.22]
         ], normPhase, 0.20);
 
         const pL = this.sampleClosedSpline3D([
-          [0.88, -0.30, 0.30],
-          [0.92, -0.35, 0.20],
-          [0.85, -0.35, 0.30],
-          [0.85, -0.25, 0.35]
+          [0.85, -0.40, 0.25],
+          [0.88, -0.30, 0.28],
+          [0.92, -0.22, 0.22],
+          [0.95, -0.20, 0.18],
+          [0.92, -0.38, 0.18],
+          [0.88, -0.45, 0.22]
         ], normPhase, 0.20);
 
-        this.solveArmIK(true, wR, pR, 0.18, 0.18, qDelta, amp);
-        this.solveArmIK(false, wL, pL, 0.18, -0.18, qDelta, amp);
+        const bloomWave = Math.sin(normPhase * Math.PI * 2.0);
+        // Muñecas estilizadas que se abren suavemente en flor
+        const flex = -0.15 * bloomWave;
+        const twist = 0.25 * bloomWave;
 
-        this.setWorldDelta('spine', 0.03 * amp, 0.0, 0.0, qDelta);
-        this.setWorldDelta('chest', 0.02 * amp, 0.0, 0.0, qDelta);
-        this.setWorldDelta('head', 0.05 * amp, 0.0, 0.0, qDelta);
+        this.solveArmIK(true, wR, pR, flex, twist, qDelta, amp);
+        this.solveArmIK(false, wL, pL, flex, -twist, qDelta, amp);
+
+        const breathTorso = (0.02 + 0.03 * bloomWave) * amp;
+        this.setWorldDelta('spine', breathTorso * 0.6, 0.0, 0.0, qDelta);
+        this.setWorldDelta('chest', breathTorso * 0.8, 0.0, 0.0, qDelta);
+        this.setWorldDelta('head', (0.03 + 0.04 * bloomWave) * amp, 0.0, 0.0, qDelta);
+
+        return { x: 0.0, z: 0.04 * bloomWave, dip: -0.01 * bloomWave };
       }
 
       // 6. LA PEINADA REAL (360° Head Wrap a 4.0 beats por vuelta, cadencia elegante)
@@ -4065,7 +4083,7 @@
       estirados: { name: '💥 1. Extensión Horizontal & Cruce Máximo', icon: '💥', desc: 'Brazos 100% estirados y latigazo al cruce frontal + base de cadera y pisadas mocap' },
       trenzado: { name: '🥨 2. Arm Wrap Bicicleta (Pot de Colle)', icon: '🥨', desc: 'Rodillo eléctrico continuo frente al esternón + rebote elástico y cadera mocap' },
       peinada: { name: '👑 3. La Peinada Real (360° Head Wrap)', icon: '👑', desc: 'Órbita 360° con relevo de brazos + esquiva de cabeza y pasos mocap' },
-      enhebrado: { name: '🪡 4. El Enhebrado (Threading / Ventana)', icon: '🪡', desc: 'Paso penetrante de un brazo por dentro del marco geométrico + base mocap' },
+      enhebrado: { name: '🌸 4. La Flor Abierta (Blooming Flower)', icon: '🌸', desc: 'Florecimiento estético y simétrico de brazos hacia los lados + base mocap' },
       l_shapes: { name: '📐 5. Geometría Neón (L-Shapes / Tutting)', icon: '📐', desc: 'Escuadras angulares de 90° con bloqueo al beat + balanceo dinámico mocap' },
       molino: { name: '🌀 6. El Molino (Windmills 360° Figura-8)', icon: '🌀', desc: 'Rotación circular en figura-8 + onda lateral y cadera mocap' },
       cielo: { name: '☝️ 7. Señalar Arriba al Cielo (Sky Point)', icon: '☝️', desc: 'Dos brazos extendidos apuntando al cielo + paso y rebote mocap' },
