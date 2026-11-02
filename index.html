@@ -6,7 +6,20 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Electro Dance 3D — Especialización Tecktonik & Ritmo</title>
+  <title>Electro Dance 3D — Discoteca Guerrero</title>
+
+  <!-- PWA & Mobile Web App Meta -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#05070c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Guerrero 3D">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -711,6 +724,257 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 10px;
       color: #00f2fe;
+    }
+
+    /* PWA Install Button (Top Bar & Actions) */
+    .btn-install-pwa {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(6, 214, 160, 0.28), rgba(0, 242, 254, 0.35));
+      border: 1px solid rgba(6, 214, 160, 0.7);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 16px rgba(6, 214, 160, 0.3);
+      animation: pulseInstallGlow 2.8s infinite;
+    }
+    @keyframes pulseInstallGlow {
+      0%, 100% { box-shadow: 0 0 12px rgba(6, 214, 160, 0.35); }
+      50% { box-shadow: 0 0 22px rgba(6, 214, 160, 0.75); }
+    }
+    .btn-install-pwa:hover {
+      background: linear-gradient(135deg, rgba(6, 214, 160, 0.45), rgba(0, 242, 254, 0.5));
+      border-color: #06d6a0;
+      box-shadow: 0 0 24px rgba(6, 214, 160, 0.8);
+      transform: translateY(-2px) scale(1.04);
+    }
+    .btn-install-pwa:active {
+      transform: scale(0.96);
+    }
+
+    /* PWA Floating Install Banner */
+    .pwa-install-banner {
+      position: fixed;
+      bottom: 96px;
+      left: 50%;
+      transform: translateX(-50%) translateY(30px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(10, 14, 28, 0.94);
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 242, 254, 0.25);
+      border-radius: 18px;
+      padding: 12px 20px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 90vw;
+    }
+    .pwa-install-banner.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .pwa-banner-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+    .pwa-banner-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .pwa-banner-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .pwa-banner-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .pwa-banner-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .pwa-banner-btn {
+      background: linear-gradient(135deg, #00f2fe, #4facfe);
+      color: #05070c;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .pwa-banner-btn:hover {
+      box-shadow: 0 0 16px rgba(0, 242, 254, 0.7);
+      transform: scale(1.04);
+    }
+    .pwa-banner-close {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+    .pwa-banner-close:hover {
+      color: #fff;
+    }
+
+    /* iOS Modal Styles */
+    .ios-install-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 10001;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .ios-install-modal.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .ios-modal-card {
+      background: #0f172a;
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 242, 254, 0.2);
+    }
+    .ios-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .ios-modal-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .ios-modal-close {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .ios-modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .ios-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .ios-step-num {
+      background: linear-gradient(135deg, #00f2fe, #4facfe);
+      color: #05070c;
+      font-weight: 900;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .ios-step-text {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+    .ios-icon {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .ios-modal-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #00f2fe, #4facfe);
+      color: #05070c;
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .ios-modal-btn:hover {
+      box-shadow: 0 0 16px rgba(0, 242, 254, 0.6);
+      transform: translateY(-1px);
+    }
+    .menu-install-card {
+      background: linear-gradient(135deg, rgba(6, 214, 160, 0.18), rgba(0, 242, 254, 0.18));
+      border: 1px solid rgba(6, 214, 160, 0.4);
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .menu-install-card:hover {
+      background: linear-gradient(135deg, rgba(6, 214, 160, 0.28), rgba(0, 242, 254, 0.28));
+      border-color: #06d6a0;
+      transform: translateY(-2px);
+    }
+    .menu-install-card .card-arrow {
+      background: #06d6a0;
+      color: #05070c;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 5px 10px;
+      border-radius: 8px;
+      margin-left: auto;
     }
 
     /* Floating Restore Button when UI is hidden */
@@ -1492,6 +1756,9 @@
         <span class="toggle-ui-label">Pantalla Limpia</span>
         <kbd>H</kbd>
       </button>
+      <button class="btn-install-pwa" id="btn-install-pwa" onclick="window.triggerPWAInstall()" title="Instalar aplicación en tu pantalla de inicio u ordenador">
+        <span>📲 Instalar App</span>
+      </button>
       <a href="visor_original.html" class="btn-studio-link studio-link-desktop" style="background: linear-gradient(135deg, rgba(247, 37, 133, 0.4), rgba(157, 78, 221, 0.45)); border-color: #f72585; color: #fff; box-shadow: 0 0 12px rgba(247, 37, 133, 0.4);">
         <span>🎬 Ver Baile Original (Vídeo 100%)</span>
       </a>
@@ -1516,6 +1783,16 @@
     </div>
 
     <div class="mobile-menu-content">
+      <!-- PWA Install Button inside Mobile Menu -->
+      <div class="menu-install-card" id="mobile-menu-install" onclick="window.triggerPWAInstall(); window.toggleMobileMainMenu(false);" style="display: none;">
+        <span class="card-icon">📲</span>
+        <div class="card-text">
+          <strong>Instalar como Aplicación</strong>
+          <small>Acceso directo rápido a pantalla completa y sin barras</small>
+        </div>
+        <span class="card-arrow">Instalar</span>
+      </div>
+
       <!-- Section: Experiencias & Vídeo -->
       <div class="menu-section-label">🎬 Experiencias de Baile</div>
       <div class="menu-cards-grid">
@@ -5383,6 +5660,139 @@
         audioCtx.resume();
       }
     }, { once: true, passive: true });
+
+    // =======================================================================
+    // PWA & SERVICE WORKER: Instalabilidad en GitHub Pages / Móvil / PC
+    // =======================================================================
+    let deferredInstallPrompt = null;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    // Registrar Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((registration) => {
+            console.log('[PWA] Service Worker activo con scope:', registration.scope);
+          })
+          .catch((err) => {
+            console.warn('[PWA] No se pudo registrar el Service Worker:', err);
+          });
+      });
+    }
+
+    // Capturar evento de instalación estándar (Chrome, Edge, Android)
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      showPWAInstallButtons();
+    });
+
+    // Detectar cuando ya se ha instalado con éxito
+    window.addEventListener('appinstalled', () => {
+      deferredInstallPrompt = null;
+      hidePWAInstallButtons();
+      if (typeof window.showToast === 'function') {
+        window.showToast('🎉 ¡Discoteca Guerrero instalada como app con éxito!');
+      }
+      console.log('[PWA] Aplicación instalada correctamente');
+    });
+
+    function showPWAInstallButtons() {
+      if (isStandalone) return;
+      const topBtn = document.getElementById('btn-install-pwa');
+      if (topBtn) topBtn.style.display = 'inline-flex';
+      const mobileCard = document.getElementById('mobile-menu-install');
+      if (mobileCard) mobileCard.style.display = 'flex';
+      const floatingBanner = document.getElementById('pwa-install-banner');
+      if (floatingBanner && !sessionStorage.getItem('pwa_banner_dismissed')) {
+        setTimeout(() => floatingBanner.classList.add('visible'), 2000);
+      }
+    }
+
+    function hidePWAInstallButtons() {
+      const topBtn = document.getElementById('btn-install-pwa');
+      if (topBtn) topBtn.style.display = 'none';
+      const mobileCard = document.getElementById('mobile-menu-install');
+      if (mobileCard) mobileCard.style.display = 'none';
+      const floatingBanner = document.getElementById('pwa-install-banner');
+      if (floatingBanner) floatingBanner.classList.remove('visible');
+    }
+
+    window.dismissPWABanner = function() {
+      const floatingBanner = document.getElementById('pwa-install-banner');
+      if (floatingBanner) floatingBanner.classList.remove('visible');
+      sessionStorage.setItem('pwa_banner_dismissed', '1');
+    };
+
+    window.triggerPWAInstall = async function() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice.outcome === 'accepted') {
+          console.log('[PWA] El usuario aceptó instalar la app');
+        } else {
+          console.log('[PWA] El usuario pospuso la instalación');
+        }
+        deferredInstallPrompt = null;
+        window.dismissPWABanner();
+      } else if (isIOS && !isStandalone) {
+        const iosModal = document.getElementById('ios-install-modal');
+        if (iosModal) iosModal.classList.add('visible');
+      } else {
+        if (typeof window.showToast === 'function') {
+          window.showToast('ℹ️ Pulsa el icono de instalar (⊕) en la barra de tu navegador');
+        }
+      }
+    };
+
+    // Si es iOS Safari y no está en modo standalone, habilitar botón en menú
+    if (isIOS && !isStandalone) {
+      setTimeout(() => {
+        const topBtn = document.getElementById('btn-install-pwa');
+        if (topBtn) topBtn.style.display = 'inline-flex';
+        const mobileCard = document.getElementById('mobile-menu-install');
+        if (mobileCard) mobileCard.style.display = 'flex';
+      }, 1500);
+    }
   </script>
+
+  <!-- PWA Floating Install Banner -->
+  <div class="pwa-install-banner" id="pwa-install-banner">
+    <div class="pwa-banner-icon">
+      <img src="icons/icon-192.png" alt="Guerrero 3D">
+    </div>
+    <div class="pwa-banner-info">
+      <div class="pwa-banner-title">Discoteca Guerrero 3D</div>
+      <div class="pwa-banner-desc">Instalar en tu pantalla de inicio</div>
+    </div>
+    <button class="pwa-banner-btn" onclick="window.triggerPWAInstall()">Instalar</button>
+    <button class="pwa-banner-close" onclick="window.dismissPWABanner()" title="Cerrar">✕</button>
+  </div>
+
+  <!-- iOS Safari Install Guidance Modal -->
+  <div class="ios-install-modal" id="ios-install-modal" onclick="if(event.target === this) this.classList.remove('visible');">
+    <div class="ios-modal-card">
+      <div class="ios-modal-header">
+        <span class="ios-modal-title">📲 Instalar en iPhone / iPad</span>
+        <button class="ios-modal-close" onclick="document.getElementById('ios-install-modal').classList.remove('visible')">✕</button>
+      </div>
+      <div class="ios-modal-body">
+        <div class="ios-step">
+          <span class="ios-step-num">1</span>
+          <div class="ios-step-text">Pulsa el botón <strong>Compartir</strong> <span class="ios-icon">⎋</span> (icono de cuadrado con flecha en la barra de Safari).</div>
+        </div>
+        <div class="ios-step">
+          <span class="ios-step-num">2</span>
+          <div class="ios-step-text">Baja un poco en el menú y selecciona <strong>"Añadir a pantalla de inicio"</strong> <span class="ios-icon">⊞</span>.</div>
+        </div>
+        <div class="ios-step">
+          <span class="ios-step-num">3</span>
+          <div class="ios-step-text">Pulsa <strong>Añadir</strong> arriba a la derecha. ¡Listo! Se abrirá a pantalla completa sin barras.</div>
+        </div>
+      </div>
+      <button class="ios-modal-btn" onclick="document.getElementById('ios-install-modal').classList.remove('visible')">¡Entendido!</button>
+    </div>
+  </div>
 </body>
 </html>
